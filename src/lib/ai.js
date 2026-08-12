@@ -100,9 +100,8 @@ export function buildContext({ mode, records, visible, counts, attachments }) {
   const summary = [
     `Records in total: ${counts.total}`,
     `of those overdue: ${counts.overdue}`,
-    `open effort in days: ${counts.effort}`,
-    `by status: ${JSON.stringify(counts.byStatus)}`,
-    `by area: ${JSON.stringify(counts.byArea)}`,
+    `open total (of the schema's total field): ${counts.total_sum}`,
+    ...Object.entries(counts.facets ?? {}).map(([key, dist]) => `by ${key}: ${JSON.stringify(dist)}`),
   ].join('\n')
 
   if (mode === 'kennzahlen') {
