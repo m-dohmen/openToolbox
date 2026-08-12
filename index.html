@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Action items — openToolbox</title>
+
+    <!--
+      Data store of the application. On save the app writes a new HTML file in
+      which exactly this block is replaced. Do not rename it - the id is the anchor.
+    -->
+    <script id="sb-payload" type="application/json">null</script>
+
+    <!--
+      Applies the colour scheme before anything renders. Without it a file saved
+      in dark mode flashes the light interface on open. Settings sit in the
+      payload deliberately unencrypted.
+    -->
+    <script>
+      (function () {
+        var theme = 'system'
+        try {
+          var p = JSON.parse(document.getElementById('sb-payload').textContent)
+          if (p && p.settings && p.settings.theme) theme = p.settings.theme
+        } catch (e) {}
+        var dark =
+          theme === 'dark' ||
+          (theme === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches)
+        document.documentElement.dataset.theme = dark ? 'dark' : 'light'
+      })()
+    </script>
+  </head>
+  <body>
+    <div id="app"></div>
+    <script type="module" src="/src/main.jsx"></script>
+  </body>
+</html>

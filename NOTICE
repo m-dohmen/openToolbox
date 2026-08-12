@@ -1,0 +1,7 @@
+openToolbox
+Copyright 2026 M. Dohmen
+
+Licensed under the Apache License, Version 2.0. The license text is in the LICENSE file.
+
+This product bundles no third-party code in its source tree. At build time it uses Preact (MIT)
+and Vite (MIT); the resulting single HTML file contains Preact in inlined form.

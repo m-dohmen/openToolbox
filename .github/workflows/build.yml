@@ -1,0 +1,37 @@
+name: build
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+      - name: Check the build is really one self-contained file
+        run: |
+          test -f dist/index.html
+          size=$(stat -c%s dist/index.html)
+          echo "dist/index.html is $size bytes"
+          if [ "$size" -lt 40000 ]; then
+            echo "Build far too small — the script was probably not inlined."
+            exit 1
+          fi
+          if grep -qE '<script[^>]+src=|<link[^>]+href="http' dist/index.html; then
+            echo "External reference found in the built file."
+            exit 1
+          fi
+      - run: npx playwright install --with-deps chromium
+      - run: npm test
+      - uses: actions/upload-artifact@v4
+        with:
+          name: opentoolbox-single-file
+          path: dist/index.html

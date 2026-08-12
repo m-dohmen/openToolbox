@@ -1,0 +1,61 @@
+/*
+ * SPDX-License-Identifier: Apache-2.0
+ *
+ * ─────────────────────────────────────────────────────────────────────────
+ *  openToolbox — Gestaltungsgrundlage
+ *
+ *  Diese Datei enthält nur Rohwerte. Anwendungsspezifisches gehört in
+ *  styles.css und greift von dort ausschließlich über Variablen zu.
+ *  Wer die Optik einer Anwendung ändern will, ändert dort die Zuordnung;
+ *  wer eine eigene Hausfarbe setzen will, tauscht hier die Akzentwerte.
+ * ─────────────────────────────────────────────────────────────────────────
+ */
+
+:root {
+  /* Akzent — trägt alles Aktive */
+  --tone-accent: #0e7c86;
+  --tone-accent-deep: #0a5a62;
+  --tone-accent-light: #6fbec4;
+  --tone-accent-soft: #e2f1f2;
+
+  /* Grundton — Flächen und Text */
+  --tone-band: #16202b;
+  --tone-ink: #1b2430;
+  --tone-gray: #48535f;
+  --tone-med-gray: #6b7681;
+  --tone-light-gray: #a3acb5;
+  --tone-line: #d8dde1;
+  --tone-bg-gray: #edf0f1;
+  --tone-bg-light: #f5f7f7;
+  --tone-white: #ffffff;
+
+  /* Zustände — sparsam und nur dafür */
+  --tone-flag: #c2521b;
+  --tone-ok: #2e7d5b;
+  --tone-ok-soft: #e6f2ec;
+  --tone-pending: #d19a0a;
+
+  /* Schrift */
+  --tone-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue",
+    Arial, sans-serif;
+  --tone-mono: ui-monospace, SFMono-Regular, "SF Mono", "JetBrains Mono", Menlo, Consolas,
+    monospace;
+  --tone-weight-bold: 700;
+  --tone-weight-semi: 600;
+}
+
+/*
+ * Dunkelmodus. Aus dem Grundton abgeleitet und bewusst hier gebündelt,
+ * damit die Zuordnung in styles.css beide Modi gleich behandeln kann.
+ */
+:root {
+  --tone-dark-bg: #10161d;
+  --tone-dark-surface: #19212b;
+  --tone-dark-band: #0a0f14;
+  --tone-dark-line: #2c3743;
+  --tone-dark-line-soft: #222b35;
+  --tone-dark-text: #dde3e8;
+  --tone-dark-muted: #98a4b0;
+  --tone-dark-faint: #6d7a86;
+  --tone-dark-accent-soft: #10353a;
+}
