@@ -662,6 +662,7 @@ function Workbench({
         <>
           <div class="scrim" onClick={() => setDraft(null)} />
           <RecordDrawer
+            key={draft[SCHEMA.idField]}
             record={draft}
             isNew={!records.some((r) => r.id === draft.id)}
             onCancel={() => setDraft(null)}
@@ -801,11 +802,12 @@ function RecordDrawer({ record, isNew, onCancel, onSave, onDelete }) {
   const [confirm, setConfirm] = useState(false)
   const first = useRef(null)
 
-  useEffect(() => {
-    setR(record)
-    setConfirm(false)
-    first.current?.focus()
-  }, [record[SCHEMA.idField]])
+  // `key={id}` beim Aufrufer montiert diese Komponente pro Datensatz neu, `r`
+  // braucht daher nur seinen Startwert aus dem useState oben - kein Abgleich
+  // bei Id-Wechsel per Effekt. Genau der lief bisher der ersten Eingabe hinterher:
+  // er feuerte nach dem Mount und setzte `r` auf den veralteten record-Prop zurück,
+  // was schnelle Eingaben verschluckte.
+  useEffect(() => first.current?.focus(), [])
 
   const set = (k) => (e) => setR({ ...r, [k]: e.currentTarget.value })
 
@@ -860,7 +862,7 @@ function RecordDrawer({ record, isNew, onCancel, onSave, onDelete }) {
           Apply
         </button>
         <button class="btn btn--quiet" onClick={onCancel}>
-          Abbrechen
+          Cancel
         </button>
         {!isNew && (
           <button
@@ -887,7 +889,7 @@ function KeyPrompt({ model, onSubmit, onDisable, onLater }) {
   useEffect(() => input.current?.focus(), [])
 
   return (
-    <div class="modal" role="dialog" aria-label="KI-Schlüssel">
+    <div class="modal" role="dialog" aria-label="API key">
       <h2>An API key is needed</h2>
       <p>
         AI integration is switched on in this file{model ? ` (${model})` : ''}, but the key was

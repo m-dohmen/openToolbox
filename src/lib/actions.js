@@ -52,7 +52,7 @@ function coerce(schema, key, raw, problems, where) {
     return value
   }
 
-  return String(raw)
+  return raw == null ? '' : String(raw)
 }
 
 /**

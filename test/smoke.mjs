@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 import { chromium } from 'playwright'
 import { createServer } from 'node:http'
 import { buildUrl, parseHeaders } from '../src/lib/ai.js'
@@ -14,6 +15,16 @@ const fail = (m) => {
   console.error('FEHLER: ' + m)
   process.exitCode = 1
 }
+
+// Test-Logo mit absichtlich unsauberem Markup, um den SVG-Sanitiser zu pruefen.
+const logoFixture = resolve(tmp, 'logo.svg')
+writeFileSync(
+  logoFixture,
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 40" onload="evil()">' +
+    '<script>alert(1)</script>' +
+    '<rect width="100" height="40" fill="#0e7c86" onclick="evil()" />' +
+    '</svg>',
+)
 
 /* Nachgebauter OpenAI-kompatibler Endpunkt. Prueft nebenbei, ob ein Aufruf
    aus einer lokalen Datei ueberhaupt durchgeht - die Herkunft ist dabei "null". */
@@ -465,7 +476,7 @@ await page9.evaluate(() => {
 await page9.getByRole('button', { name: 'Upload SVG' }).click()
 await page9.waitForFunction(() => window.__logoInput)
 const logoHandle = await page9.evaluateHandle(() => window.__logoInput)
-await logoHandle.asElement().setInputFiles('/tmp/logo.svg')
+await logoHandle.asElement().setInputFiles(logoFixture)
 await page9.waitForSelector('.note--ok')
 console.log('27) Logo:', await page9.locator('.note--ok').innerText())
 const marks = await page9.locator('.wordmark--logo').count()
