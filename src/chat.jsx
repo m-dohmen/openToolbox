@@ -7,13 +7,13 @@ import {
   extractActions,
   isTextFile,
   ATTACHMENT_ACCEPT,
-  CONTEXT_MODES,
+  contextModeOptions,
 } from './lib/ai.js'
 import { describeActions } from './lib/actions.js'
 import { SCHEMA } from './domain.js'
+import { translator } from './i18n.js'
 import { IconChat, IconSend, IconChevron, IconPaperclip } from './icons.jsx'
 
-const modeLabel = (mode) => CONTEXT_MODES.find(([v]) => v === mode)?.[1] ?? mode
 const kb = (n) => (n < 1024 ? `${n} B` : `${(n / 1024).toFixed(1)} KB`)
 
 /**
@@ -22,7 +22,9 @@ const kb = (n) => (n < 1024 ? `${n} B` : `${(n / 1024).toFixed(1)} KB`)
  * Verlauf und Anhänge leben nur in dieser Sitzung und werden nicht in die
  * Datei geschrieben.
  */
-export function ChatDock({ config, apiKey, records, visible, counts, onDialect, onActions }) {
+export function ChatDock({ config, apiKey, records, visible, counts, onDialect, onActions, locale }) {
+  const tr = translator(locale)
+  const modeLabel = (mode) => contextModeOptions(tr).find(([v]) => v === mode)?.[1] ?? mode
   const [open, setOpen] = useState(false)
   const [messages, setMessages] = useState([])
   const [attachments, setAttachments] = useState([])
@@ -70,11 +72,7 @@ export function ChatDock({ config, apiKey, records, visible, counts, onDialect, 
         ...accepted,
       ])
     }
-    setError(
-      rejected.length
-        ? `Skipped, no readable text: ${rejected.join(', ')}.`
-        : '',
-    )
+    setError(rejected.length ? tr('chat.skipped', rejected.join(', ')) : '')
   }
 
   const removeAttachment = (name) =>
@@ -157,12 +155,12 @@ export function ChatDock({ config, apiKey, records, visible, counts, onDialect, 
     <div class="chat" data-open={String(open)}>
       <button class="chat__bar" onClick={() => setOpen(!open)} aria-expanded={String(open)}>
         <IconChat />
-        <span class="chat__bar-title">AI assistant</span>
+        <span class="chat__bar-title">{tr('chat.title')}</span>
         <span class="chat__bar-meta">
-          {config.model || 'no model'} · Context: {modeLabel(config.context)}
+          {config.model || tr('chat.noModel')} · {tr('chat.contextLabel', modeLabel(config.context))}
           {config.context !== 'kennzahlen' && ` (${rowCount})`}
-          {attachments.length > 0 && ` · ${attachments.length} attachment(s)`}
-          {config.allowWrite ? ' · changes allowed' : ' · read only'}
+          {attachments.length > 0 && ` · ${tr('chat.attachments', attachments.length)}`}
+          {' · '}{config.allowWrite ? tr('chat.writeAllowed') : tr('chat.readOnly')}
         </span>
         <IconChevron class="chat__caret" />
       </button>
@@ -184,42 +182,34 @@ export function ChatDock({ config, apiKey, records, visible, counts, onDialect, 
         >
           <div class="chat__log" ref={log}>
             {messages.length === 0 && !error && (
-              <p class="chat__hint">
-                The records in this file go to the configured endpoint with every question. Text
-                files can be attached and are added as extra context.
-                {config.allowWrite
-                  ? ' On an explicit instruction the model proposes changes, which you see before they are applied.'
-                  : ' Write access is switched off in the settings.'}
-              </p>
+              <p class="chat__hint">{config.allowWrite ? tr('chat.hintWrite') : tr('chat.hintReadOnly')}</p>
             )}
 
             {messages.map((m, i) => (
               <div key={i} class={'chat__msg chat__msg--' + m.role}>
-                <span class="chat__who">{m.role === 'user' ? 'You' : 'Model'}</span>
+                <span class="chat__who">{m.role === 'user' ? tr('chat.you') : tr('chat.model')}</span>
                 {m.content && <div class="chat__text">{m.content}</div>}
 
                 {m.pending && (
                   <div class="proposal">
-                    <p class="proposal__head">
-                      Proposed change{m.pending.length > 1 ? 's' : ''} to the data
-                    </p>
+                    <p class="proposal__head">{tr('chat.proposalHead', m.pending.length)}</p>
                     <ul>
-                      {describeActions(records, m.pending, SCHEMA).map((line, k) => (
+                      {describeActions(records, m.pending, SCHEMA, tr).map((line, k) => (
                         <li key={k}>{line}</li>
                       ))}
                     </ul>
                     <div class="proposal__foot">
                       <button class="btn btn--primary" onClick={() => confirmActions(i)}>
-                        Apply
+                        {tr('common.apply')}
                       </button>
                       <button class="btn btn--quiet" onClick={() => discardActions(i)}>
-                        Discard
+                        {tr('chat.discard')}
                       </button>
                     </div>
                   </div>
                 )}
 
-                {m.discarded && <p class="proposal__note">Proposal discarded.</p>}
+                {m.discarded && <p class="proposal__note">{tr('chat.discarded')}</p>}
 
                 {m.outcome && (
                   <div class="proposal proposal--done">
@@ -236,8 +226,8 @@ export function ChatDock({ config, apiKey, records, visible, counts, onDialect, 
 
             {busy && (
               <div class="chat__msg chat__msg--assistant">
-                <span class="chat__who">Model</span>
-                <div class="chat__text chat__text--wait">thinking …</div>
+                <span class="chat__who">{tr('chat.model')}</span>
+                <div class="chat__text chat__text--wait">{tr('chat.thinking')}</div>
               </div>
             )}
             {error && <p class="chat__error">{error}</p>}
@@ -248,13 +238,13 @@ export function ChatDock({ config, apiKey, records, visible, counts, onDialect, 
               {attachments.map((a) => (
                 <span class="chip" key={a.name}>
                   {a.name} <em>{kb(a.size)}</em>
-                  <button aria-label={`Remove ${a.name}`} onClick={() => removeAttachment(a.name)}>
+                  <button aria-label={tr('chat.removeAttachment', a.name)} onClick={() => removeAttachment(a.name)}>
                     ×
                   </button>
                 </span>
               ))}
               <button class="btn btn--quiet" onClick={() => setAttachments([])}>
-                remove all
+                {tr('chat.removeAll')}
               </button>
             </div>
           )}
@@ -263,7 +253,7 @@ export function ChatDock({ config, apiKey, records, visible, counts, onDialect, 
             <textarea
               ref={field}
               rows="2"
-              placeholder="Ask about or instruct changes to the data in this file …"
+              placeholder={tr('chat.placeholder')}
               value={input}
               onInput={(e) => setInput(e.currentTarget.value)}
               onKeyDown={(e) => {
@@ -286,10 +276,10 @@ export function ChatDock({ config, apiKey, records, visible, counts, onDialect, 
                 }}
               />
               <button class="btn" onClick={() => picker.current?.click()}>
-                <IconPaperclip /> Files
+                <IconPaperclip /> {tr('chat.files')}
               </button>
               <button class="btn btn--primary" disabled={busy || !input.trim()} onClick={send}>
-                <IconSend /> Send
+                <IconSend /> {tr('chat.send')}
               </button>
               {messages.length > 0 && (
                 <button
@@ -299,7 +289,7 @@ export function ChatDock({ config, apiKey, records, visible, counts, onDialect, 
                     setError('')
                   }}
                 >
-                  Clear history
+                  {tr('chat.clearHistory')}
                 </button>
               )}
             </div>

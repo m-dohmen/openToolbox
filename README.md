@@ -1,3 +1,5 @@
+<img src="docs/logo.svg" alt="openToolbox logo" width="96" height="96">
+
 # openToolbox
 
 **Ship a working tool as a single HTML file. No server, no install, no network.**
@@ -29,6 +31,8 @@ Point an AI assistant at this repository and it has everything it needs — the 
 - **Brandable.** Five colours, product name and an SVG logo, all editable in the app and stored with
   the file. Export the configuration once and reuse it across every tool you build.
 - **Light and dark mode**, keyboard shortcuts, CSV and JSON export, responsive down to phone width.
+- **Two interface languages out of the box** (English, German), a setting that travels with the
+  file. Adding a third is a small, mechanical change — see [Interface languages](#interface-languages).
 
 ## Quick start
 
@@ -136,6 +140,71 @@ Uploaded SVGs are sanitised first — scripts, `on…` handlers, `foreignObject`
 are stripped, and you are told what was removed. Export the configuration as JSON (without records,
 without the API key) and load it into every other tool you build.
 
+## Interface languages
+
+The interface ships in **English (default) and German**, selectable in Settings → Appearance →
+Language. The choice travels with the file, exactly like the color scheme.
+
+This is deliberately split into two layers that don't mix:
+
+- **App chrome** — buttons, dialogs, toasts, the AI proposal review ("Updated A-123 — Status: open →
+  done"). This is what the language toggle controls. It lives in one file, `src/i18n.js`: a flat
+  `key → string` dictionary, one block per language.
+- **Schema content** — field labels, enum values, seed data in `src/domain.js`. Whatever language you
+  wrote them in is what stays on screen, regardless of the interface language. A German-only tool
+  keeps its German column headers ("Fälligkeit", "Zuständig") even with the toggle set to English —
+  translating live business data isn't a UI toggle's job, and mixing the two would make the schema
+  layer depend on a locale it doesn't know about.
+
+### Adding a language
+
+Since the whole mechanism sits in one file with every string already translated once, adding a
+language is small enough to hand an AI assistant as a single instruction:
+
+> Add Italian as an interface language.
+
+Everything it needs is right there: `src/i18n.js` documents the pattern in its header comment,
+`LOCALES` and `LOCALE_LABELS` list what Settings offers, and all 229 keys in `STRINGS.en` already
+have a `STRINGS.de` counterpart to translate from. Concretely, the change is:
+
+```js
+// src/i18n.js
+export const LOCALES = ['en', 'de', 'it']
+export const LOCALE_LABELS = { en: 'English', de: 'Deutsch', it: 'Italiano' }
+
+const STRINGS = {
+  en: { /* … */ },
+  de: { /* … */ },
+  it: {
+    'app.settings': 'Impostazioni',
+    'common.apply': 'Applica',
+    // … one line per key, same shape as `en` — plain strings and small
+    // functions like `(n) => `${n} record${n === 1 ? '' : 's'}`` for the
+    // handful of keys that take arguments (counts, names, plurals).
+  },
+}
+```
+
+Nothing else in the codebase changes. Settings picks up the new option from `LOCALES` automatically,
+every component already calls the generic `tr('some.key', ...args)`, and a key missing from a
+work-in-progress translation falls back to English rather than breaking — so a partial translation
+is safe to ship and finish later.
+
+### How it's wired, for anyone extending it further
+
+- `settings.locale` is a normal setting: stored with the file, defaults to `'en'`, rendered as a
+  segmented control next to color scheme and row height.
+- Every component builds a bound translator once — `const tr = translator(settings.locale)` — and
+  calls `tr('key')` or `tr('key', ...args)` for the handful of keys that interpolate a value (a
+  count, a filename, a field label).
+- `src/lib/actions.js` (validating and describing AI-proposed changes) and `dialectSummary()` in
+  `src/lib/ai.js` (the negotiated-dialect line in Settings) take the same `tr` — the sentences a user
+  reads when reviewing an AI proposal are translated too, not just the surrounding chrome.
+- What stays English on purpose: the instructions and schema description sent *to* the AI model
+  (`buildInstructions`, `buildContext` in `src/lib/ai.js`). Models are most reliable in English
+  regardless of the interface language, and the user never reads that text directly — only the
+  model does.
+
 ## Limits worth knowing
 
 - **Not saved means lost.** There is no autosave — without a target file there cannot be one. The
@@ -155,6 +224,7 @@ src/app.jsx            shell, list, form, save logic
 src/settings.jsx       settings page
 src/chat.jsx           AI assistant dock
 src/brand.jsx          wordmark and uploaded logo
+src/i18n.js            interface language dictionary (English, German)
 src/tokens.css         colour and type primitives
 src/styles.css         semantic roles and components
 src/lib/payload.js     read and write the embedded data block
@@ -189,4 +259,5 @@ Apache License 2.0. Source files carry an `SPDX-License-Identifier` header.
 Dependencies: Preact (MIT), Vite (MIT), Playwright for tests only (Apache 2.0). The built file loads
 nothing at runtime.
 
-Interface and documentation are in US English; source comments are in German.
+The interface ships in US English and German (see [Interface languages](#interface-languages) above)
+and defaults to English; documentation is in US English; source comments are in German.

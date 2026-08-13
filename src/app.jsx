@@ -19,6 +19,7 @@ import { IconSave, IconSettings } from './icons.jsx'
 import { SettingsPage } from './settings.jsx'
 import { ChatDock } from './chat.jsx'
 import { AI_DEFAULTS } from './lib/ai.js'
+import { translator, DEFAULT_LOCALE } from './i18n.js'
 
 /** Anpassbare Grundfarben. Die Abstufungen werden daraus gerechnet. */
 export const DEFAULT_COLORS = {
@@ -30,7 +31,24 @@ export const DEFAULT_COLORS = {
 }
 
 /** Wortmarke und optionales Logo. Beides reist mit der Datei. */
-export const DEFAULT_BRAND = { name: 'openToolbox', logo: '' }
+export const DEFAULT_BRAND = {
+  name: 'openToolbox',
+  logo:
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" role="img" aria-label="openToolbox logo" preserveAspectRatio="xMinYMid meet">' +
+    '<title>openToolbox</title>' +
+    '<defs><linearGradient id="otb-bg" x1="0" y1="0" x2="100" y2="100" gradientUnits="userSpaceOnUse">' +
+    '<stop offset="0" stop-color="#2bb3bf"/><stop offset="1" stop-color="#0b5e66"/>' +
+    '</linearGradient></defs>' +
+    '<rect x="0" y="0" width="100" height="100" rx="22" fill="url(#otb-bg)"/>' +
+    '<path d="M35,20 H57 L73,36 V74 A8,8 0 0 1 65,82 H35 A8,8 0 0 1 27,74 V28 A8,8 0 0 1 35,20 Z" fill="#ffffff"/>' +
+    '<path d="M57,20 L57,32 A4,4 0 0 0 61,36 L73,36 Z" fill="#bdeef1"/>' +
+    '<rect x="57" y="27" width="27" height="23" rx="7" fill="#ffffff"/>' +
+    '<path d="M65.5,38.5 v-4.2 a5,5 0 0 1 10,0 v4.2" fill="none" stroke="url(#otb-bg)" stroke-width="3.2" stroke-linecap="round"/>' +
+    '<rect x="63.5" y="38.5" width="14" height="10.5" rx="3" fill="url(#otb-bg)"/>' +
+    '<circle cx="70.5" cy="43" r="1.7" fill="#ffffff"/>' +
+    '<rect x="69.6" y="43" width="1.8" height="3.4" rx="0.9" fill="#ffffff"/>' +
+    '</svg>',
+}
 import { applyActions } from './lib/actions.js'
 import { exportConfig, importConfig } from './lib/config.js'
 
@@ -38,11 +56,14 @@ import { exportConfig, importConfig } from './lib/config.js'
  * Einstellungen reisen im Payload mit, liegen aber bewusst außerhalb des
  * verschlüsselten Umschlags: sonst stünde der Sperrbildschirm im falschen
  * Farbschema und unter falschem Titel da. Geheim ist hier nichts.
+ * `locale` steuert nur die Oberflächensprache (src/i18n.js) - Feldnamen und
+ * Daten aus src/domain.js bleiben davon unberührt, siehe README.
  */
 const DEFAULT_SETTINGS = {
   theme: 'system',
   density: 'normal',
   watermark: true,
+  locale: DEFAULT_LOCALE,
   title: 'Action items',
   subtitle: 'Open points from audits and steering meetings',
   fileStem: 'action-items',
@@ -110,6 +131,7 @@ export function App() {
       <Gate
         title={storedSettings.title}
         brand={storedSettings.brand}
+        locale={storedSettings.locale}
         envelope={payload.envelope}
         onOpen={(data, pass) => {
           setRecords(data.records)
@@ -138,7 +160,8 @@ export function App() {
 
 /* ── Passphrasen-Abfrage beim Öffnen ──────────────────────────── */
 
-function Gate({ envelope, onOpen, title, brand }) {
+function Gate({ envelope, onOpen, title, brand, locale }) {
+  const tr = translator(locale)
   const [value, setValue] = useState('')
   const [error, setError] = useState('')
   const [busy, setBusy] = useState(false)
@@ -153,7 +176,7 @@ function Gate({ envelope, onOpen, title, brand }) {
     try {
       onOpen(await unseal(envelope, value), value)
     } catch {
-      setError('That passphrase does not match. The data stays encrypted.')
+      setError(tr('gate.error'))
       setBusy(false)
     }
   }
@@ -162,13 +185,10 @@ function Gate({ envelope, onOpen, title, brand }) {
     <div class="gate">
       <div class="gate__box">
         <Wordmark brand={brand} class="gate__logo" />
-        <h1>{title} is encrypted</h1>
-        <p>
-          The data in this file is protected with AES-256-GCM. Without the passphrase there is no
-          way in — not for anyone.
-        </p>
+        <h1>{tr('gate.title', title)}</h1>
+        <p>{tr('gate.body')}</p>
         <div class="field">
-          <label for="gate-pass">Passphrase</label>
+          <label for="gate-pass">{tr('gate.passphraseLabel')}</label>
           <input
             id="gate-pass"
             ref={input}
@@ -180,7 +200,7 @@ function Gate({ envelope, onOpen, title, brand }) {
         </div>
         {error && <p class="error">{error}</p>}
         <button class="btn btn--primary" disabled={busy || !value} onClick={submit}>
-          {busy ? 'Decrypting…' : 'Unlock'}
+          {busy ? tr('gate.decrypting') : tr('gate.unlock')}
         </button>
       </div>
     </div>
@@ -212,6 +232,8 @@ function Workbench({
   const [askKey, setAskKey] = useState(initialSettings.ai.enabled && !apiKey)
   const [toast, setToast] = useState(null)
   const [saving, setSaving] = useState(false)
+
+  const tr = translator(settings.locale)
 
   const notify = (text, kind) => {
     setToast({ text, kind })
@@ -254,6 +276,10 @@ function Workbench({
     document.documentElement.dataset.chat = settings.ai.enabled ? 'on' : 'off'
   }, [settings.ai.enabled])
 
+  useEffect(() => {
+    document.documentElement.lang = settings.locale
+  }, [settings.locale])
+
   /* Gewählte Farben als Variablen am Wurzelelement — von dort erbt alles,
      auch der Dunkelmodus, weil der nur die Rollen neu zuordnet. */
   useEffect(() => {
@@ -288,13 +314,9 @@ function Workbench({
 
       setDirty(false)
       setLastSaved(payload.savedAt)
-      notify(
-        written === 'handle'
-          ? 'Written back to the selected file.'
-          : `Saved as ${name}.`,
-      )
+      notify(written === 'handle' ? tr('toast.savedHandle') : tr('toast.savedAs', name))
     } catch (err) {
-      if (err?.name !== 'AbortError') notify('Could not save: ' + err.message, 'error')
+      if (err?.name !== 'AbortError') notify(tr('toast.saveError', err.message), 'error')
     } finally {
       setSaving(false)
     }
@@ -353,9 +375,9 @@ function Workbench({
       const x = a[sort.key] ?? ''
       const y = b[sort.key] ?? ''
       if (typeof x === 'number' && typeof y === 'number') return (x - y) * sort.dir
-      return String(x).localeCompare(String(y), 'en') * sort.dir
+      return String(x).localeCompare(String(y), settings.locale) * sort.dir
     })
-  }, [records, query, facet, sort])
+  }, [records, query, facet, sort, settings.locale])
 
   const payloadSize = useMemo(() => JSON.stringify(records).length, [records])
 
@@ -378,16 +400,12 @@ function Workbench({
    * Geprüft wird hier, nicht dort - die Antwort ist ein Vorschlag, kein Befehl.
    */
   const runActions = (actions) => {
-    const outcome = applyActions(records, actions, SCHEMA, uid, emptyRecord)
+    const outcome = applyActions(records, actions, SCHEMA, uid, emptyRecord, tr)
     if (outcome.done.length) {
       mutate(outcome.next)
-      notify(
-        outcome.done.length === 1
-          ? '1 change applied — not saved yet.'
-          : `${outcome.done.length} changes applied — not saved yet.`,
-      )
+      notify(tr('toast.changesApplied', outcome.done.length))
     } else if (outcome.problems.length) {
-      notify('No proposal could be applied.', 'error')
+      notify(tr('toast.noProposal'), 'error')
     }
     return { done: outcome.done, problems: outcome.problems }
   }
@@ -421,13 +439,11 @@ function Workbench({
       setDirty(true)
       if (next.ai.enabled && !apiKey) setAskKey(true)
       notify(
-        notes.length
-          ? `Configuration applied with limitations: ${notes[0]}`
-          : 'Configuration applied — not saved yet.',
+        notes.length ? tr('toast.configApplied', notes[0]) : tr('toast.configAppliedPlain'),
         notes.length ? 'error' : undefined,
       )
     } catch (err) {
-      notify('Import cancelled: ' + err.message, 'error')
+      notify(tr('toast.importCancelled', err.message), 'error')
     }
   }
 
@@ -439,9 +455,9 @@ function Workbench({
       const incoming = Array.isArray(parsed) ? parsed : parsed.records
       if (!Array.isArray(incoming)) throw new Error('No records array found')
       mutate(incoming)
-      notify(`${incoming.length} records imported.`)
+      notify(tr('toast.recordsImported', incoming.length))
     } catch (err) {
-      notify('Import cancelled: ' + err.message, 'error')
+      notify(tr('toast.importCancelled', err.message), 'error')
     }
   }
 
@@ -459,6 +475,8 @@ function Workbench({
         size={payloadSize}
         lastSaved={lastSaved}
         onSave={save}
+        locale={settings.locale}
+        tr={tr}
       />
 
       <header class="head">
@@ -473,15 +491,15 @@ function Workbench({
         <div class="head__actions">
           <button
             class="iconbtn"
-            title="Settings"
-            aria-label="Settings"
+            title={tr('app.settings')}
+            aria-label={tr('app.settings')}
             aria-pressed={String(view === 'settings')}
             onClick={() => setView(view === 'settings' ? 'list' : 'settings')}
           >
             <IconSettings />
           </button>
           <button class="btn btn--primary" onClick={() => { setView('list'); setDraft(emptyRecord()) }}>
-            New {SCHEMA.singular}
+            {tr('app.new', SCHEMA.singular)}
           </button>
         </div>
       </header>
@@ -501,7 +519,7 @@ function Workbench({
           onRemoveEncryption={() => {
             setPassphrase(null)
             setDirty(true)
-            notify('Encryption removed — the next save writes plain text.')
+            notify(tr('toast.encryptionRemoved'))
           }}
           onBack={() => setView('list')}
           onExportCsv={exportCsv}
@@ -516,19 +534,19 @@ function Workbench({
       <div class="body">
         <aside class="rail">
           <section>
-            <p class="label">Overview</p>
+            <p class="label">{tr('sidebar.overview')}</p>
             <dl class="kpi">
               <div>
                 <dt>{SCHEMA.plural}</dt>
                 <dd>{counts.total}</dd>
               </div>
               <div class={counts.overdue ? 'is-flag' : ''}>
-                <dt>Overdue</dt>
+                <dt>{tr('sidebar.overdue')}</dt>
                 <dd>{counts.overdue}</dd>
               </div>
               {SCHEMA.totalField && (
                 <div>
-                  <dt>Open {field(SCHEMA.totalField).label.toLowerCase()}</dt>
+                  <dt>{tr('sidebar.openTotal', field(SCHEMA.totalField).label)}</dt>
                   <dd>{counts.total_sum}</dd>
                 </div>
               )}
@@ -544,7 +562,7 @@ function Workbench({
                   onClick={() => setFacet({ ...facet, [key]: null })}
                   count={counts.total}
                 >
-                  All
+                  {tr('sidebar.all')}
                 </FilterButton>
                 {field(key).values.map((value) => (
                   <FilterButton
@@ -563,11 +581,11 @@ function Workbench({
           ))}
 
           <section>
-            <p class="label">Exchange</p>
+            <p class="label">{tr('sidebar.exchange')}</p>
             <div class="linklist">
-              <button onClick={exportCsv}>CSV for Excel</button>
-              <button onClick={exportJson}>Export JSON</button>
-              <button onClick={importJson}>Import JSON</button>
+              <button onClick={exportCsv}>{tr('sidebar.csv')}</button>
+              <button onClick={exportJson}>{tr('sidebar.exportJson')}</button>
+              <button onClick={importJson}>{tr('sidebar.importJson')}</button>
             </div>
           </section>
         </aside>
@@ -577,25 +595,19 @@ function Workbench({
             <input
               class="search"
               type="search"
-              placeholder="Search titles, owners, notes…"
+              placeholder={tr('search.placeholder')}
               value={query}
               onInput={(e) => setQuery(e.currentTarget.value)}
             />
-            <span class="counter">
-              {visible.length} of {records.length}
-            </span>
+            <span class="counter">{tr('search.counter', visible.length, records.length)}</span>
           </div>
 
           {visible.length === 0 ? (
             <div class="empty">
-              <h2>{records.length ? 'No matches' : 'Nothing here yet'}</h2>
-              <p>
-                {records.length
-                  ? 'Clear the filters or change the search term.'
-                  : 'Create the first item or import a JSON file.'}
-              </p>
+              <h2>{records.length ? tr('empty.noMatches') : tr('empty.nothingYet')}</h2>
+              <p>{records.length ? tr('empty.noMatchesHint') : tr('empty.nothingYetHint')}</p>
               <button class="btn btn--primary" onClick={() => setDraft(emptyRecord())}>
-                New {SCHEMA.singular}
+                {tr('app.new', SCHEMA.singular)}
               </button>
             </div>
           ) : (
@@ -603,7 +615,7 @@ function Workbench({
               <table>
                 <thead>
                   <tr>
-                    <Th sort={sort} k={SCHEMA.idField} onSort={sortBy}>ID</Th>
+                    <Th sort={sort} k={SCHEMA.idField} onSort={sortBy}>{tr('app.id')}</Th>
                     {SCHEMA.list.map((key) => (
                       <Th
                         key={key}
@@ -649,6 +661,7 @@ function Workbench({
           records={records}
           visible={visible}
           counts={counts}
+          locale={settings.locale}
         />
       )}
 
@@ -668,6 +681,7 @@ function Workbench({
             onCancel={() => setDraft(null)}
             onSave={commit}
             onDelete={remove}
+            tr={tr}
           />
         </>
       )}
@@ -677,6 +691,7 @@ function Workbench({
           <div class="scrim" />
           <KeyPrompt
             model={settings.ai.model}
+            tr={tr}
             onSubmit={(key) => {
               setApiKey(key)
               setAskKey(false)
@@ -684,7 +699,7 @@ function Workbench({
             onDisable={() => {
               changeSettings({ ai: { ...settings.ai, enabled: false } })
               setAskKey(false)
-              notify('AI integration switched off. The app is fully local again.')
+              notify(tr('toast.aiDisabled'))
             }}
             onLater={() => setAskKey(false)}
           />
@@ -696,12 +711,13 @@ function Workbench({
           <div class="scrim" onClick={() => setShowKey(false)} />
           <KeyDialog
             active={Boolean(passphrase)}
+            tr={tr}
             onClose={() => setShowKey(false)}
             onApply={(pass) => {
               setPassphrase(pass)
               setDirty(true)
               setShowKey(false)
-              notify(pass ? 'Passphrase set — save now.' : 'Encryption removed.')
+              notify(pass ? tr('toast.passphraseSet') : tr('toast.encryptionRemovedShort'))
             }}
           />
         </>
@@ -714,29 +730,30 @@ function Workbench({
 
 /* ── Bausteine ────────────────────────────────────────────────── */
 
-function FileBar({ name, aiOn, dirty, saving, sealed, count, size, lastSaved, onSave }) {
+function FileBar({ name, aiOn, dirty, saving, sealed, count, size, lastSaved, onSave, locale, tr }) {
+  const dateLocale = locale === 'de' ? 'de-DE' : 'en-US'
   const stamp = lastSaved
-    ? new Date(lastSaved).toLocaleString('en-US', { dateStyle: 'short', timeStyle: 'short' })
-    : 'never'
+    ? new Date(lastSaved).toLocaleString(dateLocale, { dateStyle: 'short', timeStyle: 'short' })
+    : tr('filebar.savedNever')
 
   return (
     <div class="filebar">
       <span class="filebar__name">
         <b>{name}</b>
-        <em> — application and data in a single file</em>
+        <em> — {tr('filebar.tagline')}</em>
       </span>
       <span class="filebar__meta">
-        <span>{count} records</span>
-        <span>Data block {kb(size)}</span>
-        <span>saved: {stamp}</span>
-        {aiOn && <span class="filebar__ai">AI integration active</span>}
+        <span>{tr('filebar.records', count)}</span>
+        <span>{tr('filebar.dataBlock', kb(size))}</span>
+        <span>{tr('filebar.saved', stamp)}</span>
+        {aiOn && <span class="filebar__ai">{tr('filebar.aiActive')}</span>}
       </span>
       <span class="filebar__state">
         <span class={'dot ' + (dirty ? 'dot--dirty' : sealed ? 'dot--sealed' : '')} />
-        {dirty ? 'unsaved' : sealed ? 'encrypted' : 'plain text'}
+        {dirty ? tr('filebar.unsaved') : sealed ? tr('filebar.encrypted') : tr('filebar.plain')}
         <button class="filebar__save" data-dirty={String(dirty)} disabled={saving} onClick={onSave}>
           <IconSave />
-          {saving ? 'writing…' : 'Save'}
+          {saving ? tr('filebar.saving') : tr('common.save')}
         </button>
       </span>
     </div>
@@ -797,7 +814,7 @@ const Th = ({ sort, k, onSort, align, children }) => (
   </th>
 )
 
-function RecordDrawer({ record, isNew, onCancel, onSave, onDelete }) {
+function RecordDrawer({ record, isNew, onCancel, onSave, onDelete, tr }) {
   const [r, setR] = useState(record)
   const [confirm, setConfirm] = useState(false)
   const first = useRef(null)
@@ -812,9 +829,9 @@ function RecordDrawer({ record, isNew, onCancel, onSave, onDelete }) {
   const set = (k) => (e) => setR({ ...r, [k]: e.currentTarget.value })
 
   return (
-    <aside class="drawer" role="dialog" aria-label="Edit record">
+    <aside class="drawer" role="dialog" aria-label={tr('drawer.ariaLabel')}>
       <div class="drawer__head">
-        <h2>{isNew ? `New ${SCHEMA.singular}` : `Edit ${SCHEMA.singular}`}</h2>
+        <h2>{isNew ? tr('drawer.new', SCHEMA.singular) : tr('drawer.edit', SCHEMA.singular)}</h2>
         <span class="cell-id">{r[SCHEMA.idField]}</span>
       </div>
 
@@ -859,17 +876,17 @@ function RecordDrawer({ record, isNew, onCancel, onSave, onDelete }) {
           disabled={!String(r[SCHEMA.titleField] ?? '').trim()}
           onClick={() => onSave(r)}
         >
-          Apply
+          {tr('common.apply')}
         </button>
         <button class="btn btn--quiet" onClick={onCancel}>
-          Cancel
+          {tr('common.cancel')}
         </button>
         {!isNew && (
           <button
             class="btn btn--danger"
             onClick={() => (confirm ? onDelete(r.id) : setConfirm(true))}
           >
-            {confirm ? 'Confirm delete' : 'Delete'}
+            {confirm ? tr('drawer.confirmDelete') : tr('drawer.delete')}
           </button>
         )}
       </div>
@@ -882,23 +899,19 @@ function RecordDrawer({ record, isNew, onCancel, onSave, onDelete }) {
  * bewusst nicht in der Datei liegt. Ohne Antwort geht es hier nicht weiter -
  * entweder Schlüssel oder Integration aus.
  */
-function KeyPrompt({ model, onSubmit, onDisable, onLater }) {
+function KeyPrompt({ model, onSubmit, onDisable, onLater, tr }) {
   const [value, setValue] = useState('')
   const input = useRef(null)
 
   useEffect(() => input.current?.focus(), [])
 
   return (
-    <div class="modal" role="dialog" aria-label="API key">
-      <h2>An API key is needed</h2>
-      <p>
-        AI integration is switched on in this file{model ? ` (${model})` : ''}, but the key was
-        deliberately not stored. Enter it for this session, or switch the integration off — then
-        the app runs without any network connection again.
-      </p>
+    <div class="modal" role="dialog" aria-label={tr('keyPrompt.label')}>
+      <h2>{tr('keyPrompt.title')}</h2>
+      <p>{tr('keyPrompt.body', model)}</p>
 
       <div class="field">
-        <label for="ask-key">API key</label>
+        <label for="ask-key">{tr('keyPrompt.label')}</label>
         <input
           id="ask-key"
           ref={input}
@@ -912,13 +925,13 @@ function KeyPrompt({ model, onSubmit, onDisable, onLater }) {
 
       <div class="modal__foot">
         <button class="btn" onClick={onDisable}>
-          Switch AI integration off
+          {tr('keyPrompt.disable')}
         </button>
         <button class="btn btn--quiet" onClick={onLater}>
-          Later
+          {tr('common.later')}
         </button>
         <button class="btn btn--primary" disabled={!value.trim()} onClick={() => onSubmit(value.trim())}>
-          Apply
+          {tr('common.apply')}
         </button>
       </div>
     </div>
@@ -930,65 +943,54 @@ function KeyPrompt({ model, onSubmit, onDisable, onLater }) {
  * Datei nur gegen zufälliges Mitlesen geschützt werden soll und rundherum
  * ohnehin eine abgesicherte Umgebung steht.
  */
-function ratePassphrase(value) {
+function ratePassphrase(value, tr) {
   if (!value) return null
   const variety = [/[a-z]/, /[A-ZÄÖÜ]/, /\d/, /[^\wÄÖÜäöüß]/].filter((r) => r.test(value)).length
 
   if (value.length < 8 || variety < 2) {
-    return {
-      level: 'weak',
-      text:
-        'Short or simple passphrase. It protects against casual reading, not against systematic ' +
-        'guessing. In an already secured environment that can be a fair trade.',
-    }
+    return { level: 'weak', text: tr('strength.weak') }
   }
   if (value.length < 14 || variety < 3) {
-    return { level: 'ok', text: 'Usable. Length helps more than special characters.' }
+    return { level: 'ok', text: tr('strength.ok') }
   }
-  return { level: 'good', text: 'Solid passphrase.' }
+  return { level: 'good', text: tr('strength.good') }
 }
 
-function KeyDialog({ active, onClose, onApply }) {
+function KeyDialog({ active, onClose, onApply, tr }) {
   const [a, setA] = useState('')
   const [b, setB] = useState('')
   const [error, setError] = useState('')
-  const rating = ratePassphrase(a)
+  const rating = ratePassphrase(a, tr)
 
   if (!cryptoAvailable()) {
     return (
       <div class="modal" role="dialog">
-        <h2>Encryption unavailable</h2>
-        <p>
-          This browser does not expose the Web Crypto API in this context. Open the file in a
-          current Chrome or Edge.
-        </p>
+        <h2>{tr('keyDialog.unavailableTitle')}</h2>
+        <p>{tr('keyDialog.unavailableBody')}</p>
         <div class="modal__foot">
-          <button class="btn btn--primary" onClick={onClose}>Got it</button>
+          <button class="btn btn--primary" onClick={onClose}>{tr('common.gotIt')}</button>
         </div>
       </div>
     )
   }
 
   const apply = () => {
-    if (!a) return setError('Please enter a passphrase.')
-    if (a !== b) return setError('The two entries do not match.')
+    if (!a) return setError(tr('keyDialog.errorEmpty'))
+    if (a !== b) return setError(tr('keyDialog.errorMismatch'))
     onApply(a)
   }
 
   return (
-    <div class="modal" role="dialog" aria-label="Encryption">
-      <h2>{active ? 'Change passphrase' : 'Encrypt this file'}</h2>
-      <p>
-        AES-256-GCM with a key derived through PBKDF2 (310,000 rounds). Without the passphrase the
-        data cannot be recovered — there is no back door.
-      </p>
+    <div class="modal" role="dialog" aria-label={tr('keyDialog.ariaLabel')}>
+      <h2>{active ? tr('keyDialog.changeTitle') : tr('keyDialog.encryptTitle')}</h2>
+      <p>{tr('keyDialog.body')}</p>
 
       <div class="field">
-        <label for="k1">Passphrase</label>
+        <label for="k1">{tr('keyDialog.passphraseLabel')}</label>
         <input id="k1" type="password" value={a} onInput={(e) => setA(e.currentTarget.value)} />
       </div>
       <div class="field">
-        <label for="k2">Repeat</label>
+        <label for="k2">{tr('keyDialog.repeatLabel')}</label>
         <input
           id="k2"
           type="password"
@@ -1003,11 +1005,11 @@ function KeyDialog({ active, onClose, onApply }) {
       <div class="modal__foot">
         {active && (
           <button class="btn btn--danger" onClick={() => onApply(null)}>
-            Remove encryption
+            {tr('keyDialog.remove')}
           </button>
         )}
-        <button class="btn btn--quiet" onClick={onClose}>Cancel</button>
-        <button class="btn btn--primary" onClick={apply}>Apply</button>
+        <button class="btn btn--quiet" onClick={onClose}>{tr('common.cancel')}</button>
+        <button class="btn btn--primary" onClick={apply}>{tr('common.apply')}</button>
       </div>
     </div>
   )

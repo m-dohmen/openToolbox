@@ -2,9 +2,10 @@
 import { useRef, useState } from 'preact/hooks'
 import { IconBack, IconLock, IconChat } from './icons.jsx'
 import { Wordmark } from './brand.jsx'
-import { chatCompletion, CONTEXT_MODES, dialectSummary, resolveUrl } from './lib/ai.js'
+import { chatCompletion, contextModeOptions, dialectSummary, resolveUrl } from './lib/ai.js'
 import { sanitizeSvg } from './lib/svg.js'
 import { contrastRatio } from './lib/color.js'
+import { translator, LOCALES, LOCALE_LABELS } from './i18n.js'
 
 const Row = ({ label, hint, children }) => (
   <div class="setting">
@@ -58,6 +59,7 @@ export function SettingsPage({
   onResetColors,
   recordCount,
 }) {
+  const tr = translator(settings.locale)
   const [probe, setProbe] = useState({ state: 'idle', message: '' })
   const [logoNote, setLogoNote] = useState('')
   const logoPicker = useRef(null)
@@ -71,7 +73,7 @@ export function SettingsPage({
         onDialect,
         messages: [{ role: 'user', content: 'Reply with a single word: ready' }],
       })
-      setProbe({ state: 'ok', message: `Endpoint reachable. Reply: ${answer.slice(0, 120)}` })
+      setProbe({ state: 'ok', message: tr('settings.probeReachable', answer.slice(0, 120)) })
     } catch (err) {
       setProbe({ state: 'error', message: err.message })
     }
@@ -89,113 +91,102 @@ export function SettingsPage({
     try {
       const { svg, removed } = sanitizeSvg(await file.text())
       setBrand('logo')(svg)
-      setLogoNote(
-        removed.length
-          ? `Logo applied. Removed for safety: ${removed.join(', ')}.`
-          : 'Logo applied.',
-      )
+      setLogoNote(removed.length ? tr('settings.logoAppliedRemoved', removed.join(', ')) : tr('settings.logoApplied'))
     } catch (err) {
       setLogoNote(err.message)
     }
   }
 
   const bandContrast = contrastRatio(colors.band, '#ffffff').toFixed(1)
+  const localeOptions = LOCALES.map((code) => [code, LOCALE_LABELS[code]])
 
   return (
     <div class="settings">
       <div class="settings__inner">
         <button class="btn btn--quiet settings__back" onClick={onBack}>
-          <IconBack /> Back to the list
+          <IconBack /> {tr('settings.back')}
         </button>
 
-        <h2 class="settings__title">Settings</h2>
-        <p class="settings__lead">
-          Everything here is written into the file when you save and travels with it. Whoever
-          receives the file receives these settings too.
-        </p>
+        <h2 class="settings__title">{tr('settings.title')}</h2>
+        <p class="settings__lead">{tr('settings.lead')}</p>
 
         <section>
-          <p class="label">Appearance</p>
+          <p class="label">{tr('settings.appearance')}</p>
 
-          <Row label="Color scheme" hint="Stored with the file and applied the next time it is opened.">
+          <Row label={tr('settings.colorScheme')} hint={tr('settings.colorSchemeHint')}>
             <Segmented
               value={settings.theme}
               onChange={set('theme')}
               options={[
-                ['system', 'System'],
-                ['light', 'Light'],
-                ['dark', 'Dark'],
+                ['system', tr('settings.system')],
+                ['light', tr('settings.light')],
+                ['dark', tr('settings.dark')],
               ]}
             />
           </Row>
 
-          <Row label="Row height" hint="Compact fits roughly a third more rows on long lists.">
+          <Row label={tr('settings.rowHeight')} hint={tr('settings.rowHeightHint')}>
             <Segmented
               value={settings.density}
               onChange={set('density')}
               options={[
-                ['normal', 'Normal'],
-                ['kompakt', 'Compact'],
+                ['normal', tr('settings.normal')],
+                ['kompakt', tr('settings.compact')],
               ]}
             />
           </Row>
 
-          <Row label="Watermark" hint="Semi-transparent mark in the bottom right corner.">
+          <Row label={tr('settings.watermark')} hint={tr('settings.watermarkHint')}>
             <Toggle
               checked={settings.watermark}
               onChange={set('watermark')}
-              label={settings.watermark ? 'visible' : 'hidden'}
+              label={settings.watermark ? tr('settings.visible') : tr('settings.hidden')}
             />
+          </Row>
+
+          <Row label={tr('settings.language')} hint={tr('settings.languageHint')}>
+            <Segmented value={settings.locale} onChange={set('locale')} options={localeOptions} />
           </Row>
         </section>
 
         <section>
-          <p class="label">Colors</p>
+          <p class="label">{tr('settings.colors')}</p>
 
-          <Row
-            label="Accent"
-            hint="Carries everything active: primary buttons, filters, links. The lighter and darker shades are derived from it."
-          >
+          <Row label={tr('settings.accent')} hint={tr('settings.accentHint')}>
             <Swatch id="c-accent" value={colors.accent} onChange={setColor('accent')} />
           </Row>
 
-          <Row
-            label="Header bar"
-            hint={`Top bar, table head, side panel. Contrast against white text: ${bandContrast}:1 — below 4.5 it gets hard to read.`}
-          >
+          <Row label={tr('settings.headerBar')} hint={tr('settings.headerBarHint', bandContrast)}>
             <Swatch id="c-band" value={colors.band} onChange={setColor('band')} />
           </Row>
 
-          <Row label="Attention" hint="Overdue items and the waiting state.">
+          <Row label={tr('settings.attention')} hint={tr('settings.attentionHint')}>
             <Swatch id="c-flag" value={colors.flag} onChange={setColor('flag')} />
           </Row>
 
-          <Row label="Done" hint="Completed items.">
+          <Row label={tr('settings.done')} hint={tr('settings.doneHint')}>
             <Swatch id="c-ok" value={colors.ok} onChange={setColor('ok')} />
           </Row>
 
-          <Row label="Unsaved" hint="The dot in the file bar while changes are pending.">
+          <Row label={tr('settings.unsavedLabel')} hint={tr('settings.unsavedHint')}>
             <Swatch id="c-pending" value={colors.pending} onChange={setColor('pending')} />
           </Row>
 
-          <Row label="Back to defaults" hint="Restores the shipped palette.">
+          <Row label={tr('settings.backToDefaults')} hint={tr('settings.backToDefaultsHint')}>
             <div class="setting__buttons">
-              <button class="btn" onClick={onResetColors}>Reset colors</button>
+              <button class="btn" onClick={onResetColors}>{tr('settings.resetColors')}</button>
             </div>
           </Row>
         </section>
 
         <section>
-          <p class="label">Branding</p>
+          <p class="label">{tr('settings.branding')}</p>
 
-          <Row label="Product name" hint="Shown in the header, on the lock screen and as the watermark when no logo is set.">
+          <Row label={tr('settings.productName')} hint={tr('settings.productNameHint')}>
             <input value={settings.brand.name} onInput={(e) => setBrand('name')(e.currentTarget.value)} />
           </Row>
 
-          <Row
-            label="Logo"
-            hint="An SVG file. It is embedded into the HTML, so it travels with the file. Scripts, event handlers and external references are stripped before it is used."
-          >
+          <Row label={tr('settings.logo')} hint={tr('settings.logoHint')}>
             <div class="setting__buttons">
               <input
                 ref={logoPicker}
@@ -208,7 +199,7 @@ export function SettingsPage({
                 }}
               />
               <button class="btn" onClick={() => logoPicker.current?.click()}>
-                {settings.brand.logo ? 'Replace SVG' : 'Upload SVG'}
+                {settings.brand.logo ? tr('settings.replaceSvg') : tr('settings.uploadSvg')}
               </button>
               {settings.brand.logo && (
                 <button
@@ -218,14 +209,14 @@ export function SettingsPage({
                     setLogoNote('')
                   }}
                 >
-                  Remove
+                  {tr('common.remove')}
                 </button>
               )}
             </div>
           </Row>
 
           {settings.brand.logo && (
-            <Row label="Preview" hint="Rendered the way it appears in the header.">
+            <Row label={tr('settings.preview')} hint={tr('settings.previewHint')}>
               <div class="logo-preview">
                 <Wordmark brand={settings.brand} />
               </div>
@@ -236,17 +227,17 @@ export function SettingsPage({
         </section>
 
         <section>
-          <p class="label">Application</p>
+          <p class="label">{tr('settings.application')}</p>
 
-          <Row label="Title" hint="Shown in the header and on the lock screen.">
+          <Row label={tr('settings.appTitle')} hint={tr('settings.appTitleHint')}>
             <input value={settings.title} onInput={(e) => set('title')(e.currentTarget.value)} />
           </Row>
 
-          <Row label="Subtitle">
+          <Row label={tr('settings.subtitle')}>
             <input value={settings.subtitle} onInput={(e) => set('subtitle')(e.currentTarget.value)} />
           </Row>
 
-          <Row label="File name" hint="Without extension. Drives the save suggestion and the export files.">
+          <Row label={tr('settings.fileName')} hint={tr('settings.fileNameHint')}>
             <div class="suffixed">
               <input
                 value={settings.fileStem}
@@ -260,63 +251,45 @@ export function SettingsPage({
         </section>
 
         <section>
-          <p class="label">Security</p>
+          <p class="label">{tr('settings.security')}</p>
 
           <Row
-            label={sealed ? 'This file is encrypted' : 'This file is plain text'}
-            hint={
-              sealed
-                ? 'AES-256-GCM with a key derived from your passphrase through PBKDF2. Without it there is no recovery.'
-                : 'Anyone who opens the file sees the full data set.'
-            }
+            label={sealed ? tr('settings.encryptedLabel') : tr('settings.plainLabel')}
+            hint={sealed ? tr('settings.encryptedHint') : tr('settings.plainHint')}
           >
             <div class="setting__buttons">
               <button class="btn" onClick={onEncrypt}>
-                <IconLock /> {sealed ? 'Change passphrase' : 'Encrypt'}
+                <IconLock /> {sealed ? tr('settings.changePassphrase') : tr('settings.encrypt')}
               </button>
               {sealed && (
                 <button class="btn btn--danger" onClick={onRemoveEncryption}>
-                  Remove
+                  {tr('common.remove')}
                 </button>
               )}
             </div>
           </Row>
 
-          <p class="note">
-            Encryption protects the data, not access to the application. Roles and views in a file
-            that runs locally would be surface only — whoever holds the file also holds the code.
-          </p>
+          <p class="note">{tr('settings.securityNote')}</p>
         </section>
 
         <section>
-          <p class="label">AI integration</p>
+          <p class="label">{tr('settings.aiIntegration')}</p>
 
-          <Row
-            label="AI integration active"
-            hint="While this is off the application opens no network connection at all. There is no second way out."
-          >
+          <Row label={tr('settings.aiActiveLabel')} hint={tr('settings.aiActiveHint')}>
             <Toggle
               checked={ai.enabled}
               onChange={setAi('enabled')}
-              label={ai.enabled ? 'on' : 'off'}
+              label={ai.enabled ? tr('settings.on') : tr('settings.off')}
             />
           </Row>
 
           {ai.enabled && (
             <>
-              <p class="note note--warn">
-                From now on every question sends the records in this file to the endpoint configured
-                below. In regulated environments that is outsourcing — clear it with the responsible
-                function before you use it.
-              </p>
+              <p class="note note--warn">{tr('settings.aiWarnNote')}</p>
 
               <Row
-                label="Endpoint"
-                hint={
-                  ai.baseUrl
-                    ? `Requests go to: ${resolveUrl(ai)}`
-                    : 'Base URL, usually up to and including /v1. Append an Azure api-version as a query string.'
-                }
+                label={tr('settings.endpoint')}
+                hint={ai.baseUrl ? tr('settings.endpointHintSet', resolveUrl(ai)) : tr('settings.endpointHintUnset')}
               >
                 <input
                   placeholder="https://…/openai/v1"
@@ -325,7 +298,7 @@ export function SettingsPage({
                 />
               </Row>
 
-              <Row label="Model" hint="Name or deployment, exactly as the endpoint expects it.">
+              <Row label={tr('settings.model')} hint={tr('settings.modelHint')}>
                 <input
                   placeholder="gpt-4o-mini"
                   value={ai.model}
@@ -333,10 +306,7 @@ export function SettingsPage({
                 />
               </Row>
 
-              <Row
-                label="Authentication"
-                hint="Bearer for OpenAI, LiteLLM and most proxies. api-key for Azure AI Foundry."
-              >
+              <Row label={tr('settings.authentication')} hint={tr('settings.authenticationHint')}>
                 <Segmented
                   value={ai.auth}
                   onChange={setAi('auth')}
@@ -347,10 +317,7 @@ export function SettingsPage({
                 />
               </Row>
 
-              <Row
-                label="Extra headers"
-                hint="One per line as Name: Value, for gateways that expect their own headers. An api-version belongs in the URL query."
-              >
+              <Row label={tr('settings.extraHeaders')} hint={tr('settings.extraHeadersHint')}>
                 <textarea
                   rows="2"
                   placeholder={'x-gateway-id: internal\nx-request-source: opentoolbox'}
@@ -359,7 +326,7 @@ export function SettingsPage({
                 />
               </Row>
 
-              <Row label="API key" hint="Takes effect immediately for this session. Whether it also lands in the file is decided below.">
+              <Row label={tr('settings.apiKey')} hint={tr('settings.apiKeyHint')}>
                 <input
                   type="password"
                   autocomplete="off"
@@ -370,61 +337,47 @@ export function SettingsPage({
               </Row>
 
               <Row
-                label="Store the key"
+                label={tr('settings.storeKey')}
                 hint={
                   ai.storeKey && !sealed
-                    ? 'The key then sits in plain text inside a file that gets passed around. Only sensible if the file stays on this machine — otherwise encrypt first.'
+                    ? tr('settings.storeKeyHintStorePlain')
                     : sealed
-                      ? 'The key goes into the encrypted part of the file and is unreadable without the passphrase.'
-                      : 'Without this, the file asks for the key once when it is opened. That is the safe default.'
+                      ? tr('settings.storeKeyHintSealed')
+                      : tr('settings.storeKeyHintDefault')
                 }
               >
                 <Toggle
                   checked={ai.storeKey}
                   onChange={setAi('storeKey')}
-                  label={ai.storeKey ? 'stored in file' : 'this session only'}
+                  label={ai.storeKey ? tr('settings.storedInFile') : tr('settings.sessionOnly')}
                 />
               </Row>
 
-              {ai.storeKey && !sealed && (
-                <p class="note note--warn">
-                  This file is not encrypted. Anyone who opens it can read the key in the source.
-                  Either set a passphrase above or clear this checkbox.
-                </p>
-              )}
+              {ai.storeKey && !sealed && <p class="note note--warn">{tr('settings.storeKeyWarn')}</p>}
 
-              <Row
-                label="Context sent along"
-                hint="What travels with every question: the filtered view, all records, or only the aggregates without individual cases."
-              >
-                <Segmented value={ai.context} onChange={setAi('context')} options={CONTEXT_MODES} />
+              <Row label={tr('settings.contextSent')} hint={tr('settings.contextSentHint')}>
+                <Segmented value={ai.context} onChange={setAi('context')} options={contextModeOptions(tr)} />
               </Row>
 
-              <Row
-                label="Changes to the data"
-                hint="On an explicit instruction the model may create, update and delete records. Every proposal is validated and shown first."
-              >
+              <Row label={tr('settings.changesToData')} hint={tr('settings.changesToDataHint')}>
                 <Toggle
                   checked={ai.allowWrite}
                   onChange={setAi('allowWrite')}
-                  label={ai.allowWrite ? 'allowed' : 'read only'}
+                  label={ai.allowWrite ? tr('settings.allowed') : tr('settings.readOnly')}
                 />
               </Row>
 
               {ai.allowWrite && (
-                <Row
-                  label="Apply without asking"
-                  hint="Off means you see every proposal as a list and decide. That is the default and the only sensible setting where changes have to be justified."
-                >
+                <Row label={tr('settings.applyWithoutAsking')} hint={tr('settings.applyWithoutAskingHint')}>
                   <Toggle
                     checked={ai.autoApply}
                     onChange={setAi('autoApply')}
-                    label={ai.autoApply ? 'apply immediately' : 'show first'}
+                    label={ai.autoApply ? tr('settings.applyImmediately') : tr('settings.showFirst')}
                   />
                 </Row>
               )}
 
-              <Row label="Role of the model" hint="System instruction sent before every question.">
+              <Row label={tr('settings.roleOfModel')} hint={tr('settings.roleOfModelHint')}>
                 <textarea
                   rows="4"
                   value={ai.systemPrompt}
@@ -432,7 +385,7 @@ export function SettingsPage({
                 />
               </Row>
 
-              <Row label="Temperature and length" hint="Temperature 0 to 2, answer length in tokens.">
+              <Row label={tr('settings.temperatureLength')} hint={tr('settings.temperatureLengthHint')}>
                 <div class="pair">
                   <input
                     type="number"
@@ -452,10 +405,10 @@ export function SettingsPage({
                 </div>
               </Row>
 
-              <Row label="Test the connection" hint="A minimal call to the endpoint, without any data from the file.">
+              <Row label={tr('settings.testConnection')} hint={tr('settings.testConnectionHint')}>
                 <div class="setting__buttons">
                   <button class="btn" disabled={probe.state === 'busy'} onClick={runProbe}>
-                    <IconChat /> {probe.state === 'busy' ? 'testing …' : 'Test'}
+                    <IconChat /> {probe.state === 'busy' ? tr('settings.testing') : tr('common.test')}
                   </button>
                 </div>
               </Row>
@@ -466,15 +419,12 @@ export function SettingsPage({
                 </p>
               )}
 
-              <Row
-                label="Negotiated dialect"
-                hint="Worked out on the first successful call and stored with the file. Reset it after switching models."
-              >
+              <Row label={tr('settings.negotiatedDialect')} hint={tr('settings.negotiatedDialectHint')}>
                 <div class="setting__buttons">
-                  <span class="dialect">{dialectSummary(ai.dialect)}</span>
+                  <span class="dialect">{dialectSummary(ai.dialect, tr)}</span>
                   {ai.dialect && (
                     <button class="btn btn--quiet" onClick={() => setAi('dialect')(null)}>
-                      Reset
+                      {tr('common.reset')}
                     </button>
                   )}
                 </div>
@@ -484,44 +434,35 @@ export function SettingsPage({
         </section>
 
         <section>
-          <p class="label">Data</p>
+          <p class="label">{tr('settings.data')}</p>
 
-          <Row label={`${recordCount} records`} hint="Export writes separate files; the application itself is untouched.">
+          <Row label={tr('filebar.records', recordCount)} hint={tr('settings.exportHint')}>
             <div class="setting__buttons">
-              <button class="btn" onClick={onExportCsv}>CSV</button>
-              <button class="btn" onClick={onExportJson}>JSON</button>
-              <button class="btn" onClick={onImportJson}>Import JSON</button>
+              <button class="btn" onClick={onExportCsv}>{tr('settings.csv')}</button>
+              <button class="btn" onClick={onExportJson}>{tr('settings.json')}</button>
+              <button class="btn" onClick={onImportJson}>{tr('sidebar.importJson')}</button>
             </div>
           </Row>
         </section>
 
         <section>
-          <p class="label">Configuration</p>
+          <p class="label">{tr('settings.configuration')}</p>
 
-          <Row
-            label="Save or transfer these settings"
-            hint="Everything on this page as JSON — without records and without the API key. Meant for carrying a working setup over to other tools."
-          >
+          <Row label={tr('settings.saveTransfer')} hint={tr('settings.saveTransferHint')}>
             <div class="setting__buttons">
-              <button class="btn" onClick={onExportConfig}>Save</button>
-              <button class="btn" onClick={onImportConfig}>Load</button>
+              <button class="btn" onClick={onExportConfig}>{tr('common.save')}</button>
+              <button class="btn" onClick={onImportConfig}>{tr('common.load')}</button>
             </div>
           </Row>
 
-          <p class="note">
-            Loading only takes what is defined here; anything else is dropped and named in the
-            notice. If the loaded configuration has AI switched on, the application asks for the key
-            afterwards.
-          </p>
+          <p class="note">{tr('settings.configNote')}</p>
         </section>
 
         <footer class="settings__foot">
           <Wordmark brand={settings.brand} class="settings__logo" />
           <div>
-            <p>
-              © {new Date().getFullYear()} M. Dohmen · openToolbox · Apache License 2.0
-            </p>
-            <p>Single-file application. Runs locally, without a server and without installation.</p>
+            <p>{tr('settings.copyright', new Date().getFullYear())}</p>
+            <p>{tr('settings.runsLocally')}</p>
           </div>
         </footer>
       </div>

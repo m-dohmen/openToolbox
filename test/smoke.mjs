@@ -473,7 +473,7 @@ await page9.evaluate(() => {
     return original.call(this)
   }
 })
-await page9.getByRole('button', { name: 'Upload SVG' }).click()
+await page9.getByRole('button', { name: 'Replace SVG' }).click()
 await page9.waitForFunction(() => window.__logoInput)
 const logoHandle = await page9.evaluateHandle(() => window.__logoInput)
 await logoHandle.asElement().setInputFiles(logoFixture)

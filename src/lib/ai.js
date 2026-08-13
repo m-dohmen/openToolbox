@@ -1,4 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
+import { t, DEFAULT_LOCALE } from '../i18n.js'
+
 /**
  * Anbindung an einen OpenAI-kompatiblen Endpunkt (Azure AI Foundry, LiteLLM,
  * Vertex über den Kompatibilitätslayer, vLLM, Ollama, OpenRouter …).
@@ -60,12 +62,18 @@ export const DIALECT_DEFAULT = {
   drop: [],
 }
 
-export const dialectSummary = (d) => {
-  if (!d) return 'not negotiated yet'
-  const parts = [d.tokenParam, d.sendTemperature ? 'with temperature' : 'without temperature']
-  if (d.systemRole !== 'system') parts.push(`system role as ${d.systemRole}`)
-  if (d.appendV1) parts.push('/v1 appended')
-  if (d.drop?.length) parts.push(`without ${d.drop.join(', ')}`)
+/**
+ * `tr` ist ein gebundener Übersetzer aus i18n.js, siehe translator(locale).
+ * Ohne Angabe (interner Aufruf aus chatCompletion für die Fehlermeldung beim
+ * Aushandeln) fällt es auf DEFAULT_LOCALE zurück - dort geht es nicht um die
+ * Oberfläche, sondern um eine Diagnosezeile im geworfenen Error.
+ */
+export const dialectSummary = (d, tr = (key, ...args) => t(DEFAULT_LOCALE, key, ...args)) => {
+  if (!d) return tr('dialect.notNegotiated')
+  const parts = [d.tokenParam, tr(d.sendTemperature ? 'dialect.withTemperature' : 'dialect.withoutTemperature')]
+  if (d.systemRole !== 'system') parts.push(tr('dialect.systemRoleAs', d.systemRole))
+  if (d.appendV1) parts.push(tr('dialect.v1Appended'))
+  if (d.drop?.length) parts.push(tr('dialect.without', d.drop.join(', ')))
   return parts.join(' · ')
 }
 
@@ -73,11 +81,10 @@ const CONTEXT_LIMIT = 60_000
 const ATTACHMENT_LIMIT = 120_000
 const MAX_ATTEMPTS = 6
 
-export const CONTEXT_MODES = [
-  ['sichtbar', 'View'],
-  ['alle', 'All'],
-  ['kennzahlen', 'Aggregates'],
-]
+export const CONTEXT_MODE_VALUES = ['sichtbar', 'alle', 'kennzahlen']
+
+/** [value, übersetztes Label]-Paare für Segmented - `tr` aus i18n.js. */
+export const contextModeOptions = (tr) => CONTEXT_MODE_VALUES.map((v) => [v, tr(`contextMode.${v}`)])
 
 /* ── Kontext ──────────────────────────────────────────────────── */
 
