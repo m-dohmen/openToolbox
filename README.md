@@ -18,6 +18,9 @@ Point an AI assistant at this repository and it has everything it needs — the 
 
 ---
 
+**Single file · database in the file · optional AES-256 encryption · optional AI assistant ·
+brandable (colours, logo, name) · bilingual interface (English, German) · light & dark mode.**
+
 ## What you get
 
 - **One file.** ~90 KB, self-contained. Double-click, it runs. Pull the network cable, it still runs.

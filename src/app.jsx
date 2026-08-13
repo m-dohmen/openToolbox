@@ -666,8 +666,16 @@ function Workbench({
       )}
 
       {settings.watermark && (
-        <div class="watermark" aria-hidden="true">
-          <Wordmark brand={settings.brand} class="wordmark--mark" />
+        <div class="watermark">
+          <a
+            href="https://github.com/m-dohmen/openToolbox"
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label="openToolbox on GitHub"
+            title="openToolbox on GitHub"
+          >
+            <Wordmark brand={settings.brand} class="wordmark--mark" />
+          </a>
         </div>
       )}
 

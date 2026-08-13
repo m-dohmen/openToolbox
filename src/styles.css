@@ -462,9 +462,10 @@ tbody tr[data-selected="true"] td { background: var(--accent-soft); }
   bottom: 16px;
   color: var(--tone-light-gray);
   opacity: 0.4;
-  pointer-events: none;
   z-index: 1;
 }
+.watermark a { color: inherit; display: block; }
+.watermark:hover { opacity: 0.85; }
 
 [data-theme="dark"] .watermark { color: var(--tone-white); opacity: 0.2; }
 
@@ -573,6 +574,8 @@ tbody tr[data-selected="true"] td { background: var(--accent-soft); }
 .settings__foot { display: flex; gap: 18px; align-items: flex-start; padding: 4px 2px; }
 .settings__logo { flex: none; font-size: 14px; }
 .settings__foot p { margin: 0 0 3px; color: var(--muted); font-size: 12.5px; }
+.settings__foot a { color: inherit; text-decoration: underline; text-decoration-color: currentColor; }
+.settings__foot a:hover { color: var(--tone-accent); }
 
 /* ── Einstellungen: Zusatzfelder ──────────────────────────────── */
 

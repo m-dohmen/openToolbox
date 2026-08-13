@@ -461,7 +461,13 @@ export function SettingsPage({
         <footer class="settings__foot">
           <Wordmark brand={settings.brand} class="settings__logo" />
           <div>
-            <p>{tr('settings.copyright', new Date().getFullYear())}</p>
+            <p>
+              {tr('settings.copyrightPre', new Date().getFullYear())}
+              <a href="https://www.linkedin.com/in/michael-dohmen-cloud/" target="_blank" rel="noopener noreferrer">
+                M. Dohmen
+              </a>
+              {tr('settings.copyrightPost')}
+            </p>
             <p>{tr('settings.runsLocally')}</p>
           </div>
         </footer>

@@ -312,7 +312,8 @@ const STRINGS = {
     'settings.configNote':
       'Loading only takes what is defined here; anything else is dropped and named in the ' +
       'notice. If the loaded configuration has AI switched on, the application asks for the key afterwards.',
-    'settings.copyright': (year) => `© ${year} M. Dohmen · openToolbox · Apache License 2.0`,
+    'settings.copyrightPre': (year) => `© ${year} `,
+    'settings.copyrightPost': ' · openToolbox · Apache License 2.0',
     'settings.runsLocally': 'Single-file application. Runs locally, without a server and without installation.',
     'settings.probeReachable': (answer) => `Endpoint reachable. Reply: ${answer}`,
     'settings.logoApplied': 'Logo applied.',
@@ -613,7 +614,8 @@ const STRINGS = {
       'Beim Laden wird nur übernommen, was hier definiert ist; alles andere wird verworfen und im ' +
       'Hinweis benannt. Ist KI in der geladenen Konfiguration eingeschaltet, fragt die Anwendung ' +
       'anschließend nach dem Schlüssel.',
-    'settings.copyright': (year) => `© ${year} M. Dohmen · openToolbox · Apache License 2.0`,
+    'settings.copyrightPre': (year) => `© ${year} `,
+    'settings.copyrightPost': ' · openToolbox · Apache License 2.0',
     'settings.runsLocally': 'Anwendung in einer Datei. Läuft lokal, ohne Server und ohne Installation.',
     'settings.probeReachable': (answer) => `Endpunkt erreichbar. Antwort: ${answer}`,
     'settings.logoApplied': 'Logo übernommen.',
