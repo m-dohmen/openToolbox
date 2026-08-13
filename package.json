@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "test": "node test/smoke.mjs"
+    "test": "node test/smoke.mjs && node test/multi-entity.mjs"
   },
   "dependencies": {
     "preact": "^10.24.3"

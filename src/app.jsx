@@ -12,7 +12,15 @@ import {
 } from './lib/payload.js'
 import { seal, open as unseal, cryptoAvailable } from './lib/crypto.js'
 import { toCsv } from './lib/csv.js'
-import { SCHEMA, seed, emptyRecord, uid, isOverdue, isDone, formatDate } from './domain.js'
+import * as domainModule from './domain.js'
+import {
+  normalizeEntities,
+  isSingleEntity,
+  referenceFields,
+  findReferencingRecords,
+  resolveReferenceTitle,
+  computeCounts,
+} from './lib/entities.js'
 import { Wordmark } from './brand.jsx'
 import { paletteVariables } from './lib/color.js'
 import { IconSave, IconSettings } from './icons.jsx'
@@ -20,6 +28,29 @@ import { SettingsPage } from './settings.jsx'
 import { ChatDock } from './chat.jsx'
 import { AI_DEFAULTS } from './lib/ai.js'
 import { translator, DEFAULT_LOCALE } from './i18n.js'
+
+/**
+ * Ein domain.js mit einem einzelnen SCHEMA-Export (wie src/domain.js selbst)
+ * läuft unverändert als Ein-Entity-Anwendung; eines mit ENTITIES-Export
+ * beschreibt mehrere Datensatztypen, ggf. mit Reference-Feldern
+ * untereinander. Der Rest der Anwendung kennt ab hier nur noch ENTITIES.
+ * Siehe src/lib/entities.js und das Wiki, Abschnitt "Building Your Own Tool".
+ */
+const ENTITIES = normalizeEntities(domainModule)
+const ENTITY_KEYS = Object.keys(ENTITIES)
+const DEFAULT_ENTITY_KEY = ENTITY_KEYS[0]
+const SINGLE = isSingleEntity(ENTITIES)
+
+/** Legt eine geladene/gefehlte Datensatzmenge auf alle Entitäten um. */
+function normalizeRecordsByEntity(records) {
+  const byEntity = Array.isArray(records) ? { [DEFAULT_ENTITY_KEY]: records } : { ...records }
+  for (const key of ENTITY_KEYS) {
+    if (!byEntity[key]) byEntity[key] = ENTITIES[key].seed()
+  }
+  return byEntity
+}
+
+const seedAll = () => Object.fromEntries(ENTITY_KEYS.map((key) => [key, ENTITIES[key].seed()]))
 
 /** Anpassbare Grundfarben. Die Abstufungen werden daraus gerechnet. */
 export const DEFAULT_COLORS = {
@@ -49,7 +80,7 @@ export const DEFAULT_BRAND = {
     '<rect x="69.6" y="43" width="1.8" height="3.4" rx="0.9" fill="#ffffff"/>' +
     '</svg>',
 }
-import { applyActions } from './lib/actions.js'
+import { applyActions, describeActions } from './lib/actions.js'
 import { exportConfig, importConfig } from './lib/config.js'
 
 /**
@@ -71,11 +102,6 @@ const DEFAULT_SETTINGS = {
   brand: DEFAULT_BRAND,
   ai: AI_DEFAULTS,
 }
-
-const CSV_COLUMNS = [
-  { key: 'id', label: 'ID' },
-  ...SCHEMA.fields.map((f) => ({ key: f.key, label: f.label })),
-]
 
 const today = () => new Date().toISOString().slice(0, 10)
 const kb = (n) => (n / 1024).toFixed(n < 10240 ? 1 : 0) + ' KB'
@@ -114,19 +140,19 @@ export function App() {
     colors: { ...DEFAULT_COLORS, ...(stored.colors ?? {}) },
     brand: { ...DEFAULT_BRAND, ...(stored.brand ?? {}) },
   }
-  const [records, setRecords] = useState(null)
+  const [recordsByEntity, setRecordsByEntity] = useState(null)
   const [passphrase, setPassphrase] = useState(null)
   const [apiKey, setApiKey] = useState('')
 
   // Erststart oder unverschlüsselter Datenstand: sofort loslegen.
   useEffect(() => {
-    if (!payload) return setRecords(seed())
+    if (!payload) return setRecordsByEntity(seedAll())
     if (payload.enc) return
-    setRecords(payload.data.records)
+    setRecordsByEntity(normalizeRecordsByEntity(payload.data.records))
     setApiKey(payload.data.secrets?.apiKey ?? '')
   }, [])
 
-  if (payload?.enc && records === null) {
+  if (payload?.enc && recordsByEntity === null) {
     return (
       <Gate
         title={storedSettings.title}
@@ -134,7 +160,7 @@ export function App() {
         locale={storedSettings.locale}
         envelope={payload.envelope}
         onOpen={(data, pass) => {
-          setRecords(data.records)
+          setRecordsByEntity(normalizeRecordsByEntity(data.records))
           setPassphrase(pass)
           setApiKey(data.secrets?.apiKey ?? '')
         }}
@@ -142,11 +168,11 @@ export function App() {
     )
   }
 
-  if (records === null) return null
+  if (recordsByEntity === null) return null
 
   return (
     <Workbench
-      initial={records}
+      initialRecordsByEntity={recordsByEntity}
       initialSettings={storedSettings}
       passphrase={passphrase}
       setPassphrase={setPassphrase}
@@ -210,7 +236,7 @@ function Gate({ envelope, onOpen, title, brand, locale }) {
 /* ── Arbeitsfläche ────────────────────────────────────────────── */
 
 function Workbench({
-  initial,
+  initialRecordsByEntity,
   initialSettings,
   passphrase,
   setPassphrase,
@@ -219,14 +245,15 @@ function Workbench({
   savedAt,
   fresh,
 }) {
-  const [records, setRecords] = useState(initial)
+  const [recordsByEntity, setRecordsByEntity] = useState(initialRecordsByEntity)
+  const [activeKey, setActiveKey] = useState(DEFAULT_ENTITY_KEY)
   const [settings, setSettings] = useState(initialSettings)
   const [view, setView] = useState('list')
   const [dirty, setDirty] = useState(fresh)
   const [lastSaved, setLastSaved] = useState(savedAt)
   const [query, setQuery] = useState('')
   const [facet, setFacet] = useState({})
-  const [sort, setSort] = useState({ key: SCHEMA.list[0], dir: 1 })
+  const [sort, setSort] = useState({ key: ENTITIES[DEFAULT_ENTITY_KEY].schema.list[0], dir: 1 })
   const [draft, setDraft] = useState(null)
   const [showKey, setShowKey] = useState(false)
   const [askKey, setAskKey] = useState(initialSettings.ai.enabled && !apiKey)
@@ -234,6 +261,9 @@ function Workbench({
   const [saving, setSaving] = useState(false)
 
   const tr = translator(settings.locale)
+  const entity = ENTITIES[activeKey]
+  const schema = entity.schema
+  const records = recordsByEntity[activeKey]
 
   const notify = (text, kind) => {
     setToast({ text, kind })
@@ -241,8 +271,28 @@ function Workbench({
   }
 
   const mutate = (next) => {
-    setRecords(next)
+    setRecordsByEntity((all) => ({ ...all, [activeKey]: next }))
     setDirty(true)
+  }
+
+  /* Tabs zwischen Entitäten wechseln Filter/Sortierung/Entwurf zurück -
+     die sind pro Schema, ein Übertrag zwischen unterschiedlichen Feldern
+     ergäbe keinen Sinn. */
+  const switchEntity = (key) => {
+    setActiveKey(key)
+    setQuery('')
+    setFacet({})
+    setSort({ key: ENTITIES[key].schema.list[0], dir: 1 })
+    setDraft(null)
+  }
+
+  /** Springt zu einem referenzierten Datensatz - Klick auf einen Reference-Chip. */
+  const navigateReference = (targetKey, id) => {
+    const targetRecords = recordsByEntity[targetKey] ?? []
+    const targetSchema = ENTITIES[targetKey].schema
+    const found = targetRecords.find((r) => r[targetSchema.idField] === id)
+    switchEntity(targetKey)
+    if (found) setDraft({ ...found })
   }
 
   const learnDialect = (dialect) => {
@@ -299,11 +349,15 @@ function Workbench({
     setSaving(true)
     try {
       const stamp = new Date().toISOString()
+      // Einzelne Entität: Datensätze als flaches Array speichern, exakt wie
+      // vor der Mehr-Entitäten-Unterstützung - bestehende Dateien/Tools
+      // bleiben davon unberührt. Mehrere Entitäten: als Objekt je Schlüssel.
+      const recordsForSave = SINGLE ? recordsByEntity[DEFAULT_ENTITY_KEY] : recordsByEntity
       // Der Schlüssel wandert nur mit, wenn das in den Einstellungen
       // ausdrücklich angehakt ist. Bei verschlüsselter Datei liegt er im
       // Umschlag, sonst - auf ausdrücklichen Wunsch - im Klartext.
       const keepKey = settings.ai.enabled && settings.ai.storeKey && apiKey
-      const body = keepKey ? { records, secrets: { apiKey } } : { records }
+      const body = keepKey ? { records: recordsForSave, secrets: { apiKey } } : { records: recordsForSave }
       const payload = passphrase
         ? { v: 1, savedAt: stamp, settings, enc: true, envelope: await seal(body, passphrase) }
         : { v: 1, savedAt: stamp, settings, enc: false, data: body }
@@ -349,27 +403,16 @@ function Workbench({
 
   /* Ableitungen ------------------------------------------------ */
 
-  const field = (key) => SCHEMA.fields.find((f) => f.key === key)
+  const field = (key) => schema.fields.find((f) => f.key === key)
 
-  const counts = useMemo(() => {
-    const c = { total: records.length, overdue: 0, total_sum: 0, facets: {} }
-    for (const key of SCHEMA.facets) c.facets[key] = {}
-    for (const r of records) {
-      if (isOverdue(r)) c.overdue++
-      if (SCHEMA.totalField && !isDone(r)) c.total_sum += Number(r[SCHEMA.totalField]) || 0
-      for (const key of SCHEMA.facets) {
-        c.facets[key][r[key]] = (c.facets[key][r[key]] || 0) + 1
-      }
-    }
-    return c
-  }, [records])
+  const counts = useMemo(() => computeCounts(entity, records), [records, activeKey])
 
   const visible = useMemo(() => {
     const q = query.trim().toLowerCase()
     const out = records.filter(
       (r) =>
-        SCHEMA.facets.every((key) => !facet[key] || r[key] === facet[key]) &&
-        (!q || SCHEMA.search.map((k) => r[k]).join(' ').toLowerCase().includes(q)),
+        schema.facets.every((key) => !facet[key] || r[key] === facet[key]) &&
+        (!q || schema.search.map((k) => r[k]).join(' ').toLowerCase().includes(q)),
     )
     return out.sort((a, b) => {
       const x = a[sort.key] ?? ''
@@ -377,9 +420,9 @@ function Workbench({
       if (typeof x === 'number' && typeof y === 'number') return (x - y) * sort.dir
       return String(x).localeCompare(String(y), settings.locale) * sort.dir
     })
-  }, [records, query, facet, sort, settings.locale])
+  }, [records, query, facet, sort, settings.locale, activeKey])
 
-  const payloadSize = useMemo(() => JSON.stringify(records).length, [records])
+  const payloadSize = useMemo(() => JSON.stringify(recordsByEntity).length, [recordsByEntity])
 
   const sortBy = (key) =>
     setSort((s) => ({ key, dir: s.key === key ? -s.dir : 1 }))
@@ -387,9 +430,10 @@ function Workbench({
   /* Datensätze ------------------------------------------------- */
 
   const commit = (rec) => {
+    const idKey = schema.idField
     mutate(
-      records.some((r) => r.id === rec.id)
-        ? records.map((r) => (r.id === rec.id ? rec : r))
+      records.some((r) => r[idKey] === rec[idKey])
+        ? records.map((r) => (r[idKey] === rec[idKey] ? rec : r))
         : [...records, rec],
     )
     setDraft(null)
@@ -398,11 +442,13 @@ function Workbench({
   /**
    * Einziger Weg, auf dem das Modell den Datenstand anfassen kann.
    * Geprüft wird hier, nicht dort - die Antwort ist ein Vorschlag, kein Befehl.
+   * Wirkt über alle Entitäten hinweg, nicht nur die gerade aktive.
    */
   const runActions = (actions) => {
-    const outcome = applyActions(records, actions, SCHEMA, uid, emptyRecord, tr)
+    const outcome = applyActions(recordsByEntity, actions, ENTITIES, tr, activeKey)
     if (outcome.done.length) {
-      mutate(outcome.next)
+      setRecordsByEntity(outcome.next)
+      setDirty(true)
       notify(tr('toast.changesApplied', outcome.done.length))
     } else if (outcome.problems.length) {
       notify(tr('toast.noProposal'), 'error')
@@ -410,18 +456,40 @@ function Workbench({
     return { done: outcome.done, problems: outcome.problems }
   }
 
+  /** Löscht nur, wenn kein anderer Datensatz per Reference-Feld darauf zeigt. */
   const remove = (id) => {
-    mutate(records.filter((r) => r.id !== id))
+    const refs = findReferencingRecords(ENTITIES, recordsByEntity, activeKey, id)
+    if (refs.length) {
+      const names = refs.map((h) => `${h.record[h.entity.schema.titleField]} (${h.entity.schema.singular})`).join(', ')
+      notify(tr('drawer.blockedByReferences', names), 'error')
+      return
+    }
+    mutate(records.filter((r) => r[schema.idField] !== id))
     setDraft(null)
   }
 
   /* Austausch -------------------------------------------------- */
 
-  const exportCsv = () =>
-    download(toCsv(visible, CSV_COLUMNS), `${stem}-${today()}.csv`, 'text/csv;charset=utf-8')
+  const exportCsv = () => {
+    const columns = [
+      { key: schema.idField, label: tr('app.id') },
+      ...schema.fields.map((f) => ({ key: f.key, label: f.label })),
+    ]
+    const rows = visible.map((r) => {
+      const row = { ...r }
+      for (const f of referenceFields(schema)) {
+        row[f.key] = resolveReferenceTitle(ENTITIES, recordsByEntity, f.entity, r[f.key]) ?? r[f.key]
+      }
+      return row
+    })
+    const suffix = SINGLE ? '' : `-${activeKey}`
+    download(toCsv(rows, columns), `${stem}${suffix}-${today()}.csv`, 'text/csv;charset=utf-8')
+  }
 
-  const exportJson = () =>
-    download(JSON.stringify({ records }, null, 2), `${stem}-${today()}.json`, 'application/json')
+  const exportJson = () => {
+    const body = SINGLE ? { records: recordsByEntity[activeKey] } : { records: recordsByEntity }
+    download(JSON.stringify(body, null, 2), `${stem}-${today()}.json`, 'application/json')
+  }
 
   const exportConfiguration = () =>
     download(
@@ -447,15 +515,24 @@ function Workbench({
     }
   }
 
+  /** Ein flaches Array geht in die aktive Entität, ein Objekt je Entitätsschlüssel ersetzt mehrere auf einmal. */
   async function importJson() {
     const file = await pickFile('.json,application/json')
     if (!file) return
     try {
       const parsed = JSON.parse(await file.text())
       const incoming = Array.isArray(parsed) ? parsed : parsed.records
-      if (!Array.isArray(incoming)) throw new Error('No records array found')
-      mutate(incoming)
-      notify(tr('toast.recordsImported', incoming.length))
+      if (Array.isArray(incoming)) {
+        mutate(incoming)
+        notify(tr('toast.recordsImported', incoming.length))
+      } else if (incoming && typeof incoming === 'object') {
+        setRecordsByEntity((all) => ({ ...all, ...incoming }))
+        setDirty(true)
+        const count = Object.values(incoming).reduce((n, arr) => n + (arr?.length ?? 0), 0)
+        notify(tr('toast.recordsImported', count))
+      } else {
+        throw new Error('No records array or entity map found')
+      }
     } catch (err) {
       notify(tr('toast.importCancelled', err.message), 'error')
     }
@@ -498,8 +575,8 @@ function Workbench({
           >
             <IconSettings />
           </button>
-          <button class="btn btn--primary" onClick={() => { setView('list'); setDraft(emptyRecord()) }}>
-            {tr('app.new', SCHEMA.singular)}
+          <button class="btn btn--primary" onClick={() => { setView('list'); setDraft(entity.emptyRecord()) }}>
+            {tr('app.new', schema.singular)}
           </button>
         </div>
       </header>
@@ -531,29 +608,44 @@ function Workbench({
           recordCount={records.length}
         />
       ) : (
+      <>
+      {ENTITY_KEYS.length > 1 && (
+        <div class="entity-tabs" role="tablist" aria-label={tr('entities.tabsLabel')}>
+          {ENTITY_KEYS.map((key) => (
+            <button
+              key={key}
+              role="tab"
+              aria-selected={String(key === activeKey)}
+              onClick={() => switchEntity(key)}
+            >
+              {ENTITIES[key].schema.plural}
+            </button>
+          ))}
+        </div>
+      )}
       <div class="body">
         <aside class="rail">
           <section>
             <p class="label">{tr('sidebar.overview')}</p>
             <dl class="kpi">
               <div>
-                <dt>{SCHEMA.plural}</dt>
+                <dt>{schema.plural}</dt>
                 <dd>{counts.total}</dd>
               </div>
               <div class={counts.overdue ? 'is-flag' : ''}>
                 <dt>{tr('sidebar.overdue')}</dt>
                 <dd>{counts.overdue}</dd>
               </div>
-              {SCHEMA.totalField && (
+              {schema.totalField && (
                 <div>
-                  <dt>{tr('sidebar.openTotal', field(SCHEMA.totalField).label)}</dt>
+                  <dt>{tr('sidebar.openTotal', field(schema.totalField).label)}</dt>
                   <dd>{counts.total_sum}</dd>
                 </div>
               )}
             </dl>
           </section>
 
-          {SCHEMA.facets.map((key) => (
+          {schema.facets.map((key) => (
             <section key={key}>
               <p class="label">{field(key).label}</p>
               <div class="filter">
@@ -606,8 +698,8 @@ function Workbench({
             <div class="empty">
               <h2>{records.length ? tr('empty.noMatches') : tr('empty.nothingYet')}</h2>
               <p>{records.length ? tr('empty.noMatchesHint') : tr('empty.nothingYetHint')}</p>
-              <button class="btn btn--primary" onClick={() => setDraft(emptyRecord())}>
-                {tr('app.new', SCHEMA.singular)}
+              <button class="btn btn--primary" onClick={() => setDraft(entity.emptyRecord())}>
+                {tr('app.new', schema.singular)}
               </button>
             </div>
           ) : (
@@ -615,8 +707,8 @@ function Workbench({
               <table>
                 <thead>
                   <tr>
-                    <Th sort={sort} k={SCHEMA.idField} onSort={sortBy}>{tr('app.id')}</Th>
-                    {SCHEMA.list.map((key) => (
+                    <Th sort={sort} k={schema.idField} onSort={sortBy}>{tr('app.id')}</Th>
+                    {schema.list.map((key) => (
                       <Th
                         key={key}
                         sort={sort}
@@ -632,15 +724,24 @@ function Workbench({
                 <tbody>
                   {visible.map((r) => (
                     <tr
-                      key={r[SCHEMA.idField]}
-                      data-selected={draft?.[SCHEMA.idField] === r[SCHEMA.idField]}
+                      key={r[schema.idField]}
+                      data-selected={draft?.[schema.idField] === r[schema.idField]}
                       onClick={() => setDraft({ ...r })}
                       tabIndex={0}
                       onKeyDown={(e) => e.key === 'Enter' && setDraft({ ...r })}
                     >
-                      <td class="cell-id">{r[SCHEMA.idField]}</td>
-                      {SCHEMA.list.map((key) => (
-                        <Cell key={key} record={r} field={field(key)} />
+                      <td class="cell-id">{r[schema.idField]}</td>
+                      {schema.list.map((key) => (
+                        <Cell
+                          key={key}
+                          record={r}
+                          field={field(key)}
+                          schema={schema}
+                          entities={ENTITIES}
+                          recordsByEntity={recordsByEntity}
+                          entity={entity}
+                          onNavigateReference={navigateReference}
+                        />
                       ))}
                     </tr>
                   ))}
@@ -650,6 +751,7 @@ function Workbench({
           )}
         </main>
       </div>
+      </>
       )}
 
       {settings.ai.enabled && (
@@ -658,9 +760,10 @@ function Workbench({
           apiKey={apiKey}
           onDialect={learnDialect}
           onActions={runActions}
-          records={records}
+          entities={ENTITIES}
+          recordsByEntity={recordsByEntity}
           visible={visible}
-          counts={counts}
+          activeKey={activeKey}
           locale={settings.locale}
         />
       )}
@@ -683,9 +786,13 @@ function Workbench({
         <>
           <div class="scrim" onClick={() => setDraft(null)} />
           <RecordDrawer
-            key={draft[SCHEMA.idField]}
+            key={activeKey + ':' + draft[schema.idField]}
             record={draft}
-            isNew={!records.some((r) => r.id === draft.id)}
+            schema={schema}
+            singular={schema.singular}
+            entities={ENTITIES}
+            recordsByEntity={recordsByEntity}
+            isNew={!records.some((r) => r[schema.idField] === draft[schema.idField])}
             onCancel={() => setDraft(null)}
             onSave={commit}
             onDelete={remove}
@@ -777,17 +884,18 @@ const FilterButton = ({ active, onClick, count, children }) => (
 
 /**
  * Eine Tabellenzelle nach Feldtyp. Der Titel bekommt die Zweitzeile aus
- * SCHEMA.subField, Aufzählungen werden zu Pillen, Datumsangaben rot bei
- * Überfälligkeit. Damit reicht das Schema aus, um die Liste zu erzeugen.
+ * schema.subField, Aufzählungen werden zu Pillen, Datumsangaben rot bei
+ * Überfälligkeit, Reference-Felder zu einem klickbaren Chip mit dem Titel
+ * des Zieldatensatzes. Damit reicht das Schema aus, um die Liste zu erzeugen.
  */
-function Cell({ record, field }) {
+function Cell({ record, field, schema, entities, recordsByEntity, entity, onNavigateReference }) {
   const value = record[field.key]
 
-  if (field.key === SCHEMA.titleField) {
+  if (field.key === schema.titleField) {
     return (
       <td class="cell-title">
         {value}
-        {SCHEMA.subField && <small>{record[SCHEMA.subField]}</small>}
+        {schema.subField && <small>{record[schema.subField]}</small>}
       </td>
     )
   }
@@ -800,9 +908,30 @@ function Cell({ record, field }) {
     )
   }
 
+  if (field.type === 'reference') {
+    const title = resolveReferenceTitle(entities, recordsByEntity, field.entity, value)
+    return (
+      <td>
+        {title ? (
+          <button
+            class="ref-chip"
+            onClick={(e) => {
+              e.stopPropagation()
+              onNavigateReference(field.entity, value)
+            }}
+          >
+            {title}
+          </button>
+        ) : (
+          <span class="cell-num">—</span>
+        )}
+      </td>
+    )
+  }
+
   if (field.type === 'date') {
     return (
-      <td class={'cell-date' + (isOverdue(record) ? ' is-overdue' : '')}>{formatDate(value)}</td>
+      <td class={'cell-date' + (entity.isOverdue(record) ? ' is-overdue' : '')}>{entity.formatDate(value)}</td>
     )
   }
 
@@ -822,16 +951,16 @@ const Th = ({ sort, k, onSort, align, children }) => (
   </th>
 )
 
-function RecordDrawer({ record, isNew, onCancel, onSave, onDelete, tr }) {
+function RecordDrawer({ record, schema, singular, entities, recordsByEntity, isNew, onCancel, onSave, onDelete, tr }) {
   const [r, setR] = useState(record)
   const [confirm, setConfirm] = useState(false)
   const first = useRef(null)
 
-  // `key={id}` beim Aufrufer montiert diese Komponente pro Datensatz neu, `r`
-  // braucht daher nur seinen Startwert aus dem useState oben - kein Abgleich
-  // bei Id-Wechsel per Effekt. Genau der lief bisher der ersten Eingabe hinterher:
-  // er feuerte nach dem Mount und setzte `r` auf den veralteten record-Prop zurück,
-  // was schnelle Eingaben verschluckte.
+  // `key` beim Aufrufer (Entität + Id) montiert diese Komponente pro
+  // Datensatz neu, `r` braucht daher nur seinen Startwert aus dem useState
+  // oben - kein Abgleich bei Id-Wechsel per Effekt. Genau der lief bisher
+  // der ersten Eingabe hinterher: er feuerte nach dem Mount und setzte `r`
+  // auf den veralteten record-Prop zurück, was schnelle Eingaben verschluckte.
   useEffect(() => first.current?.focus(), [])
 
   const set = (k) => (e) => setR({ ...r, [k]: e.currentTarget.value })
@@ -839,12 +968,12 @@ function RecordDrawer({ record, isNew, onCancel, onSave, onDelete, tr }) {
   return (
     <aside class="drawer" role="dialog" aria-label={tr('drawer.ariaLabel')}>
       <div class="drawer__head">
-        <h2>{isNew ? tr('drawer.new', SCHEMA.singular) : tr('drawer.edit', SCHEMA.singular)}</h2>
-        <span class="cell-id">{r[SCHEMA.idField]}</span>
+        <h2>{isNew ? tr('drawer.new', singular) : tr('drawer.edit', singular)}</h2>
+        <span class="cell-id">{r[schema.idField]}</span>
       </div>
 
       <div class="drawer__body">
-        {SCHEMA.fields.map((f, i) => (
+        {schema.fields.map((f, i) => (
           <div class="field" key={f.key}>
             <label for={'f-' + f.key}>{f.label}</label>
 
@@ -852,6 +981,15 @@ function RecordDrawer({ record, isNew, onCancel, onSave, onDelete, tr }) {
               <select id={'f-' + f.key} value={r[f.key]} onChange={set(f.key)}>
                 {f.values.map((v) => (
                   <option key={v}>{v}</option>
+                ))}
+              </select>
+            ) : f.type === 'reference' ? (
+              <select id={'f-' + f.key} value={r[f.key] ?? ''} onChange={set(f.key)}>
+                <option value=""></option>
+                {(recordsByEntity[f.entity] ?? []).map((opt) => (
+                  <option key={opt[entities[f.entity].schema.idField]} value={opt[entities[f.entity].schema.idField]}>
+                    {opt[entities[f.entity].schema.titleField]}
+                  </option>
                 ))}
               </select>
             ) : f.type === 'number' ? (
@@ -881,7 +1019,7 @@ function RecordDrawer({ record, isNew, onCancel, onSave, onDelete, tr }) {
       <div class="drawer__foot">
         <button
           class="btn btn--primary"
-          disabled={!String(r[SCHEMA.titleField] ?? '').trim()}
+          disabled={!String(r[schema.titleField] ?? '').trim()}
           onClick={() => onSave(r)}
         >
           {tr('common.apply')}
@@ -892,7 +1030,7 @@ function RecordDrawer({ record, isNew, onCancel, onSave, onDelete, tr }) {
         {!isNew && (
           <button
             class="btn btn--danger"
-            onClick={() => (confirm ? onDelete(r.id) : setConfirm(true))}
+            onClick={() => (confirm ? onDelete(r[schema.idField]) : setConfirm(true))}
           >
             {confirm ? tr('drawer.confirmDelete') : tr('drawer.delete')}
           </button>

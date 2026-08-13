@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 import { t, DEFAULT_LOCALE } from '../i18n.js'
+import { isSingleEntity, computeCounts } from './entities.js'
 
 /**
  * Anbindung an einen OpenAI-kompatiblen Endpunkt (Azure AI Foundry, LiteLLM,
@@ -103,32 +104,57 @@ function attachmentBlock(attachments) {
   return `\n\nFiles attached by the user:\n${parts.join('\n\n')}`
 }
 
-export function buildContext({ mode, records, visible, counts, attachments }) {
-  const summary = [
-    `Records in total: ${counts.total}`,
-    `of those overdue: ${counts.overdue}`,
-    `open total (of the schema's total field): ${counts.total_sum}`,
-    ...Object.entries(counts.facets ?? {}).map(([key, dist]) => `by ${key}: ${JSON.stringify(dist)}`),
+function countsSummary(entityKey, entity, records, single) {
+  const c = computeCounts(entity, records)
+  const prefix = single ? '' : `Entity "${entityKey}" - `
+  return [
+    `${prefix}Records in total: ${c.total}`,
+    `${prefix}of those overdue: ${c.overdue}`,
+    `${prefix}open total (of the schema's total field): ${c.total_sum}`,
+    ...Object.entries(c.facets).map(([key, dist]) => `${prefix}by ${key}: ${JSON.stringify(dist)}`),
   ].join('\n')
+}
+
+/**
+ * `entities`/`recordsByEntity` decken alle Entitäten ab; `visible` ist bereits
+ * die gefilterte Ansicht der gerade aktiven Entität (`activeKey`), berechnet
+ * von der aufrufenden Komponente (Tabellenfilter/-suche liegen dort).
+ */
+export function buildContext({ mode, entities, recordsByEntity, visible, activeKey, attachments }) {
+  const single = isSingleEntity(entities)
 
   if (mode === 'kennzahlen') {
+    const summary = Object.entries(entities)
+      .map(([key, entity]) => countsSummary(key, entity, recordsByEntity[key] ?? [], single))
+      .join('\n\n')
     return (
       `Aggregates for this file:\n${summary}\n\n(Individual records were deliberately withheld.)` +
       attachmentBlock(attachments)
     )
   }
 
-  const rows = mode === 'alle' ? records : visible
+  const summary = countsSummary(activeKey, entities[activeKey], recordsByEntity[activeKey] ?? [], single)
+  const rows = mode === 'alle' ? (single ? recordsByEntity[activeKey] : recordsByEntity) : visible
   let json = JSON.stringify(rows)
   let note = ''
 
   if (json.length > CONTEXT_LIMIT) {
-    const keep = Math.max(1, Math.floor((rows.length * CONTEXT_LIMIT) / json.length))
-    json = JSON.stringify(rows.slice(0, keep))
-    note = `\n\nNote: for space reasons only the first ${keep} of ${rows.length} records were included.`
+    // Kürzung nur sinnvoll für ein flaches Array - bei "alle" über mehrere
+    // Entitäten hinweg wird stattdessen nur ein Hinweis ergänzt, kein Datensatz
+    // stillschweigend abgeschnitten.
+    if (Array.isArray(rows)) {
+      const keep = Math.max(1, Math.floor((rows.length * CONTEXT_LIMIT) / json.length))
+      json = JSON.stringify(rows.slice(0, keep))
+      note = `\n\nNote: for space reasons only the first ${keep} of ${rows.length} records were included.`
+    } else {
+      note = '\n\nNote: the full multi-entity record set is large; consider the "Aggregates" context mode instead.'
+    }
   }
 
-  const label = mode === 'alle' ? 'All records' : 'Records in the currently filtered view'
+  const label =
+    mode === 'alle'
+      ? single ? 'All records' : 'All records, per entity'
+      : single ? 'Records in the currently filtered view' : `Records in the currently filtered view of entity "${activeKey}"`
 
   return (
     `Aggregates for this file:\n${summary}\n\n${label} as JSON:\n${json}${note}` +
@@ -142,36 +168,54 @@ const fieldLine = (f) => {
   const type =
     f.type === 'enum'
       ? `one of: ${f.values.join(' | ')}`
-      : f.type === 'date'
-        ? 'date as YYYY-MM-DD'
-        : f.type === 'number'
-          ? 'number'
-          : 'text'
+      : f.type === 'reference'
+        ? `reference to entity "${f.entity}" (its id, or the target record's title text)`
+        : f.type === 'date'
+          ? 'date as YYYY-MM-DD'
+          : f.type === 'number'
+            ? 'number'
+            : 'text'
   return `  ${f.key} (${f.label}): ${type}${f.required ? ', required' : ''}`
 }
 
 /**
- * Beschreibt dem Modell den Datensatz und - falls erlaubt - wie es Änderungen
- * vorschlägt. Bewusst als Textprotokoll statt über Tool-Calling: die Hälfte der
- * kompatiblen Endpunkte unterstützt Werkzeuge gar nicht oder anders.
+ * Beschreibt dem Modell den Datensatz (bzw. bei mehreren Entitäten: alle
+ * Entitäten und ihre Beziehungen zueinander) und - falls erlaubt - wie es
+ * Änderungen vorschlägt. Bewusst als Textprotokoll statt über Tool-Calling:
+ * die Hälfte der kompatiblen Endpunkte unterstützt Werkzeuge gar nicht oder anders.
  */
-export function buildInstructions(schema, allowWrite) {
-  const fields = schema.fields.map(fieldLine).join('\n')
-  const base = `Shape of one record (${schema.singular}), identifier in field ${schema.idField}:\n${fields}`
+export function buildInstructions(entities, allowWrite) {
+  const single = isSingleEntity(entities)
+  const entries = Object.entries(entities)
+
+  const base = single
+    ? (() => {
+        const schema = entries[0][1].schema
+        return `Shape of one record (${schema.singular}), identifier in field ${schema.idField}:\n${schema.fields.map(fieldLine).join('\n')}`
+      })()
+    : entries
+        .map(([key, entity]) => {
+          const schema = entity.schema
+          return `Entity "${key}" (${schema.plural}), identifier in field ${schema.idField}:\n${schema.fields.map(fieldLine).join('\n')}`
+        })
+        .join('\n\n')
 
   if (!allowWrite) {
     return `${base}\n\nYou can only read the data. Changes are not possible.`
   }
 
+  const entityHint = single ? '' : ' Include "entity" naming which of the entities above each operation targets.'
+  const refHint = single ? '' : ' For a reference-type field, give either the exact id or the target record\'s title text.'
+
   return (
     `${base}\n\n` +
     'If and only if the user explicitly asks for a change to the data, append a fenced code block ' +
-    'with the language tag "aktionen" containing a JSON array. Allowed operations:\n' +
-    '  {"op":"create","record":{…fields…}}\n' +
-    '  {"op":"update","id":"…","changes":{…changed fields only…}}\n' +
-    '  {"op":"delete","id":"…"}\n' +
-    'Identifiers for new records are assigned by the application, do not invent them. Explain your ' +
-    'proposal briefly in plain text before the block. For plain questions, append no block.'
+    `with the language tag "aktionen" containing a JSON array. Allowed operations:${entityHint}\n` +
+    `  {"op":"create"${single ? '' : ',"entity":"…"'},"record":{…fields…}}\n` +
+    `  {"op":"update"${single ? '' : ',"entity":"…"'},"id":"…","changes":{…changed fields only…}}\n` +
+    `  {"op":"delete"${single ? '' : ',"entity":"…"'},"id":"…"}\n` +
+    `Identifiers for new records are assigned by the application, do not invent them.${refHint} Explain ` +
+    'your proposal briefly in plain text before the block. For plain questions, append no block.'
   )
 }
 

@@ -36,6 +36,8 @@ brandable (colours, logo, name) · bilingual interface (English, German) · ligh
 - **Light and dark mode**, keyboard shortcuts, CSV and JSON export, responsive down to phone width.
 - **Two interface languages out of the box** (English, German), a setting that travels with the
   file. Adding a third is a small, mechanical change — see [Interface languages](#interface-languages).
+- **Multiple entities and relationships**, when one record type isn't enough — see
+  [Multiple entities and relationships](#multiple-entities-and-relationships).
 
 ## Quick start
 
@@ -72,6 +74,36 @@ That schema alone produces the table columns, the edit form, the sidebar filters
 the instructions sent to the AI model and the validation of anything the model proposes back.
 `examples/risk-register.domain.js` is a complete working example — copy it over `src/domain.js` and
 rebuild to watch the entire app change.
+
+## Multiple entities and relationships
+
+Most tools need only one record type — the single `SCHEMA` export above. Once there are genuinely
+two or more kinds of records that reference each other (suppliers and their certificates, projects
+and their tasks), export `ENTITIES` instead: one entry per record type, each shaped like the
+single-entity export above, plus a `type: 'reference'` field on whichever entity points at another.
+
+```js
+export const ENTITIES = {
+  suppliers: { schema: { /* … */ }, uid, emptyRecord, seed, isDone, isOverdue },
+  certificates: {
+    schema: {
+      /* … */
+      fields: [
+        { key: 'title', label: 'Title', type: 'text', required: true },
+        { key: 'supplierId', label: 'Supplier', type: 'reference', entity: 'suppliers', required: true },
+      ],
+    },
+    uid, emptyRecord, seed, isDone, isOverdue,
+  },
+}
+```
+
+A reference field renders as a dropdown of the target entity's records in the form and as a
+clickable chip resolving to the referenced record's title in the table — click it, and the app
+switches to that entity and opens the record. Deleting a record still referenced by another entity
+is blocked, naming what references it. The AI assistant understands the relationship too: its
+instructions describe every entity and how they connect, and it can name a referenced record by id
+or by title text. `examples/suppliers-certificates.domain.js` is a complete working example.
 
 ## Using it with an AI assistant
 
@@ -234,9 +266,11 @@ src/lib/payload.js     read and write the embedded data block
 src/lib/crypto.js      PBKDF2 + AES-GCM
 src/lib/ai.js          endpoint client, dialect negotiation, context building
 src/lib/actions.js     validation and application of AI-proposed changes
+src/lib/entities.js    normalizes SCHEMA/ENTITIES, reference-field and delete-guard helpers
 src/lib/svg.js         logo sanitiser
 src/lib/color.js       palette derivation and contrast check
 test/smoke.mjs         end-to-end test against a real headless browser
+test/multi-entity.mjs  end-to-end test for the ENTITIES/reference-field path
 ```
 
 ## Testing
@@ -245,10 +279,19 @@ test/smoke.mjs         end-to-end test against a real headless browser
 npm test
 ```
 
-Runs a headless Chromium against `file://dist/index.html` and walks the whole thing: startup, edit,
-save, reopen, encrypt, wrong passphrase, decrypt, dark mode, settings round-trip, AI dialect
-negotiation against a mock endpoint, attachments, proposed changes with a deliberately invalid one,
-key handling and the branding pipeline with a deliberately malicious SVG. Around 29 assertions.
+Runs two suites, both against a real headless Chromium:
+
+- `test/smoke.mjs` — the single-entity path, against the already-built `dist/index.html`: startup,
+  edit, save, reopen, encrypt, wrong passphrase, decrypt, dark mode, settings round-trip, AI dialect
+  negotiation against a mock endpoint, attachments, proposed changes with a deliberately invalid one,
+  key handling and the branding pipeline with a deliberately malicious SVG. Around 29 assertions.
+- `test/multi-entity.mjs` — the `ENTITIES`/reference-field path: builds
+  `examples/suppliers-certificates.domain.js` into its own `dist-multi-entity/` (swapping
+  `src/domain.js` only for the duration of that one build, restored immediately after), then checks
+  the entity switcher, the reference dropdown in the form, the resolved-title chip and its
+  click-to-navigate in the table, the delete guard against a referenced record, CSV export
+  resolving the reference to a name, and an AI-proposed action that creates a record in one entity
+  by naming a related record in another by its title text.
 
 ## Contributing
 

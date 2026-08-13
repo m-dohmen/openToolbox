@@ -10,7 +10,6 @@ import {
   contextModeOptions,
 } from './lib/ai.js'
 import { describeActions } from './lib/actions.js'
-import { SCHEMA } from './domain.js'
 import { translator } from './i18n.js'
 import { IconChat, IconSend, IconChevron, IconPaperclip } from './icons.jsx'
 
@@ -22,7 +21,7 @@ const kb = (n) => (n < 1024 ? `${n} B` : `${(n / 1024).toFixed(1)} KB`)
  * Verlauf und Anhänge leben nur in dieser Sitzung und werden nicht in die
  * Datei geschrieben.
  */
-export function ChatDock({ config, apiKey, records, visible, counts, onDialect, onActions, locale }) {
+export function ChatDock({ config, apiKey, entities, recordsByEntity, visible, activeKey, onDialect, onActions, locale }) {
   const tr = translator(locale)
   const modeLabel = (mode) => contextModeOptions(tr).find(([v]) => v === mode)?.[1] ?? mode
   const [open, setOpen] = useState(false)
@@ -93,12 +92,13 @@ export function ChatDock({ config, apiKey, records, visible, counts, onDialect, 
     try {
       const context = buildContext({
         mode: config.context,
-        records,
+        entities,
+        recordsByEntity,
         visible,
-        counts,
+        activeKey,
         attachments,
       })
-      const instructions = buildInstructions(SCHEMA, config.allowWrite)
+      const instructions = buildInstructions(entities, config.allowWrite)
 
       const answer = await chatCompletion({
         config,
@@ -148,8 +148,9 @@ export function ChatDock({ config, apiKey, records, visible, counts, onDialect, 
       current.map((m, i) => (i === index ? { ...m, pending: null, discarded: true } : m)),
     )
 
+  const totalRecords = Object.values(recordsByEntity).reduce((n, arr) => n + arr.length, 0)
   const rowCount =
-    config.context === 'alle' ? records.length : config.context === 'sichtbar' ? visible.length : 0
+    config.context === 'alle' ? totalRecords : config.context === 'sichtbar' ? visible.length : 0
 
   return (
     <div class="chat" data-open={String(open)}>
@@ -194,7 +195,7 @@ export function ChatDock({ config, apiKey, records, visible, counts, onDialect, 
                   <div class="proposal">
                     <p class="proposal__head">{tr('chat.proposalHead', m.pending.length)}</p>
                     <ul>
-                      {describeActions(records, m.pending, SCHEMA, tr).map((line, k) => (
+                      {describeActions(recordsByEntity, m.pending, entities, tr, activeKey).map((line, k) => (
                         <li key={k}>{line}</li>
                       ))}
                     </ul>

@@ -66,6 +66,9 @@ const STRINGS = {
     'drawer.delete': 'Delete',
     'drawer.confirmDelete': 'Confirm delete',
     'drawer.ariaLabel': 'Edit record',
+    'drawer.blockedByReferences': (refs) =>
+      `Can't delete — still referenced by: ${refs}.`,
+    'entities.tabsLabel': 'Entities',
 
     'keyPrompt.title': 'An API key is needed',
     'keyPrompt.body': (model) =>
@@ -166,6 +169,10 @@ const STRINGS = {
       `${where}: "${raw}" is not a valid ${label}. Allowed: ${values}.`,
     'actions.notNumber': (where, raw, label) => `${where}: "${raw}" is not a number for ${label}.`,
     'actions.notDate': (where, raw) => `${where}: "${raw}" is not a date in YYYY-MM-DD format.`,
+    'actions.notReference': (where, raw, label) =>
+      `${where}: "${raw}" does not match any existing ${label}.`,
+    'actions.unknownEntity': (where, entity, known) =>
+      `${where}: "${entity}" is not a known entity. Allowed: ${known}.`,
     'actions.unknownOp': (where, op) => `${where}: "${op}" is not a known operation.`,
     'actions.created': (title, id) => `Created: ${title} (${id})`,
     'actions.needsTitle': (where, titleField) => `${where}: nothing is created without a ${titleField}.`,
@@ -367,6 +374,9 @@ const STRINGS = {
     'drawer.delete': 'Löschen',
     'drawer.confirmDelete': 'Löschen bestätigen',
     'drawer.ariaLabel': 'Datensatz bearbeiten',
+    'drawer.blockedByReferences': (refs) =>
+      `Löschen nicht möglich — wird noch referenziert von: ${refs}.`,
+    'entities.tabsLabel': 'Entitäten',
 
     'keyPrompt.title': 'Ein API-Schlüssel wird benötigt',
     'keyPrompt.body': (model) =>
@@ -467,6 +477,10 @@ const STRINGS = {
       `${where}: "${raw}" ist kein gültiger Wert für ${label}. Erlaubt: ${values}.`,
     'actions.notNumber': (where, raw, label) => `${where}: "${raw}" ist keine Zahl für ${label}.`,
     'actions.notDate': (where, raw) => `${where}: "${raw}" ist kein Datum im Format JJJJ-MM-TT.`,
+    'actions.notReference': (where, raw, label) =>
+      `${where}: "${raw}" passt zu keinem vorhandenen ${label}.`,
+    'actions.unknownEntity': (where, entity, known) =>
+      `${where}: "${entity}" ist keine bekannte Entität. Erlaubt: ${known}.`,
     'actions.unknownOp': (where, op) => `${where}: "${op}" ist keine bekannte Operation.`,
     'actions.created': (title, id) => `Angelegt: ${title} (${id})`,
     'actions.needsTitle': (where, titleField) => `${where}: ohne ${titleField} wird nichts angelegt.`,

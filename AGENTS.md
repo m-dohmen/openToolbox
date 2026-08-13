@@ -69,6 +69,57 @@ rejected and reported, so keep `values` accurate.
 `examples/risk-register.domain.js` is a complete working example. Copy it over `src/domain.js` and
 build to see the whole app change.
 
+## Multiple entities and relationships
+
+Most tools need only one record type — stick with the single `SCHEMA` export above. Reach for this
+only once there are genuinely two or more kinds of records that reference each other, e.g.
+"suppliers" and "certificates", where a certificate always belongs to a supplier.
+
+Export `ENTITIES` instead of `SCHEMA`, one entry per record type, each shaped like the single-entity
+exports above but nested under a key:
+
+```js
+export const ENTITIES = {
+  suppliers: {
+    schema: { idField: 'id', singular: 'supplier', plural: 'suppliers', titleField: 'name', /* … */ },
+    uid: () => 'S-' + /* … */,
+    emptyRecord: () => ({ /* … */ }),
+    seed: () => [ /* … */ ],
+    isDone: () => false,
+    isOverdue: () => false,
+  },
+  certificates: {
+    schema: {
+      idField: 'id', singular: 'certificate', plural: 'certificates', titleField: 'title',
+      fields: [
+        { key: 'title', label: 'Title', type: 'text', required: true },
+        { key: 'supplierId', label: 'Supplier', type: 'reference', entity: 'suppliers', required: true },
+        // …
+      ],
+    },
+    uid: () => 'C-' + /* … */,
+    emptyRecord: () => ({ /* … */ }),
+    seed: () => [ /* … */ ],
+    isDone: () => false,
+    isOverdue: (r) => r.expiry && r.expiry < today,
+  },
+}
+export const formatDate = (s) => /* … */   // one shared export, same as the single-entity shape
+```
+
+A `type: 'reference'` field points at another entity via `entity: '<key>'`. The app renders it as a
+dropdown of that entity's records (showing the title field, storing the id) in the edit form, and
+as a clickable chip resolving to the referenced record's title in the table — clicking it switches
+to that entity and opens the record. Deleting a record that's still referenced by another entity is
+blocked, and the message names what references it. The AI assistant's instructions and proposal
+validation are reference-aware too: it can name the target record by id or by its title text.
+
+`examples/suppliers-certificates.domain.js` is a complete working example — copy it over
+`src/domain.js` and rebuild to see a two-entity tool with a working relationship between them.
+
+Everything else — CSV/JSON export, encryption, branding, the interface language toggle — already
+understands this shape without any further change.
+
 ## Optional second file
 
 `src/app.jsx` — only if the user needs something the schema cannot express: an extra sidebar
