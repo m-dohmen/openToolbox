@@ -177,6 +177,8 @@ button, input, select, textarea { font-family: var(--font); font-size: inherit; 
   font-weight: var(--tone-weight-bold);
 }
 .entity-tabs button + button { margin-left: 14px; }
+/* Ansichtsumschalter rechts, Entitäten links - zwei Achsen, nicht eine Liste. */
+.entity-tabs__views { margin-left: auto; display: flex; }
 
 .ref-chip {
   border: 1px solid var(--line);
@@ -188,6 +190,135 @@ button, input, select, textarea { font-family: var(--font); font-size: inherit; 
   cursor: pointer;
 }
 .ref-chip:hover { border-color: var(--tone-accent); }
+
+/* ── Dashboard ────────────────────────────────────────────────── */
+
+.dashboard {
+  padding: 20px;
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  align-content: start;
+  overflow-y: auto;
+}
+
+.tile {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  padding: 16px 18px;
+}
+.tile__label {
+  margin: 0 0 12px;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  font-weight: var(--tone-weight-semi);
+}
+.tile--stat { display: flex; flex-direction: column; justify-content: center; }
+.tile__value {
+  margin: 0;
+  font-size: 40px;
+  line-height: 1;
+  font-weight: var(--tone-weight-bold);
+  color: var(--ink-strong);
+  font-variant-numeric: tabular-nums;
+}
+.tile__caption { margin: 8px 0 0; font-size: 12px; color: var(--muted); }
+
+.bars { display: grid; gap: 9px; }
+.bars__row { display: grid; grid-template-columns: 33% 1fr auto; align-items: center; gap: 10px; }
+.bars__name {
+  font-size: 12.5px;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.bars__track { background: var(--line-soft); border-radius: 3px; height: 10px; overflow: hidden; }
+.bars__fill { display: block; height: 100%; border-radius: 3px; min-width: 2px; }
+.bars__value {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.donut { display: flex; align-items: center; gap: 16px; }
+.donut svg { width: 104px; height: 104px; flex: none; transform: rotate(-90deg); }
+.donut__track { stroke: var(--line-soft); }
+.donut__total {
+  transform: rotate(90deg);
+  transform-origin: 21px 21px;
+  text-anchor: middle;
+  dominant-baseline: middle;
+  font-size: 9px;
+  font-weight: var(--tone-weight-bold);
+  fill: var(--ink-strong);
+}
+
+.legend { list-style: none; margin: 0; padding: 0; display: grid; gap: 5px; min-width: 0; flex: 1; }
+.legend li { display: grid; grid-template-columns: 9px 1fr auto; align-items: center; gap: 7px; }
+.legend__dot { width: 9px; height: 9px; border-radius: 2px; }
+.legend__name {
+  font-size: 12.5px;
+  color: var(--ink);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.legend__value {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Druck ────────────────────────────────────────────────────── */
+
+/*
+ * Berater brauchen die Liste oder das Dashboard als Anlage — der Browser
+ * erzeugt das PDF, hier steht nur, was dabei wegfällt. Alles Bedienbare
+ * verschwindet, der Inhalt bekommt die volle Breite.
+ */
+@media print {
+  .filebar,
+  .rail,
+  .toolbar,
+  .chat,
+  .watermark,
+  .head__actions,
+  .entity-tabs__views,
+  .scrim,
+  .drawer,
+  .modal,
+  .toast { display: none !important; }
+
+  html, body, #app { height: auto; background: #fff; }
+  .shell { display: block; }
+  .head { border-bottom: 1px solid #999; padding: 0 0 10px; background: none; }
+  .body { display: block; }
+  .main { overflow: visible; }
+
+  /* Farbflächen sind hier Information, nicht Dekoration: ohne das druckt
+     Chrome Balken und Ringe weiß. */
+  .tile, .bars__fill, .donut, .pill, thead th {
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  .dashboard { padding: 0; overflow: visible; gap: 12px; }
+  .tile { break-inside: avoid; border-color: #999; }
+
+  .table-wrap { overflow: visible; }
+  table { font-size: 10.5px; }
+  thead { display: table-header-group; }  /* Kopfzeile auf jeder Seite */
+  tr { break-inside: avoid; }
+  td, th { padding: 5px 8px; }
+
+  a[href]::after { content: ""; }  /* keine ausgeschriebenen URLs */
+}
 
 /* ── Grundgerüst ──────────────────────────────────────────────── */
 
@@ -337,7 +468,7 @@ tbody tr[data-selected="true"] td { background: var(--accent-soft); }
   color: var(--muted);
   font-family: var(--mono);
   font-size: 13px;
-  background: var(--bg-soft, transparent);
+  background: transparent;
 }
 .cell-date { font-family: var(--mono); font-size: 12.5px; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .cell-date.is-overdue { color: var(--flag); font-weight: var(--tone-weight-bold); }

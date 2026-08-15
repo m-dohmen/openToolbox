@@ -42,6 +42,8 @@ brandable (colours, logo, name) · bilingual interface (English, German) · ligh
   file. Adding a third is a small, mechanical change — see [Interface languages](#interface-languages).
 - **Multiple entities and relationships**, when one record type isn't enough — see
   [Multiple entities and relationships](#multiple-entities-and-relationships).
+- **Dashboard tiles and a print stylesheet**, because analysis usually ends in a slide or an
+  appendix — see [Dashboard](#dashboard).
 
 ## Quick start
 
@@ -120,6 +122,44 @@ switches to that entity and opens the record. Deleting a record still referenced
 is blocked, naming what references it. The AI assistant understands the relationship too: its
 instructions describe every entity and how they connect, and it can name a referenced record by id
 or by title text. `examples/suppliers-certificates.domain.js` is a complete working example.
+
+## Dashboard
+
+Optional, declared in `src/domain.js` as a `DASHBOARD` export. Without it, the view does not exist
+and nothing in the interface changes.
+
+```js
+export const DASHBOARD = {
+  tiles: [
+    { type: 'stat',  measure: 'count', label: 'Action items', caption: 'in this file' },
+    { type: 'stat',  measure: 'effort', filter: (r) => !isDone(r), label: 'Open effort' },
+    { type: 'donut', groupBy: 'status' },
+    { type: 'bar',   groupBy: 'area', measure: 'effort', label: 'Effort by area' },
+  ],
+}
+```
+
+Three tile types — `stat` (one number), `bar` (one bar per enum value) and `donut` (the same data
+as a ring with a legend). `measure` is either `'count'` or a field key whose values get summed;
+`filter(record)` narrows the set first; with `ENTITIES`, a tile can name the `entity` it reports on.
+
+Drawn **without a charting library**: the bars are CSS widths and the ring is a single SVG circle
+with `stroke-dasharray`. A charting library would multiply the size of a file that has to travel by
+email, for four tile types. Category colours are derived from the tool's own accent colour — so a
+rebranded tool recolours its dashboard by itself — and the shade direction flips in dark mode, or
+one end of the range would disappear into the background.
+
+Tiles report on their entity's **full** record set, not the filtered table view: a tile can belong
+to a different entity than the one currently open, and "sometimes filtered, sometimes not" would be
+unpredictable.
+
+## Printing
+
+Both views have a print stylesheet, so `Ctrl`/`Cmd`+`P` produces a usable PDF for a meeting
+appendix. The file bar, sidebar, search, chat dock, watermark and every button drop away; the table
+repeats its header on each page and avoids breaking rows; dashboard tiles avoid breaking across
+pages. Colour is forced on for bars, rings and status pills — there they carry information rather
+than decoration, and browsers otherwise print them white.
 
 ## Using it with an AI assistant
 
@@ -320,6 +360,7 @@ Three ways, all in the sidebar and in Settings → Data:
 src/domain.js          the only file most tools need to change
 src/app.jsx            shell, list, form, save logic
 src/settings.jsx       settings page
+src/dashboard.jsx      dashboard tiles (stat, bar, donut) — no charting library
 src/chat.jsx           AI assistant dock
 src/brand.jsx          wordmark and uploaded logo
 src/i18n.js            interface language dictionary (English, German)
@@ -353,7 +394,8 @@ Runs two suites, both against a real headless Chromium:
   fixture deliberately contains a row without a title, an unknown enum value and a misformatted
   date, plus the usage counter in all three of its states (preset, pointed at a different endpoint,
   and switched off — the last one asserting that the file makes no outbound request whatsoever).
-  Around 45 assertions.
+  the dashboard tiles agreeing with the sidebar counts, and the print stylesheet actually hiding
+  the interactive chrome. Around 55 assertions.
 - `test/multi-entity.mjs` — the `ENTITIES`/reference-field path: builds
   `examples/suppliers-certificates.domain.js` into its own `dist-multi-entity/` (swapping
   `src/domain.js` only for the duration of that one build, restored immediately after), then checks

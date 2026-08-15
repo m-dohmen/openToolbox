@@ -29,6 +29,7 @@ import { Wordmark } from './brand.jsx'
 import { paletteVariables } from './lib/color.js'
 import { IconSave, IconSettings } from './icons.jsx'
 import { SettingsPage } from './settings.jsx'
+import { DashboardView } from './dashboard.jsx'
 import { ChatDock } from './chat.jsx'
 import { AI_DEFAULTS } from './lib/ai.js'
 import { countOpen, DEFAULT_COUNT_URL } from './lib/count.js'
@@ -45,6 +46,9 @@ const ENTITIES = normalizeEntities(domainModule)
 const ENTITY_KEYS = Object.keys(ENTITIES)
 const DEFAULT_ENTITY_KEY = ENTITY_KEYS[0]
 const SINGLE = isSingleEntity(ENTITIES)
+
+/** Optional: Kacheln über den Bestand. Fehlt der Export, gibt es die Ansicht nicht. */
+const DASHBOARD = domainModule.DASHBOARD?.tiles?.length ? domainModule.DASHBOARD : null
 
 /** Legt eine geladene/gefehlte Datensatzmenge auf alle Entitäten um. */
 function normalizeRecordsByEntity(records) {
@@ -267,6 +271,7 @@ function Workbench({
   const [toast, setToast] = useState(null)
   const [saving, setSaving] = useState(false)
   const [csvImport, setCsvImport] = useState(null)
+  const [dark, setDark] = useState(false)
 
   const tr = translator(settings.locale)
   const entity = ENTITIES[activeKey]
@@ -315,11 +320,16 @@ function Workbench({
 
   /* Farbschema und Zeilenhöhe hängen am Wurzelelement, damit auch die
      festpositionierten Ebenen (Panel, Dialog, Wasserzeichen) sie erben. */
+  /* Das aufgelöste Schema wird auch als Zustand gehalten, nicht nur ans
+     Wurzelelement geschrieben: die Dashboard-Kacheln färben ihre Kategorien
+     abgestuft ein und müssen dafür wissen, ob sie gegen Hell oder Dunkel
+     zeichnen - sonst verschwindet ein Ende der Reihe im Hintergrund. */
   useEffect(() => {
     const media = window.matchMedia('(prefers-color-scheme: dark)')
     const apply = () => {
-      const dark = settings.theme === 'dark' || (settings.theme === 'system' && media.matches)
-      document.documentElement.dataset.theme = dark ? 'dark' : 'light'
+      const isDark = settings.theme === 'dark' || (settings.theme === 'system' && media.matches)
+      document.documentElement.dataset.theme = isDark ? 'dark' : 'light'
+      setDark(isDark)
     }
     apply()
     media.addEventListener('change', apply)
@@ -710,20 +720,53 @@ function Workbench({
         />
       ) : (
       <>
-      {ENTITY_KEYS.length > 1 && (
+      {(ENTITY_KEYS.length > 1 || DASHBOARD) && (
         <div class="entity-tabs" role="tablist" aria-label={tr('entities.tabsLabel')}>
-          {ENTITY_KEYS.map((key) => (
-            <button
-              key={key}
-              role="tab"
-              aria-selected={String(key === activeKey)}
-              onClick={() => switchEntity(key)}
-            >
-              {ENTITIES[key].schema.plural}
-            </button>
-          ))}
+          {ENTITY_KEYS.length > 1 &&
+            ENTITY_KEYS.map((key) => (
+              <button
+                key={key}
+                role="tab"
+                aria-selected={String(key === activeKey && view === 'list')}
+                onClick={() => {
+                  setView('list')
+                  switchEntity(key)
+                }}
+              >
+                {ENTITIES[key].schema.plural}
+              </button>
+            ))}
+          {DASHBOARD && (
+            <div class="entity-tabs__views">
+              <button
+                role="tab"
+                aria-selected={String(view === 'list')}
+                onClick={() => setView('list')}
+              >
+                {tr('view.list')}
+              </button>
+              <button
+                role="tab"
+                aria-selected={String(view === 'dashboard')}
+                onClick={() => setView('dashboard')}
+              >
+                {tr('view.dashboard')}
+              </button>
+            </div>
+          )}
         </div>
       )}
+      {view === 'dashboard' ? (
+        <DashboardView
+          dashboard={DASHBOARD}
+          entities={ENTITIES}
+          recordsByEntity={recordsByEntity}
+          defaultEntityKey={activeKey}
+          accent={settings.colors.accent}
+          dark={dark}
+          tr={tr}
+        />
+      ) : (
       <div class="body">
         <aside class="rail">
           <section>
@@ -853,6 +896,7 @@ function Workbench({
           )}
         </main>
       </div>
+      )}
       </>
       )}
 

@@ -110,3 +110,35 @@ export const formatDate = (s) => {
   const [y, m, d] = s.split('-')
   return `${m}/${d}/${y}`
 }
+
+/**
+ * Kacheln über den Bestand, erreichbar über den Umschalter neben der Liste.
+ * Fehlt dieser Export, gibt es die Dashboard-Ansicht schlicht nicht.
+ *
+ *   stat   Eine Zahl. `measure`: 'count' oder ein Feldschlüssel, dessen Werte
+ *          summiert werden. `filter` schränkt die Datensätze davor ein.
+ *   bar    Balken je Ausprägung von `groupBy` (ein Aufzählungsfeld).
+ *   donut  Dieselben Daten als Ring mit Legende.
+ */
+export const DASHBOARD = {
+  tiles: [
+    { type: 'stat', measure: 'count', label: 'Action items', caption: 'in this file' },
+    {
+      type: 'stat',
+      measure: 'count',
+      filter: (r) => isOverdue(r),
+      label: 'Overdue',
+      caption: 'past their due date',
+    },
+    {
+      type: 'stat',
+      measure: 'effort',
+      filter: (r) => !isDone(r),
+      label: 'Open effort',
+      caption: 'days still to spend',
+    },
+    { type: 'donut', groupBy: 'status' },
+    { type: 'bar', groupBy: 'area', measure: 'effort', label: 'Effort by area' },
+    { type: 'bar', groupBy: 'area', measure: 'count', label: 'Items by area' },
+  ],
+}

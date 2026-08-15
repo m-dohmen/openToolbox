@@ -70,6 +70,8 @@ const STRINGS = {
     'drawer.blockedByReferences': (refs) =>
       `Can't delete — still referenced by: ${refs}.`,
     'entities.tabsLabel': 'Entities',
+    'view.list': 'List',
+    'view.dashboard': 'Dashboard',
 
     'keyPrompt.title': 'An API key is needed',
     'keyPrompt.body': (model) =>
@@ -420,6 +422,8 @@ const STRINGS = {
     'drawer.blockedByReferences': (refs) =>
       `Löschen nicht möglich — wird noch referenziert von: ${refs}.`,
     'entities.tabsLabel': 'Entitäten',
+    'view.list': 'Liste',
+    'view.dashboard': 'Dashboard',
 
     'keyPrompt.title': 'Ein API-Schlüssel wird benötigt',
     'keyPrompt.body': (model) =>

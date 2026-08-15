@@ -659,6 +659,76 @@ await page13.waitForTimeout(400)
 console.log('33) Abgeschaltet — fremde Requests insgesamt:', foreignRequests)
 if (foreignRequests !== 0) fail('Abgeschalteter Zaehler oeffnet trotzdem eine Verbindung')
 
+// Dashboard: Kacheln aus dem DASHBOARD-Export, Zahlen muessen zur Seitenleiste
+// passen, Ring und Legende muessen dieselbe Summe zeigen wie die Datensaetze.
+const page14 = await ctx.newPage()
+page14.on('pageerror', (e) => errors.push(String(e)))
+page14.on('console', (m) => m.type() === 'error' && errors.push(m.text()))
+await page14.goto('file://' + dist)
+await page14.waitForSelector('table tbody tr')
+const railOverdue = await page14.locator('.kpi .is-flag dd').innerText()
+
+await page14.getByRole('tab', { name: 'Dashboard' }).click()
+await page14.waitForSelector('.dashboard')
+const tileCount = await page14.locator('.tile').count()
+const statValues = await page14.locator('.tile--stat .tile__value').allInnerTexts()
+console.log('34) Dashboard-Kacheln:', tileCount, '| Kennzahlen:', statValues.join(' '))
+if (tileCount !== 6) fail('Erwartet 6 Kacheln aus dem DASHBOARD-Export')
+if (statValues[0] !== '11') fail('Anzahl-Kachel stimmt nicht mit dem Bestand ueberein')
+if (statValues[1] !== railOverdue) fail('Ueberfaellig-Kachel weicht von der Seitenleiste ab')
+
+const donutTotal = await page14.locator('.donut__total').textContent()
+const legendSum = (await page14.locator('.legend__value').allInnerTexts()).reduce(
+  (n, t) => n + Number(t),
+  0,
+)
+console.log('    Ring-Summe:', donutTotal, '| Legendensumme:', legendSum)
+if (Number(donutTotal) !== legendSum) fail('Ring und Legende widersprechen sich')
+if (Number(donutTotal) !== 11) fail('Ring zaehlt nicht alle Datensaetze')
+await page14.screenshot({ path: resolve(tmp, 'dashboard-hell.png') })
+
+// Kategoriefarben muessen im Dunkelmodus die Richtung drehen, sonst verschwindet
+// ein Ende der Reihe im Hintergrund.
+const lightFirstBar = await page14.locator('.bars__fill').first().evaluate((el) => el.style.background)
+await page14.getByLabel('Settings').click()
+await page14.waitForSelector('.settings')
+await page14.getByRole('button', { name: 'Dark', exact: true }).click()
+await page14.getByRole('button', { name: 'Back to the list' }).click()
+await page14.getByRole('tab', { name: 'Dashboard' }).click()
+await page14.waitForSelector('.dashboard')
+const darkFirstBar = await page14.locator('.bars__fill').first().evaluate((el) => el.style.background)
+console.log('35) Erste Kategoriefarbe hell:', lightFirstBar, '| dunkel:', darkFirstBar)
+if (lightFirstBar === darkFirstBar) fail('Kategoriefarben drehen im Dunkelmodus nicht')
+await page14.screenshot({ path: resolve(tmp, 'dashboard-dunkel.png') })
+
+// Druckansicht: alles Bedienbare faellt weg, der Inhalt bleibt.
+await page14.getByLabel('Settings').click()
+await page14.getByRole('button', { name: 'Light', exact: true }).click()
+await page14.getByRole('button', { name: 'Back to the list' }).click()
+await page14.waitForSelector('table tbody tr')
+await page14.emulateMedia({ media: 'print' })
+const printed = await page14.evaluate(() => {
+  const display = (sel) => {
+    const el = document.querySelector(sel)
+    return el ? getComputedStyle(el).display : 'absent'
+  }
+  return {
+    filebar: display('.filebar'),
+    rail: display('.rail'),
+    toolbar: display('.toolbar'),
+    watermark: display('.watermark'),
+    actions: display('.head__actions'),
+    table: display('table'),
+  }
+})
+console.log('36) Im Druck ausgeblendet:', JSON.stringify(printed))
+for (const part of ['filebar', 'rail', 'toolbar', 'watermark', 'actions']) {
+  if (printed[part] !== 'none') fail(`${part} wird mitgedruckt`)
+}
+if (printed.table === 'none') fail('Tabelle fehlt im Druck')
+await page14.screenshot({ path: resolve(tmp, 'druck-liste.png'), fullPage: true })
+await page14.emulateMedia({ media: 'screen' })
+
 // Vorschau im hellen Modus
 await page3.getByLabel('Settings').click()
 await page3.waitForSelector('.settings')

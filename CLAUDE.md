@@ -139,6 +139,36 @@ validation are reference-aware too: it can name the target record by id or by it
 Everything else — CSV/JSON export, encryption, branding, the interface language toggle — already
 understands this shape without any further change.
 
+## Optional: a dashboard
+
+Consultants analyse and then present. If the tool is for anything that gets shown to a steering
+committee, add a `DASHBOARD` export — without it the view simply does not exist:
+
+```js
+export const DASHBOARD = {
+  tiles: [
+    { type: 'stat',  measure: 'count', label: 'Risks', caption: 'in this file' },
+    { type: 'stat',  measure: 'impact', filter: (r) => !isDone(r), label: 'Open impact' },
+    { type: 'donut', groupBy: 'likelihood' },
+    { type: 'bar',   groupBy: 'category', measure: 'impact', label: 'Impact by category' },
+  ],
+}
+```
+
+- `stat` — one number. `measure`: `'count'` or a field key whose values are summed. `filter(record)`
+  narrows the set first. `label` and `caption` are free text.
+- `bar` — one bar per value of `groupBy` (an enum field). `measure` as above.
+- `donut` — the same data as a ring with a legend.
+- `entity` — only needed with `ENTITIES`; defaults to the entity being viewed.
+
+Drawn without a charting library: bars are CSS widths, the ring is one SVG circle with
+`stroke-dasharray`. Category colours are derived from the tool's accent colour, so a rebranded tool
+recolours its dashboard automatically. Tiles show their entity's **full** record set, not the
+filtered table view.
+
+Both the list and the dashboard have a print stylesheet — the browser makes the PDF, everything
+interactive drops away. Worth mentioning at handover; it is how these end up as meeting appendices.
+
 ## Optional second file
 
 `src/app.jsx` — only if the user needs something the schema cannot express: an extra sidebar
