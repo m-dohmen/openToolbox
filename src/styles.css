@@ -24,6 +24,7 @@
   --accent-text: var(--tone-accent);
 
   --flag: var(--tone-flag);
+  --flag-soft: var(--tone-flag-soft);
   --ok: var(--tone-ok);
   --ok-soft: var(--tone-ok-soft);
   --pending: var(--tone-pending);
@@ -190,6 +191,96 @@ button, input, select, textarea { font-family: var(--font); font-size: inherit; 
   cursor: pointer;
 }
 .ref-chip:hover { border-color: var(--tone-accent); }
+
+/* ── Beispiel-Prompts ─────────────────────────────────────────── */
+
+/* Aufmerksamkeitsfarbe, aber zurückhaltend eingesetzt: die Kästen erklären
+   das Werkzeug, sie sind keine Warnung. */
+.hint {
+  display: block;
+  border: 1px solid var(--flag);
+  border-left-width: 3px;
+  border-radius: var(--r);
+  background: var(--flag-soft);
+  padding: 10px 12px;
+  margin: 0 0 14px;
+}
+.hint__text { margin: 0 0 8px; font-size: 12.5px; color: var(--ink); }
+.hint__prompt { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.hint__badge {
+  flex: none;
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  font-weight: var(--tone-weight-bold);
+  color: var(--flag);
+}
+.hint__prompt q {
+  flex: 1;
+  min-width: 180px;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--ink-strong);
+  quotes: "„" "“" "‚" "'";
+}
+.hint__copy {
+  flex: none;
+  border: 1px solid var(--flag);
+  background: transparent;
+  color: var(--flag);
+  border-radius: var(--r);
+  padding: 2px 9px;
+  font-size: 11px;
+  cursor: pointer;
+}
+.hint__copy:hover { background: var(--flag); color: var(--tone-white); }
+
+.rail .hint { margin-top: 24px; }
+.dashboard__hint { grid-column: 1 / -1; }
+.dashboard__hint .hint { margin: 0; }
+.chat__log .hint { margin: 10px 0 0; }
+
+/* ── Version ──────────────────────────────────────────────────── */
+
+.version {
+  display: inline-block;
+  margin-left: 10px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent-text);
+  font-family: var(--mono);
+  font-size: 11.5px;
+  font-weight: var(--tone-weight-semi);
+  vertical-align: 2px;
+}
+.version--small { margin-left: 0; font-size: 11px; }
+
+/* ── Änderungsprotokoll ───────────────────────────────────────── */
+
+.logview { flex: 1; min-height: 0; overflow-y: auto; background: var(--bg); }
+.logview__inner { max-width: 760px; margin: 0 auto; padding: 22px 20px 40px; }
+
+.logview__list { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 8px; }
+.logview__list li {
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  padding: 10px 12px;
+}
+.logview__head { display: flex; align-items: center; gap: 10px; margin-bottom: 6px; }
+.logview__head time { font-family: var(--mono); font-size: 12px; color: var(--muted); }
+.logview__head .btn { margin-left: auto; padding: 0 8px; line-height: 1.6; }
+.logview__note {
+  width: 100%;
+  border: 1px solid transparent;
+  background: transparent;
+  padding: 4px 6px;
+  border-radius: var(--r);
+  font-size: 13px;
+}
+.logview__note:hover { border-color: var(--line); }
+.logview__note:focus { border-color: var(--accent); background: var(--panel); }
 
 /* ── Dashboard ────────────────────────────────────────────────── */
 
@@ -647,6 +738,7 @@ tbody tr[data-selected="true"] td { background: var(--accent-soft); }
 
   --accent-soft: var(--tone-dark-accent-soft);
   --accent-text: var(--tone-accent-light);
+  --flag-soft: var(--tone-dark-flag-soft);
 }
 
 [data-theme="dark"] .pill--erledigt { background: transparent; color: var(--ok); }

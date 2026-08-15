@@ -11,6 +11,7 @@ import {
 } from './lib/ai.js'
 import { describeActions } from './lib/actions.js'
 import { translator } from './i18n.js'
+import { Hint } from './hint.jsx'
 import { IconChat, IconSend, IconChevron, IconPaperclip } from './icons.jsx'
 
 const kb = (n) => (n < 1024 ? `${n} B` : `${(n / 1024).toFixed(1)} KB`)
@@ -21,7 +22,7 @@ const kb = (n) => (n < 1024 ? `${n} B` : `${(n / 1024).toFixed(1)} KB`)
  * Verlauf und Anhänge leben nur in dieser Sitzung und werden nicht in die
  * Datei geschrieben.
  */
-export function ChatDock({ config, apiKey, entities, recordsByEntity, visible, activeKey, onDialect, onActions, locale }) {
+export function ChatDock({ config, apiKey, entities, recordsByEntity, visible, activeKey, onDialect, onActions, locale, examplePrompts }) {
   const tr = translator(locale)
   const modeLabel = (mode) => contextModeOptions(tr).find(([v]) => v === mode)?.[1] ?? mode
   const [open, setOpen] = useState(false)
@@ -183,7 +184,10 @@ export function ChatDock({ config, apiKey, entities, recordsByEntity, visible, a
         >
           <div class="chat__log" ref={log}>
             {messages.length === 0 && !error && (
-              <p class="chat__hint">{config.allowWrite ? tr('chat.hintWrite') : tr('chat.hintReadOnly')}</p>
+              <>
+                <p class="chat__hint">{config.allowWrite ? tr('chat.hintWrite') : tr('chat.hintReadOnly')}</p>
+                <Hint show={examplePrompts} id="ai" tr={tr} />
+              </>
             )}
 
             {messages.map((m, i) => (

@@ -31,6 +31,7 @@
 
   /* Zustände — sparsam und nur dafür */
   --tone-flag: #c2521b;
+  --tone-flag-soft: #fdf2ec;
   --tone-ok: #2e7d5b;
   --tone-ok-soft: #e6f2ec;
   --tone-pending: #d19a0a;
@@ -58,4 +59,5 @@
   --tone-dark-muted: #98a4b0;
   --tone-dark-faint: #6d7a86;
   --tone-dark-accent-soft: #10353a;
+  --tone-dark-flag-soft: #2a1a12;
 }

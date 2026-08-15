@@ -11,6 +11,29 @@ const dist = resolve(root, 'dist/index.html')
 const tmp = resolve(root, 'test/.out')
 mkdirSync(tmp, { recursive: true })
 
+
+/**
+ * Speichern und die Datei einsammeln. Mit eingeschaltetem Aenderungsprotokoll
+ * (Voreinstellung) fragt das Speichern erst nach Notiz und Version - der
+ * Helfer beantwortet das, damit die uebrigen Pruefungen sich nicht darum
+ * kuemmern muessen.
+ */
+async function saveTo(page, target, note) {
+  const [download] = await Promise.all([
+    page.waitForEvent('download', { timeout: 15000 }),
+    (async () => {
+      await page.locator('.filebar__save').click()
+      const dialog = page.locator('#log-note')
+      if (await dialog.count()) {
+        if (note) await dialog.fill(note)
+        await page.locator('.modal__foot .btn--primary').click()
+      }
+    })(),
+  ])
+  await download.saveAs(target)
+  return download
+}
+
 const fail = (m) => {
   console.error('FEHLER: ' + m)
   process.exitCode = 1
@@ -167,12 +190,8 @@ console.log('2) Datensatz angelegt — Zeilen:', rows2)
 if (rows2 !== 12) fail('Anlegen hat nicht gegriffen')
 
 // Speichern (ohne File System Access API -> Download-Pfad)
-const dl = await Promise.all([
-  page.waitForEvent('download', { timeout: 10000 }),
-  page.locator('.filebar__save').click(),
-]).then(([d]) => d)
 const saved = resolve(tmp, 'runde1.html')
-await dl.saveAs(saved)
+const dl = await saveTo(page, saved, 'Testeintrag angelegt')
 const size = readFileSync(saved).length
 console.log('3) Datei geschrieben:', dl.suggestedFilename(), size, 'Bytes')
 
@@ -212,12 +231,8 @@ if (await page2.getByRole('button', { name: 'Apply' }).isDisabled()) {
 await page2.locator('#k1').fill('korrekt-pferd-batterie')
 await page2.locator('#k2').fill('korrekt-pferd-batterie')
 await page2.getByRole('button', { name: 'Apply' }).click()
-const dl2 = await Promise.all([
-  page2.waitForEvent('download', { timeout: 15000 }),
-  page2.locator('.filebar__save').click(),
-]).then(([d]) => d)
 const sealed = resolve(tmp, 'runde2-verschluesselt.html')
-await dl2.saveAs(sealed)
+await saveTo(page2, sealed, 'verschluesselt')
 const sealedSrc = readFileSync(sealed, 'utf8')
 const leak = sealedSrc.includes('Smoke test entry')
 console.log('5) Verschlüsselt gespeichert — Klartext im Quelltext auffindbar:', leak)
@@ -272,12 +287,8 @@ console.log('    Kopftitel:', await page3.locator('.head h1').innerText())
 await page3.screenshot({ path: resolve(tmp, 'liste-dunkel.png') })
 
 // Speichern und erneut oeffnen: reisen Einstellungen mit?
-const dl4 = await Promise.all([
-  page3.waitForEvent('download', { timeout: 15000 }),
-  page3.locator('.filebar__save').click(),
-]).then(([d]) => d)
 const runde3 = resolve(tmp, 'runde3.html')
-await dl4.saveAs(runde3)
+await saveTo(page3, runde3, 'Einstellungen geaendert')
 
 const page4 = await ctx.newPage()
 page4.on('pageerror', (e) => errors.push(String(e)))
@@ -372,12 +383,8 @@ await page5.screenshot({ path: resolve(tmp, 'ki-aenderung.png') })
 await page5.locator('.chat__bar').click()
 
 // Ohne den Haken darf der Schluessel nicht in die Datei wandern
-const dl5 = await Promise.all([
-  page5.waitForEvent('download', { timeout: 15000 }),
-  page5.locator('.filebar__save').click(),
-]).then(([d]) => d)
 const klartext = resolve(tmp, 'runde4-ohne-key.html')
-await dl5.saveAs(klartext)
+await saveTo(page5, klartext, 'ohne Schluessel')
 const klartextSrc = readFileSync(klartext, 'utf8')
 const keyLeak = klartextSrc.includes('test-key')
 console.log('15) API-Schlüssel ohne Haken in der Datei auffindbar:', keyLeak)
@@ -409,12 +416,8 @@ const storeToggle = page5.getByText('this session only')
 await storeToggle.scrollIntoViewIfNeeded()
 await storeToggle.click()
 await page5.waitForSelector('.note--warn >> nth=1')
-const dl6 = await Promise.all([
-  page5.waitForEvent('download', { timeout: 15000 }),
-  page5.locator('.filebar__save').click(),
-]).then(([d]) => d)
 const mitKey = resolve(tmp, 'runde5-mit-key.html')
-await dl6.saveAs(mitKey)
+await saveTo(page5, mitKey, 'mit Schluessel')
 console.log('18) API-Schlüssel mit Haken in der Datei:', readFileSync(mitKey, 'utf8').includes('test-key'))
 if (!readFileSync(mitKey, 'utf8').includes('test-key')) fail('Haken wurde nicht beachtet')
 
@@ -620,12 +623,8 @@ if (countHits[0]?.includes('action-items')) fail('Dateiname darf nicht im Zaehla
 await page11.getByLabel('Settings').click()
 await page11.waitForSelector('.settings')
 await page11.locator('input[placeholder="empty — count nothing"]').fill('https://zaehler.intern/count')
-const dlOwn = await Promise.all([
-  page11.waitForEvent('download', { timeout: 15000 }),
-  page11.locator('.filebar__save').click(),
-]).then(([d]) => d)
 const ownCounter = resolve(tmp, 'zaehler-eigen.html')
-await dlOwn.saveAs(ownCounter)
+await saveTo(page11, ownCounter, 'eigener Zaehler')
 
 const page12 = await ctx.newPage()
 page12.on('pageerror', (e) => errors.push(String(e)))
@@ -640,12 +639,8 @@ await page12.getByLabel('Settings').click()
 await page12.waitForSelector('.settings')
 await page12.getByText('counting', { exact: true }).click()
 await page12.waitForTimeout(200)
-const dlOff = await Promise.all([
-  page12.waitForEvent('download', { timeout: 15000 }),
-  page12.locator('.filebar__save').click(),
-]).then(([d]) => d)
 const offCounter = resolve(tmp, 'zaehler-aus.html')
-await dlOff.saveAs(offCounter)
+await saveTo(page12, offCounter, 'Zaehler aus')
 
 const page13 = await ctx.newPage()
 page13.on('pageerror', (e) => errors.push(String(e)))
@@ -728,6 +723,64 @@ for (const part of ['filebar', 'rail', 'toolbar', 'watermark', 'actions']) {
 if (printed.table === 'none') fail('Tabelle fehlt im Druck')
 await page14.screenshot({ path: resolve(tmp, 'druck-liste.png'), fullPage: true })
 await page14.emulateMedia({ media: 'screen' })
+
+// Beispiel-Prompts, Version und Aenderungsprotokoll.
+const page15 = await ctx.newPage()
+page15.on('pageerror', (e) => errors.push(String(e)))
+page15.on('console', (m) => m.type() === 'error' && errors.push(m.text()))
+await page15.goto('file://' + dist)
+await page15.waitForSelector('table tbody tr')
+
+const hintCount = await page15.locator('.hint').count()
+const hintPrompt = await page15.locator('.hint__prompt q').first().innerText()
+console.log('37) Hinweiskaesten sichtbar:', hintCount)
+console.log('    Erster Beispiel-Prompt:', hintPrompt.slice(0, 60) + '…')
+if (hintCount < 3) fail('Beispiel-Prompts fehlen in der Listenansicht')
+
+// Speichern fragt nach Notiz und Version, beides landet in der Datei
+await page15.locator('.filebar__save').click()
+await page15.waitForSelector('#log-note')
+await page15.locator('#log-note').fill('Erste Fassung nach dem Kickoff')
+await page15.locator('#log-version').fill('1.0')
+await page15.screenshot({ path: resolve(tmp, 'speichern-dialog.png') })
+const [logDownload] = await Promise.all([
+  page15.waitForEvent('download', { timeout: 15000 }),
+  page15.locator('.modal__foot .btn--primary').click(),
+])
+const versioned = resolve(tmp, 'mit-version.html')
+await logDownload.saveAs(versioned)
+console.log('38) Dateiname mit Version:', logDownload.suggestedFilename())
+if (!logDownload.suggestedFilename().includes('-1.0-')) fail('Version fehlt im Dateinamen')
+
+const badge = await page15.locator('.head .version').innerText()
+console.log('    Version neben dem Titel:', badge)
+if (badge !== '1.0') fail('Version wird nicht neben dem Titel angezeigt')
+
+const logPayload = readFileSync(versioned, 'utf8').match(
+  /<script id="sb-payload"[^>]*>([\s\S]*?)<\/script>/,
+)[1]
+const logParsed = JSON.parse(logPayload.replace(/\\u003c/g, '<'))
+console.log('39) Protokolleintrag in der Datei:', JSON.stringify(logParsed.data.log?.[0]))
+if (logParsed.data.log?.length !== 1) fail('Kein Protokolleintrag geschrieben')
+if (logParsed.data.log[0].note !== 'Erste Fassung nach dem Kickoff') fail('Notiz kam nicht an')
+if (logParsed.settings.version !== '1.0') fail('Version wurde nicht in den Einstellungen abgelegt')
+
+await page15.getByRole('tab', { name: 'Change log' }).click()
+await page15.waitForSelector('.logview__list')
+console.log('40) Protokollansicht:', await page15.locator('.logview__list li').count(), 'Eintrag')
+if ((await page15.locator('.logview__note').inputValue()) !== 'Erste Fassung nach dem Kickoff') {
+  fail('Protokollansicht zeigt die Notiz nicht')
+}
+await page15.screenshot({ path: resolve(tmp, 'protokoll.png') })
+
+// Beispiel-Prompts abschaltbar
+await page15.getByLabel('Settings').click()
+await page15.waitForSelector('.settings')
+await page15.getByText('shown', { exact: true }).click()
+await page15.getByRole('button', { name: 'Back to the list' }).click()
+await page15.waitForSelector('table tbody tr')
+console.log('41) Hinweiskaesten nach dem Abschalten:', await page15.locator('.hint').count())
+if ((await page15.locator('.hint').count()) !== 0) fail('Beispiel-Prompts liessen sich nicht abschalten')
 
 // Vorschau im hellen Modus
 await page3.getByLabel('Settings').click()

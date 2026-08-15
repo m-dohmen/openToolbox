@@ -215,8 +215,26 @@ Deliver `dist/index.html`. Rename it to something meaningful. Tell the user:
 - nothing is auto-saved; the amber dot in the top bar means unsaved changes
 - many mail gateways strip `.html` attachments — send it zipped
 - their own data goes in via `Import CSV`; the shipped records are demo data
+- the version badge and the change log are theirs to fill — the dialog on save asks for both
 - the file counts its own opens (Settings → Security), preset to the template author's endpoint —
   they can point it at their own or switch it off; see below
+
+## Before you hand over: two switches
+
+Both default to **on** because the template's job is to teach. A finished tool for a client is a
+different situation, and this is a judgement call you should make yourself rather than leave to
+the recipient:
+
+- **`examplePrompts`** — hint boxes with ready-made prompts at every place worth changing. Perfect
+  while the tool is still taking shape, noise for someone who only enters data. Set
+  `examplePrompts: false` in `DEFAULT_SETTINGS` when you deliver a finished tool, or tell the user
+  where the toggle is (Settings → Appearance).
+- **`auditLog`** — one entry per save, with a short dialog asking what changed. Keep it on wherever
+  changes have to be justifiable (audits, regulated processes, anything with a steering committee).
+  Switch it off for a scratch tool where the dialog is just friction.
+
+`version` is empty by default. Set it in `DEFAULT_SETTINGS` if the tool has a meaningful starting
+version; otherwise leave it and let the user set one at the first save.
 
 ## The usage counter — mention it, don't hide it
 

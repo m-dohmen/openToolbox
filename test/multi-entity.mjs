@@ -81,7 +81,7 @@ await page.goto('file://' + dist)
 await page.waitForSelector('table tbody tr')
 
 // 1) Umschalter zwischen Entitaeten
-const tabs = await page.locator('.entity-tabs button').allInnerTexts()
+const tabs = await page.locator('.entity-tabs > button').allInnerTexts()
 console.log('1) Entity-Tabs:', tabs)
 if (tabs.length !== 2) fail('Erwartet 2 Entity-Tabs (suppliers, certificates)')
 
@@ -103,7 +103,7 @@ if (/^S-\d/.test(firstChip)) fail('Reference-Chip zeigt rohe Id statt Titel')
 // 3) Klick auf den Chip springt zur Suppliers-Ansicht und oeffnet den Datensatz
 await page.locator('.ref-chip').first().click()
 await page.waitForSelector('.drawer')
-const activeTab = await page.locator('.entity-tabs button[aria-selected="true"]').innerText()
+const activeTab = await page.locator('.entity-tabs > button[aria-selected="true"]').innerText()
 console.log('4) Nach Klick aktiver Tab:', activeTab, '| Drawer-Titel:', await page.locator('.drawer__head h2').innerText())
 if (activeTab.toLowerCase() !== 'suppliers') fail('Klick auf Reference-Chip navigiert nicht zur Zielentitaet')
 

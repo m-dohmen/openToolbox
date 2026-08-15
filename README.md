@@ -2,6 +2,8 @@
 
 # openToolbox
 
+*[Deutsche Fassung](README.de.md)*
+
 **Ship a working tool as a single HTML file. No server, no install, no network.**
 
 openToolbox is a template for small internal tools that need to travel — by email, USB stick or
@@ -18,8 +20,50 @@ Point an AI assistant at this repository and it has everything it needs — the 
 
 ---
 
+## See it
+
+[**Open the live demo**](https://m-dohmen.github.io/openToolbox/demo/) — a project portfolio with
+two linked record types, or [download `docs/demo/index.html`](docs/demo/index.html) and
+double-click it. Same file, no server involved either way.
+
+![The list view](docs/screenshots/list.png)
+
+Two record types that reference each other, calculated columns, filters that count, and a version
+badge next to the title. Everything you see comes out of one file, `src/domain.js`.
+
+![The dashboard](docs/screenshots/dashboard.png)
+
+The dashboard reports across both record types. Drawn without a charting library — the bars are CSS
+widths and the ring is one SVG circle. Both views print to a clean PDF.
+
+<table>
+<tr>
+<td width="50%"><img src="docs/screenshots/example-prompts.png" alt="Example prompts"></td>
+<td width="50%"><img src="docs/screenshots/csv-import.png" alt="CSV import with column mapping"></td>
+</tr>
+<tr>
+<td><b>The file explains itself.</b> Hint boxes carry a ready-made prompt for changing that
+part of the tool. One switch turns them off before you hand the file to someone who only uses it.</td>
+<td><b>Real data goes in via CSV</b>, with a column-mapping step. Separator and quoting are
+detected; every cell runs through the same type check as an AI-proposed change.</td>
+</tr>
+<tr>
+<td><img src="docs/screenshots/record.png" alt="Editing a record"></td>
+<td><img src="docs/screenshots/dashboard-dark.png" alt="Dark mode"></td>
+</tr>
+<tr>
+<td><b>The edit form is generated</b> from the schema, including the dropdown that resolves a
+reference to another record type and read-only calculated fields.</td>
+<td><b>Light and dark</b>, stored with the file. Category shades reverse direction in dark mode so
+neither end of the range disappears.</td>
+</tr>
+</table>
+
+---
+
 **Single file · database in the file · optional AES-256 encryption · optional AI assistant ·
-brandable (colours, logo, name) · bilingual interface (English, German) · light & dark mode.**
+brandable (colours, logo, name) · bilingual interface (English, German) · light & dark mode ·
+dashboard · CSV import · change log · version numbers.**
 
 ## What you get
 
@@ -44,6 +88,10 @@ brandable (colours, logo, name) · bilingual interface (English, German) · ligh
   [Multiple entities and relationships](#multiple-entities-and-relationships).
 - **Dashboard tiles and a print stylesheet**, because analysis usually ends in a slide or an
   appendix — see [Dashboard](#dashboard).
+- **A change log**, filled on every save with date, version and what changed — see
+  [Version numbers and change log](#version-numbers-and-change-log).
+- **Example prompts embedded in the file**, so whoever receives it can have it changed without
+  reading this README — see [Example prompts](#example-prompts).
 
 ## Quick start
 
@@ -121,7 +169,9 @@ clickable chip resolving to the referenced record's title in the table — click
 switches to that entity and opens the record. Deleting a record still referenced by another entity
 is blocked, naming what references it. The AI assistant understands the relationship too: its
 instructions describe every entity and how they connect, and it can name a referenced record by id
-or by title text. `examples/suppliers-certificates.domain.js` is a complete working example.
+or by title text. `examples/suppliers-certificates.domain.js` is a minimal working example, and
+`examples/portfolio.domain.js` — the one behind the [live demo](https://m-dohmen.github.io/openToolbox/demo/)
+— is the full-dress version using every feature at once.
 
 ## Dashboard
 
@@ -152,6 +202,36 @@ one end of the range would disappear into the background.
 Tiles report on their entity's **full** record set, not the filtered table view: a tile can belong
 to a different entity than the one currently open, and "sometimes filtered, sometimes not" would be
 unpredictable.
+
+## Version numbers and change log
+
+Two small features that matter once a file starts circulating.
+
+**A version** is free text in Settings → Application — `1.4`, `2026-Q3`, `final for steering
+committee`. It shows as a badge next to the title and is folded into the saved file name
+(`project-portfolio-2.1-2026-08-15.html`), so the right file is identifiable in a mail thread
+without opening it. Empty by default, and then nothing changes.
+
+**The change log** writes one entry per save: timestamp, version, and a note you type in a short
+dialog when saving. The Change log view lists them newest first with the notes still editable.
+
+Entries live with the records, not with the settings — so in an encrypted file the log sits
+**inside** the envelope, where notes like "budget corrected after the audit finding" belong. Switch
+the log off in Settings and saving asks nothing.
+
+## Example prompts
+
+The built file explains how to change itself. At the places you would typically want to adjust —
+the header, the table, the filters, the dashboard, the edit form, the CSV import, the AI dock — a
+box in the attention colour states what generates that part and offers a ready-made prompt to hand
+to an AI agent, with a copy button.
+
+The point: whoever receives the file does not have to have read this README, or know that
+`src/domain.js` exists, to get the tool changed. They copy a sentence and hand it to an agent.
+
+It is on by default because the template's job is to teach. **Switch it off before handing a
+finished tool to someone who only uses it** — there the boxes are noise. One toggle in
+Settings → Appearance, and `examplePrompts: false` in `DEFAULT_SETTINGS` ships it off from the start.
 
 ## Printing
 
@@ -361,6 +441,9 @@ src/domain.js          the only file most tools need to change
 src/app.jsx            shell, list, form, save logic
 src/settings.jsx       settings page
 src/dashboard.jsx      dashboard tiles (stat, bar, donut) — no charting library
+src/hint.jsx           the example-prompt boxes
+scripts/build-demo.mjs builds examples/portfolio.domain.js into docs/demo/
+scripts/screenshots.mjs regenerates the images in this README
 src/chat.jsx           AI assistant dock
 src/brand.jsx          wordmark and uploaded logo
 src/i18n.js            interface language dictionary (English, German)

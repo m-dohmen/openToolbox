@@ -24,6 +24,7 @@
  */
 import { fieldValue, findField } from './lib/entities.js'
 import { shade } from './lib/color.js'
+import { Hint } from './hint.jsx'
 
 /**
  * Farbreihe für Kategorien: Abstufungen der Akzentfarbe statt eigener Palette -
@@ -159,9 +160,14 @@ function DonutTile({ entity, records, tile, accent, dark, tr }) {
 
 /* ── Ansicht ──────────────────────────────────────────────────── */
 
-export function DashboardView({ dashboard, entities, recordsByEntity, defaultEntityKey, accent, dark, tr }) {
+export function DashboardView({ dashboard, entities, recordsByEntity, defaultEntityKey, accent, dark, examplePrompts, tr }) {
   return (
     <div class="dashboard">
+      {examplePrompts && (
+        <div class="dashboard__hint">
+          <Hint show id="dashboard" tr={tr} />
+        </div>
+      )}
       {dashboard.tiles.map((tile, i) => {
         const key = tile.entity ?? defaultEntityKey
         const entity = entities[key]

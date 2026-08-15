@@ -72,6 +72,31 @@ const STRINGS = {
     'entities.tabsLabel': 'Entities',
     'view.list': 'List',
     'view.dashboard': 'Dashboard',
+    'view.log': 'Change log',
+
+    'log.title': 'Change log',
+    'log.lead':
+      'One entry per save. Kept inside the file, and inside the encrypted part of it when the file ' +
+      'is encrypted.',
+    'log.empty': 'No entry yet. The first one is written the next time you save.',
+    'log.dialogTitle': 'Save',
+    'log.whatChanged': 'What changed?',
+    'log.notePlaceholder': 'e.g. three items closed after the steering committee',
+    'log.versionLabel': 'Version',
+    'log.versionPlaceholder': 'e.g. 1.4',
+    'log.save': 'Save',
+    'log.entryNote': 'Note',
+    'log.entryVersion': 'Version',
+    'log.noNote': 'no note',
+    'log.deleteEntry': 'Delete entry',
+    'log.entries': (n) => `${n} ${n === 1 ? 'entry' : 'entries'}`,
+
+    'settings.auditLog': 'Change log',
+    'settings.auditLogHint':
+      'Writes one entry per save — date, time, version and your note. Switched off, nothing is ' +
+      'recorded and saving asks nothing.',
+    'settings.logging': 'recording',
+    'settings.notLogging': 'off',
 
     'keyPrompt.title': 'An API key is needed',
     'keyPrompt.body': (model) =>
@@ -271,6 +296,55 @@ const STRINGS = {
     'settings.subtitle': 'Subtitle',
     'settings.fileName': 'File name',
     'settings.fileNameHint': 'Without extension. Drives the save suggestion and the export files.',
+    'settings.version': 'Version',
+    'settings.versionHint':
+      'Free text — "1.4", "2026-Q3", "final for steering committee". Shown next to the title and ' +
+      'folded into the saved file name. Leave empty and nothing is shown.',
+    'settings.versionEmpty': 'no version',
+
+    'settings.examplePrompts': 'Example prompts',
+    'settings.examplePromptsHint':
+      'Shows hint boxes at the places you would typically want to change, each with a prompt you ' +
+      'can hand to an AI agent working on this tool. Switch off before passing the file to someone ' +
+      'who only uses it.',
+    'settings.promptsShown': 'shown',
+    'settings.promptsHidden': 'hidden',
+
+    'hint.label': 'Example prompt',
+    'hint.copy': 'Copy',
+    'hint.copied': 'Copied',
+    'hint.header':
+      'Title, subtitle, logo and the five colours all live in the settings and travel with the file.',
+    'hint.header.prompt':
+      'Rename this tool to "Supplier audits", give it the subtitle "Findings from the 2026 audit round", and set the accent colour to a dark blue.',
+    'hint.columns':
+      'Which columns you see, in which order, and which fields exist at all comes from SCHEMA in src/domain.js.',
+    'hint.columns.prompt':
+      'Add a "Priority" field with the values high, medium and low, show it as a column after the owner, and make it filterable in the sidebar.',
+    'hint.filters':
+      'The overview figures and the filter groups are generated from the schema — facets, totalField and the isDone/isOverdue rules.',
+    'hint.filters.prompt':
+      'Count only items that are not done in the overview, and add a filter group for the responsible person.',
+    'hint.dashboard':
+      'Every tile is one entry in the DASHBOARD export — stat, bar or donut, optionally filtered.',
+    'hint.dashboard.prompt':
+      'Add a dashboard tile showing effort per owner as a bar chart, and one counting only the items due within the next 14 days.',
+    'hint.form':
+      'The form is generated from the fields — including a calculated field that is derived rather than typed in.',
+    'hint.form.prompt':
+      'Add a calculated field "Risk score" that multiplies likelihood by impact, and show it in the table.',
+    'hint.import':
+      'CSV import maps the columns of your file onto these fields; matching headings are preselected.',
+    'hint.import.prompt':
+      'Rename the fields so they match the column headings of my Excel export: Vorgang, Zuständig, Fällig, Status.',
+    'hint.ai':
+      'The assistant reads the records in this file and, on an explicit instruction, proposes changes you approve first.',
+    'hint.ai.prompt':
+      'Set up the AI assistant against our internal LiteLLM proxy, restrict it to read-only, and change its role text so it answers in German.',
+    'hint.settings':
+      'Everything on this page is stored in the file. Export the configuration once and reuse it for the next tool.',
+    'hint.settings.prompt':
+      'Build me a second tool with the same colours and logo, but for tracking vendor certificates.',
     'settings.security': 'Security',
     'settings.encryptedLabel': 'This file is encrypted',
     'settings.plainLabel': 'This file is plain text',
@@ -424,6 +498,31 @@ const STRINGS = {
     'entities.tabsLabel': 'Entitäten',
     'view.list': 'Liste',
     'view.dashboard': 'Dashboard',
+    'view.log': 'Änderungsprotokoll',
+
+    'log.title': 'Änderungsprotokoll',
+    'log.lead':
+      'Ein Eintrag je Speichervorgang. Bleibt in der Datei, und bei verschlüsselter Datei im ' +
+      'verschlüsselten Teil davon.',
+    'log.empty': 'Noch kein Eintrag. Der erste entsteht beim nächsten Speichern.',
+    'log.dialogTitle': 'Speichern',
+    'log.whatChanged': 'Was hat sich geändert?',
+    'log.notePlaceholder': 'z. B. drei Punkte nach dem Lenkungsausschuss geschlossen',
+    'log.versionLabel': 'Version',
+    'log.versionPlaceholder': 'z. B. 1.4',
+    'log.save': 'Speichern',
+    'log.entryNote': 'Notiz',
+    'log.entryVersion': 'Version',
+    'log.noNote': 'ohne Notiz',
+    'log.deleteEntry': 'Eintrag löschen',
+    'log.entries': (n) => `${n} ${n === 1 ? 'Eintrag' : 'Einträge'}`,
+
+    'settings.auditLog': 'Änderungsprotokoll',
+    'settings.auditLogHint':
+      'Schreibt bei jedem Speichern einen Eintrag — Datum, Uhrzeit, Version und deine Notiz. ' +
+      'Ausgeschaltet wird nichts festgehalten und das Speichern fragt nichts.',
+    'settings.logging': 'zeichnet auf',
+    'settings.notLogging': 'aus',
 
     'keyPrompt.title': 'Ein API-Schlüssel wird benötigt',
     'keyPrompt.body': (model) =>
@@ -623,6 +722,55 @@ const STRINGS = {
     'settings.subtitle': 'Untertitel',
     'settings.fileName': 'Dateiname',
     'settings.fileNameHint': 'Ohne Endung. Bestimmt den Speichervorschlag und die Exportdateien.',
+    'settings.version': 'Version',
+    'settings.versionHint':
+      'Freier Text — "1.4", "2026-Q3", "final für Lenkungsausschuss". Erscheint neben dem Titel und ' +
+      'wandert in den Dateinamen beim Speichern. Leer lassen, dann wird nichts angezeigt.',
+    'settings.versionEmpty': 'keine Version',
+
+    'settings.examplePrompts': 'Beispiel-Prompts',
+    'settings.examplePromptsHint':
+      'Blendet an den Stellen, die man typischerweise ändern will, Hinweiskästen ein — jeweils mit ' +
+      'einem Prompt, den du einem KI-Agenten geben kannst, der an diesem Werkzeug arbeitet. Vor der ' +
+      'Weitergabe an reine Anwender ausschalten.',
+    'settings.promptsShown': 'sichtbar',
+    'settings.promptsHidden': 'aus',
+
+    'hint.label': 'Beispiel-Prompt',
+    'hint.copy': 'Kopieren',
+    'hint.copied': 'Kopiert',
+    'hint.header':
+      'Titel, Untertitel, Logo und die fünf Farben stehen in den Einstellungen und reisen mit der Datei.',
+    'hint.header.prompt':
+      'Benenne dieses Werkzeug in "Lieferantenaudits" um, gib ihm den Untertitel "Feststellungen aus der Auditrunde 2026" und setze die Akzentfarbe auf ein dunkles Blau.',
+    'hint.columns':
+      'Welche Spalten du siehst, in welcher Reihenfolge, und welche Felder es überhaupt gibt, kommt aus SCHEMA in src/domain.js.',
+    'hint.columns.prompt':
+      'Ergänze ein Feld "Priorität" mit den Werten hoch, mittel und niedrig, zeige es als Spalte hinter dem Verantwortlichen und mache es in der Seitenleiste filterbar.',
+    'hint.filters':
+      'Die Kennzahlen und die Filtergruppen entstehen aus dem Schema — facets, totalField und die Regeln isDone/isOverdue.',
+    'hint.filters.prompt':
+      'Zähle in der Übersicht nur die noch nicht erledigten Einträge und ergänze eine Filtergruppe nach Verantwortlichem.',
+    'hint.dashboard':
+      'Jede Kachel ist ein Eintrag im DASHBOARD-Export — stat, bar oder donut, wahlweise gefiltert.',
+    'hint.dashboard.prompt':
+      'Ergänze eine Dashboard-Kachel mit dem Aufwand je Verantwortlichem als Balken, und eine, die nur die in den nächsten 14 Tagen fälligen Einträge zählt.',
+    'hint.form':
+      'Das Formular entsteht aus den Feldern — einschließlich berechneter Felder, die abgeleitet statt eingetippt werden.',
+    'hint.form.prompt':
+      'Ergänze ein berechnetes Feld "Risikowert", das Wahrscheinlichkeit mal Auswirkung rechnet, und zeige es in der Tabelle.',
+    'hint.import':
+      'Der CSV-Import ordnet die Spalten deiner Datei diesen Feldern zu; passende Überschriften sind vorbelegt.',
+    'hint.import.prompt':
+      'Benenne die Felder so um, dass sie zu den Spaltenüberschriften meines Excel-Exports passen: Vorgang, Zuständig, Fällig, Status.',
+    'hint.ai':
+      'Der Assistent liest die Datensätze dieser Datei und schlägt auf ausdrückliche Anweisung Änderungen vor, die du vorher freigibst.',
+    'hint.ai.prompt':
+      'Richte den KI-Assistenten gegen unseren internen LiteLLM-Proxy ein, beschränke ihn auf lesenden Zugriff und ändere seinen Rollentext so, dass er auf Deutsch antwortet.',
+    'hint.settings':
+      'Alles auf dieser Seite steht in der Datei. Exportiere die Konfiguration einmal und nutze sie für das nächste Werkzeug wieder.',
+    'hint.settings.prompt':
+      'Bau mir ein zweites Werkzeug mit denselben Farben und demselben Logo, aber für die Verfolgung von Lieferantenzertifikaten.',
     'settings.security': 'Sicherheit',
     'settings.encryptedLabel': 'Diese Datei ist verschlüsselt',
     'settings.plainLabel': 'Diese Datei ist Klartext',

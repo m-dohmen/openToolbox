@@ -30,6 +30,7 @@ import { paletteVariables } from './lib/color.js'
 import { IconSave, IconSettings } from './icons.jsx'
 import { SettingsPage } from './settings.jsx'
 import { DashboardView } from './dashboard.jsx'
+import { Hint } from './hint.jsx'
 import { ChatDock } from './chat.jsx'
 import { AI_DEFAULTS } from './lib/ai.js'
 import { countOpen, DEFAULT_COUNT_URL } from './lib/count.js'
@@ -109,12 +110,18 @@ const DEFAULT_SETTINGS = {
   title: 'Action items',
   subtitle: 'Open points from audits and steering meetings',
   fileStem: 'action-items',
+  version: '',
+  examplePrompts: true,
+  auditLog: true,
   colors: DEFAULT_COLORS,
   brand: DEFAULT_BRAND,
   ai: AI_DEFAULTS,
 }
 
 const today = () => new Date().toISOString().slice(0, 10)
+/** Version für den Dateinamen entschärfen: "1.4 final" → "1-4-final". */
+const versionSlug = (v) =>
+  String(v ?? '').trim().replace(/[^\w.-]+/g, '-').replace(/^-+|-+$/g, '').toLowerCase()
 const kb = (n) => (n / 1024).toFixed(n < 10240 ? 1 : 0) + ' KB'
 
 /**
@@ -154,12 +161,17 @@ export function App() {
   const [recordsByEntity, setRecordsByEntity] = useState(null)
   const [passphrase, setPassphrase] = useState(null)
   const [apiKey, setApiKey] = useState('')
+  // Das Protokoll liegt bei den Datensätzen, nicht bei den Einstellungen: es
+  // beschreibt, was mit den Daten geschah, und gehört damit bei verschlüsselter
+  // Datei in den Umschlag.
+  const [log, setLog] = useState([])
 
   // Erststart oder unverschlüsselter Datenstand: sofort loslegen.
   useEffect(() => {
     if (!payload) return setRecordsByEntity(seedAll())
     if (payload.enc) return
     setRecordsByEntity(normalizeRecordsByEntity(payload.data.records))
+    setLog(payload.data.log ?? [])
     setApiKey(payload.data.secrets?.apiKey ?? '')
   }, [])
 
@@ -172,6 +184,7 @@ export function App() {
         envelope={payload.envelope}
         onOpen={(data, pass) => {
           setRecordsByEntity(normalizeRecordsByEntity(data.records))
+          setLog(data.log ?? [])
           setPassphrase(pass)
           setApiKey(data.secrets?.apiKey ?? '')
         }}
@@ -184,6 +197,7 @@ export function App() {
   return (
     <Workbench
       initialRecordsByEntity={recordsByEntity}
+      initialLog={log}
       initialSettings={storedSettings}
       passphrase={passphrase}
       setPassphrase={setPassphrase}
@@ -248,6 +262,7 @@ function Gate({ envelope, onOpen, title, brand, locale }) {
 
 function Workbench({
   initialRecordsByEntity,
+  initialLog,
   initialSettings,
   passphrase,
   setPassphrase,
@@ -272,8 +287,11 @@ function Workbench({
   const [saving, setSaving] = useState(false)
   const [csvImport, setCsvImport] = useState(null)
   const [dark, setDark] = useState(false)
+  const [log, setLog] = useState(initialLog ?? [])
+  const [saveDialog, setSaveDialog] = useState(null)
 
   const tr = translator(settings.locale)
+  const showHints = settings.examplePrompts
   const entity = ENTITIES[activeKey]
   const schema = entity.schema
   const records = recordsByEntity[activeKey]
@@ -373,7 +391,17 @@ function Workbench({
 
   /* Speichern ------------------------------------------------- */
 
-  async function save() {
+  /**
+   * Mit eingeschaltetem Protokoll fragt das Speichern erst nach Version und
+   * Notiz - ohne diese Rückfrage bliebe das Protokoll leer und damit wertlos.
+   * Ausgeschaltet geht es direkt durch, wie vorher.
+   */
+  function requestSave() {
+    if (!settings.auditLog) return save()
+    setSaveDialog({ version: settings.version ?? '', note: '' })
+  }
+
+  async function save(entry) {
     setSaving(true)
     try {
       const stamp = new Date().toISOString()
@@ -381,19 +409,30 @@ function Workbench({
       // vor der Mehr-Entitäten-Unterstützung - bestehende Dateien/Tools
       // bleiben davon unberührt. Mehrere Entitäten: als Objekt je Schlüssel.
       const recordsForSave = SINGLE ? recordsByEntity[DEFAULT_ENTITY_KEY] : recordsByEntity
+      const nextSettings = entry ? { ...settings, version: entry.version } : settings
+      const nextLog = entry
+        ? [...log, { at: stamp, version: entry.version, note: entry.note }]
+        : log
       // Der Schlüssel wandert nur mit, wenn das in den Einstellungen
       // ausdrücklich angehakt ist. Bei verschlüsselter Datei liegt er im
       // Umschlag, sonst - auf ausdrücklichen Wunsch - im Klartext.
       const keepKey = settings.ai.enabled && settings.ai.storeKey && apiKey
-      const body = keepKey ? { records: recordsForSave, secrets: { apiKey } } : { records: recordsForSave }
+      const body = { records: recordsForSave }
+      if (nextLog.length) body.log = nextLog
+      if (keepKey) body.secrets = { apiKey }
       const payload = passphrase
-        ? { v: 1, savedAt: stamp, settings, enc: true, envelope: await seal(body, passphrase) }
-        : { v: 1, savedAt: stamp, settings, enc: false, data: body }
+        ? { v: 1, savedAt: stamp, settings: nextSettings, enc: true, envelope: await seal(body, passphrase) }
+        : { v: 1, savedAt: stamp, settings: nextSettings, enc: false, data: body }
 
       const html = buildDocument(payload)
-      const name = `${stem}-${today()}.html`
+      const slug = versionSlug(nextSettings.version)
+      const name = `${stem}${slug ? '-' + slug : ''}-${today()}.html`
       const written = await persist(html, name)
 
+      if (entry) {
+        setLog(nextLog)
+        if (entry.version !== settings.version) setSettings(nextSettings)
+      }
       setDirty(false)
       setLastSaved(payload.savedAt)
       notify(written === 'handle' ? tr('toast.savedHandle') : tr('toast.savedAs', name))
@@ -408,7 +447,7 @@ function Workbench({
     const onKey = (e) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 's') {
         e.preventDefault()
-        if (dirty) save()
+        if (dirty) requestSave()
       }
       if (e.key === 'Escape') {
         setDraft(null)
@@ -661,7 +700,7 @@ function Workbench({
         count={records.length}
         size={payloadSize}
         lastSaved={lastSaved}
-        onSave={save}
+        onSave={requestSave}
         locale={settings.locale}
         tr={tr}
       />
@@ -672,7 +711,10 @@ function Workbench({
           <span class="brand__rule" />
         </div>
         <div>
-          <h1>{settings.title}</h1>
+          <h1>
+            {settings.title}
+            {settings.version && <span class="version">{settings.version}</span>}
+          </h1>
           {settings.subtitle && <p>{settings.subtitle}</p>}
         </div>
         <div class="head__actions">
@@ -691,10 +733,13 @@ function Workbench({
         </div>
       </header>
 
+      {view !== 'settings' && <Hint show={showHints} id="header" tr={tr} />}
+
       {view === 'settings' ? (
         <SettingsPage
           settings={settings}
           onChange={changeSettings}
+          showHints={showHints}
           apiKey={apiKey}
           onDialect={learnDialect}
           onApiKey={(v) => {
@@ -720,7 +765,7 @@ function Workbench({
         />
       ) : (
       <>
-      {(ENTITY_KEYS.length > 1 || DASHBOARD) && (
+      {(ENTITY_KEYS.length > 1 || DASHBOARD || settings.auditLog) && (
         <div class="entity-tabs" role="tablist" aria-label={tr('entities.tabsLabel')}>
           {ENTITY_KEYS.length > 1 &&
             ENTITY_KEYS.map((key) => (
@@ -736,7 +781,7 @@ function Workbench({
                 {ENTITIES[key].schema.plural}
               </button>
             ))}
-          {DASHBOARD && (
+          {(DASHBOARD || settings.auditLog) && (
             <div class="entity-tabs__views">
               <button
                 role="tab"
@@ -745,18 +790,44 @@ function Workbench({
               >
                 {tr('view.list')}
               </button>
-              <button
-                role="tab"
-                aria-selected={String(view === 'dashboard')}
-                onClick={() => setView('dashboard')}
-              >
-                {tr('view.dashboard')}
-              </button>
+              {DASHBOARD && (
+                <button
+                  role="tab"
+                  aria-selected={String(view === 'dashboard')}
+                  onClick={() => setView('dashboard')}
+                >
+                  {tr('view.dashboard')}
+                </button>
+              )}
+              {settings.auditLog && (
+                <button
+                  role="tab"
+                  aria-selected={String(view === 'log')}
+                  onClick={() => setView('log')}
+                >
+                  {tr('view.log')}
+                </button>
+              )}
             </div>
           )}
         </div>
       )}
-      {view === 'dashboard' ? (
+      {view === 'log' ? (
+        <LogView
+          log={log}
+          locale={settings.locale}
+          examplePrompts={settings.examplePrompts}
+          onEditNote={(i, note) => {
+            setLog((l) => l.map((e, k) => (k === i ? { ...e, note } : e)))
+            setDirty(true)
+          }}
+          onDelete={(i) => {
+            setLog((l) => l.filter((_, k) => k !== i))
+            setDirty(true)
+          }}
+          tr={tr}
+        />
+      ) : view === 'dashboard' ? (
         <DashboardView
           dashboard={DASHBOARD}
           entities={ENTITIES}
@@ -764,6 +835,7 @@ function Workbench({
           defaultEntityKey={activeKey}
           accent={settings.colors.accent}
           dark={dark}
+          examplePrompts={showHints}
           tr={tr}
         />
       ) : (
@@ -816,6 +888,8 @@ function Workbench({
             </section>
           ))}
 
+          <Hint show={showHints} id="filters" tr={tr} />
+
           <section>
             <p class="label">{tr('sidebar.exchange')}</p>
             <div class="linklist">
@@ -828,6 +902,7 @@ function Workbench({
         </aside>
 
         <main class="main">
+          <Hint show={showHints} id="columns" tr={tr} />
           <div class="toolbar">
             <input
               class="search"
@@ -911,6 +986,7 @@ function Workbench({
           visible={visible}
           activeKey={activeKey}
           locale={settings.locale}
+          examplePrompts={showHints}
         />
       )}
 
@@ -943,6 +1019,7 @@ function Workbench({
             onCancel={() => setDraft(null)}
             onSave={commit}
             onDelete={remove}
+            showHints={showHints}
             tr={tr}
           />
         </>
@@ -985,12 +1062,30 @@ function Workbench({
         </>
       )}
 
+      {saveDialog && (
+        <>
+          <div class="scrim" onClick={() => setSaveDialog(null)} />
+          <SaveDialog
+            state={saveDialog}
+            tr={tr}
+            onChange={(patch) => setSaveDialog((s) => ({ ...s, ...patch }))}
+            onCancel={() => setSaveDialog(null)}
+            onConfirm={() => {
+              const entry = saveDialog
+              setSaveDialog(null)
+              save({ version: entry.version.trim(), note: entry.note.trim() })
+            }}
+          />
+        </>
+      )}
+
       {csvImport && (
         <>
           <div class="scrim" onClick={() => setCsvImport(null)} />
           <CsvImportDialog
             state={csvImport}
             schema={schema}
+            showHints={showHints}
             tr={tr}
             onMap={(index, key) =>
               setCsvImport((s) => ({ ...s, mapping: { ...s.mapping, [index]: key } }))
@@ -1015,7 +1110,7 @@ function Workbench({
  * verschweigt nichts - abgelehnte Zeilen werden benannt, nicht stillschweigend
  * übergangen, wie schon bei den KI-Vorschlägen.
  */
-function CsvImportDialog({ state, schema, tr, onMap, onMode, onRun, onClose }) {
+function CsvImportDialog({ state, schema, showHints, tr, onMap, onMode, onRun, onClose }) {
   const { name, columns, rows, delimiter, mapping, mode, result } = state
 
   if (result) {
@@ -1049,6 +1144,7 @@ function CsvImportDialog({ state, schema, tr, onMap, onMode, onRun, onClose }) {
       <h2>{tr('import.title')}</h2>
       <p class="note">{tr('import.summary', name, rows.length, delimiter)}</p>
       <p>{tr('import.lead')}</p>
+      <Hint show={showHints} id="import" tr={tr} />
 
       <table class="import__map">
         <thead>
@@ -1222,7 +1318,7 @@ const Th = ({ sort, k, onSort, align, children }) => (
   </th>
 )
 
-function RecordDrawer({ record, schema, singular, entity, entities, recordsByEntity, isNew, onCancel, onSave, onDelete, tr }) {
+function RecordDrawer({ record, schema, singular, entity, entities, recordsByEntity, isNew, onCancel, onSave, onDelete, showHints, tr }) {
   const [r, setR] = useState(record)
   const [confirm, setConfirm] = useState(false)
   const first = useRef(null)
@@ -1247,6 +1343,7 @@ function RecordDrawer({ record, schema, singular, entity, entities, recordsByEnt
       </div>
 
       <div class="drawer__body">
+        <Hint show={showHints} id="form" tr={tr} />
         {schema.fields.map((f, i) => (
           <div class="field" key={f.key}>
             <label for={'f-' + f.key}>{f.label}</label>
@@ -1434,6 +1531,105 @@ function KeyDialog({ active, onClose, onApply, tr }) {
         )}
         <button class="btn btn--quiet" onClick={onClose}>{tr('common.cancel')}</button>
         <button class="btn btn--primary" onClick={apply}>{tr('common.apply')}</button>
+      </div>
+    </div>
+  )
+}
+
+/**
+ * Rückfrage vor dem Speichern, solange das Änderungsprotokoll an ist. Die
+ * Version steht hier und nicht nur in den Einstellungen, weil sie sich meist
+ * genau in dem Moment ändert, in dem man speichert.
+ */
+function SaveDialog({ state, tr, onChange, onCancel, onConfirm }) {
+  const note = useRef(null)
+  useEffect(() => note.current?.focus(), [])
+
+  return (
+    <div class="modal" role="dialog" aria-label={tr('log.dialogTitle')}>
+      <h2>{tr('log.dialogTitle')}</h2>
+
+      <div class="field">
+        <label for="log-note">{tr('log.whatChanged')}</label>
+        <textarea
+          id="log-note"
+          ref={note}
+          rows="3"
+          placeholder={tr('log.notePlaceholder')}
+          value={state.note}
+          onInput={(e) => onChange({ note: e.currentTarget.value })}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) onConfirm()
+          }}
+        />
+      </div>
+
+      <div class="field">
+        <label for="log-version">{tr('log.versionLabel')}</label>
+        <input
+          id="log-version"
+          placeholder={tr('log.versionPlaceholder')}
+          value={state.version}
+          onInput={(e) => onChange({ version: e.currentTarget.value })}
+          onKeyDown={(e) => e.key === 'Enter' && onConfirm()}
+        />
+      </div>
+
+      <div class="modal__foot">
+        <button class="btn btn--quiet" onClick={onCancel}>{tr('common.cancel')}</button>
+        <button class="btn btn--primary" onClick={onConfirm}>{tr('log.save')}</button>
+      </div>
+    </div>
+  )
+}
+
+/** Das Protokoll, neueste Eintraege zuerst. Notizen bleiben nachtraeglich aenderbar. */
+function LogView({ log, locale, examplePrompts, onEditNote, onDelete, tr }) {
+  const dateLocale = locale === 'de' ? 'de-DE' : 'en-US'
+  const entries = log.map((e, i) => ({ ...e, index: i })).reverse()
+
+  return (
+    <div class="logview">
+      <div class="logview__inner">
+        <h2 class="settings__title">{tr('log.title')}</h2>
+        <p class="settings__lead">{tr('log.lead')}</p>
+        <Hint show={examplePrompts} id="settings" tr={tr} />
+
+        {entries.length === 0 ? (
+          <p class="note">{tr('log.empty')}</p>
+        ) : (
+          <>
+            <p class="label">{tr('log.entries', entries.length)}</p>
+            <ol class="logview__list">
+              {entries.map((entry) => (
+                <li key={entry.index}>
+                  <div class="logview__head">
+                    <time>
+                      {new Date(entry.at).toLocaleString(dateLocale, {
+                        dateStyle: 'medium',
+                        timeStyle: 'short',
+                      })}
+                    </time>
+                    {entry.version && <span class="version version--small">{entry.version}</span>}
+                    <button
+                      class="btn btn--quiet"
+                      title={tr('log.deleteEntry')}
+                      onClick={() => onDelete(entry.index)}
+                    >
+                      ×
+                    </button>
+                  </div>
+                  <input
+                    class="logview__note"
+                    value={entry.note}
+                    placeholder={tr('log.noNote')}
+                    onInput={(e) => onEditNote(entry.index, e.currentTarget.value)}
+                  />
+                </li>
+              ))}
+            </ol>
+          </>
+        )}
       </div>
     </div>
   )

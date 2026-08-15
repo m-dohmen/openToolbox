@@ -6,6 +6,7 @@ import { chatCompletion, contextModeOptions, dialectSummary, resolveUrl } from '
 import { sanitizeSvg } from './lib/svg.js'
 import { contrastRatio } from './lib/color.js'
 import { translator, LOCALES, LOCALE_LABELS } from './i18n.js'
+import { Hint } from './hint.jsx'
 
 const Row = ({ label, hint, children }) => (
   <div class="setting">
@@ -59,6 +60,7 @@ export function SettingsPage({
   onImportConfig,
   onResetColors,
   recordCount,
+  showHints,
 }) {
   const tr = translator(settings.locale)
   const [probe, setProbe] = useState({ state: 'idle', message: '' })
@@ -110,6 +112,7 @@ export function SettingsPage({
 
         <h2 class="settings__title">{tr('settings.title')}</h2>
         <p class="settings__lead">{tr('settings.lead')}</p>
+        <Hint show={showHints} id="settings" tr={tr} />
 
         <section>
           <p class="label">{tr('settings.appearance')}</p>
@@ -147,6 +150,14 @@ export function SettingsPage({
 
           <Row label={tr('settings.language')} hint={tr('settings.languageHint')}>
             <Segmented value={settings.locale} onChange={set('locale')} options={localeOptions} />
+          </Row>
+
+          <Row label={tr('settings.examplePrompts')} hint={tr('settings.examplePromptsHint')}>
+            <Toggle
+              checked={settings.examplePrompts}
+              onChange={set('examplePrompts')}
+              label={settings.examplePrompts ? tr('settings.promptsShown') : tr('settings.promptsHidden')}
+            />
           </Row>
         </section>
 
@@ -238,6 +249,22 @@ export function SettingsPage({
             <input value={settings.subtitle} onInput={(e) => set('subtitle')(e.currentTarget.value)} />
           </Row>
 
+          <Row label={tr('settings.version')} hint={tr('settings.versionHint')}>
+            <input
+              placeholder={tr('settings.versionEmpty')}
+              value={settings.version}
+              onInput={(e) => set('version')(e.currentTarget.value)}
+            />
+          </Row>
+
+          <Row label={tr('settings.auditLog')} hint={tr('settings.auditLogHint')}>
+            <Toggle
+              checked={settings.auditLog}
+              onChange={set('auditLog')}
+              label={settings.auditLog ? tr('settings.logging') : tr('settings.notLogging')}
+            />
+          </Row>
+
           <Row label={tr('settings.fileName')} hint={tr('settings.fileNameHint')}>
             <div class="suffixed">
               <input
@@ -305,6 +332,7 @@ export function SettingsPage({
           {ai.enabled && (
             <>
               <p class="note note--warn">{tr('settings.aiWarnNote')}</p>
+              <Hint show={showHints} id="ai" tr={tr} />
 
               <Row
                 label={tr('settings.endpoint')}
