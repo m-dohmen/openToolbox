@@ -189,6 +189,8 @@ const STRINGS = {
     'chat.removeAttachment': (name) => `Remove ${name}`,
 
     'actions.notField': (where, key) => `${where}: no such field "${key}", ignored.`,
+    'actions.readOnly': (where, label) =>
+      `${where}: ${label} is calculated from the other fields and cannot be set.`,
     'actions.notEnum': (where, raw, label, values) =>
       `${where}: "${raw}" is not a valid ${label}. Allowed: ${values}.`,
     'actions.notNumber': (where, raw, label) => `${where}: "${raw}" is not a number for ${label}.`,
@@ -537,6 +539,8 @@ const STRINGS = {
     'chat.removeAttachment': (name) => `${name} entfernen`,
 
     'actions.notField': (where, key) => `${where}: Feld "${key}" gibt es nicht, ignoriert.`,
+    'actions.readOnly': (where, label) =>
+      `${where}: ${label} wird aus den anderen Feldern berechnet und lässt sich nicht setzen.`,
     'actions.notEnum': (where, raw, label, values) =>
       `${where}: "${raw}" ist kein gültiger Wert für ${label}. Erlaubt: ${values}.`,
     'actions.notNumber': (where, raw, label) => `${where}: "${raw}" ist keine Zahl für ${label}.`,

@@ -325,6 +325,20 @@ tbody tr[data-selected="true"] td { background: var(--accent-soft); }
 .cell-title { color: var(--ink); font-weight: var(--tone-weight-bold); }
 .cell-title small { display: block; font-weight: 400; color: var(--muted); font-size: 12px; margin-top: 1px; }
 .cell-num { font-family: var(--mono); font-variant-numeric: tabular-nums; text-align: right; }
+
+/* Berechnete Felder sind abgeleitet, nicht eingegeben - die leichte
+   Zurücknahme sagt das, ohne sie unlesbar zu machen. */
+.cell-computed { color: var(--muted); }
+.field__computed {
+  display: block;
+  padding: 7px 10px;
+  border: 1px dashed var(--line);
+  border-radius: var(--r);
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 13px;
+  background: var(--bg-soft, transparent);
+}
 .cell-date { font-family: var(--mono); font-size: 12.5px; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .cell-date.is-overdue { color: var(--flag); font-weight: var(--tone-weight-bold); }
 

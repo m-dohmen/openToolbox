@@ -45,6 +45,39 @@ export const referenceFields = (schema) => schema.fields.filter((f) => f.type ==
 
 export const findField = (schema, key) => schema.fields.find((f) => f.key === key)
 
+/* ── Berechnete Felder ────────────────────────────────────────── */
+
+/** Felder, die der Anwender selbst füllt - alles außer den berechneten. */
+export const writableFields = (schema) => schema.fields.filter((f) => f.type !== 'computed')
+
+/**
+ * Wert eines Feldes. Berechnete Felder werden hier ausgerechnet und liegen
+ * bewusst NIE im Datensatz: gespeicherte Ableitungen veralten in dem Moment,
+ * in dem sich eine ihrer Quellen ändert, und niemand merkt es.
+ *
+ * `compute` stammt aus domain.js und ist damit ebenso vertrauenswürdig wie
+ * isDone/isOverdue - eine kaputte Formel soll aber die Tabelle nicht sprengen,
+ * deshalb der Fangarm.
+ */
+export function fieldValue(entity, record, key) {
+  const field = findField(entity.schema, key)
+  if (field?.type !== 'computed') return record[key]
+  try {
+    return field.compute(record) ?? ''
+  } catch {
+    return ''
+  }
+}
+
+/** Datensatz mit ausgerechneten Feldern - für Export, Sortierung, KI-Kontext. */
+export function materialize(entity, record) {
+  const computed = entity.schema.fields.filter((f) => f.type === 'computed')
+  if (!computed.length) return record
+  const out = { ...record }
+  for (const f of computed) out[f.key] = fieldValue(entity, record, f.key)
+  return out
+}
+
 /* ── Typprüfung ───────────────────────────────────────────────── */
 
 /** Aufzählungswerte tolerant zuordnen — Groß- und Kleinschreibung, Leerzeichen. */
@@ -80,6 +113,11 @@ function matchReference(entities, recordsByEntity, field, raw) {
 export function coerceField(schema, key, raw, { entities, recordsByEntity } = {}) {
   const field = findField(schema, key)
   if (!field) return { ok: false, code: 'notField', params: [key] }
+
+  // Berechnete Felder ergeben sich aus den anderen; sie zu setzen hiesse, die
+  // Formel zu umgehen und einen Wert zu hinterlegen, der beim naechsten Rendern
+  // wieder verschwindet.
+  if (field.type === 'computed') return { ok: false, code: 'readOnly', params: [field.label] }
 
   if (field.type === 'enum') {
     const hit = matchEnum(field.values, raw)
@@ -149,7 +187,9 @@ export function computeCounts(entity, records) {
   for (const key of schema.facets) c.facets[key] = {}
   for (const r of records) {
     if (entity.isOverdue(r)) c.overdue++
-    if (schema.totalField && !entity.isDone(r)) c.total_sum += Number(r[schema.totalField]) || 0
+    if (schema.totalField && !entity.isDone(r)) {
+      c.total_sum += Number(fieldValue(entity, r, schema.totalField)) || 0
+    }
     for (const key of schema.facets) c.facets[key][r[key]] = (c.facets[key][r[key]] || 0) + 1
   }
   return c

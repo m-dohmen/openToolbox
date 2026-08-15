@@ -74,6 +74,18 @@ export const SCHEMA = {
 }
 ```
 
+A field can also be **calculated** instead of stored:
+
+```js
+{ key: 'score', label: 'Risk score', type: 'computed', compute: (r) => r.likelihood * r.impact }
+```
+
+`compute(record)` runs on every render and the result is never written into the record — a stored
+derivation goes stale the moment one of its inputs changes, and nobody notices. It still sorts,
+searches, sums into the overview tile and lands in the CSV export like any other field; it is
+read-only in the form, and the AI is told so and rejected by name if it tries to set one. The
+shipped demo has one: *Days left*, counting down to the due date.
+
 That schema alone produces the table columns, the edit form, the sidebar filters, the CSV export,
 the instructions sent to the AI model and the validation of anything the model proposes back.
 `examples/risk-register.domain.js` is a complete working example — copy it over `src/domain.js` and
@@ -341,7 +353,7 @@ Runs two suites, both against a real headless Chromium:
   fixture deliberately contains a row without a title, an unknown enum value and a misformatted
   date, plus the usage counter in all three of its states (preset, pointed at a different endpoint,
   and switched off — the last one asserting that the file makes no outbound request whatsoever).
-  Around 40 assertions.
+  Around 45 assertions.
 - `test/multi-entity.mjs` — the `ENTITIES`/reference-field path: builds
   `examples/suppliers-certificates.domain.js` into its own `dist-multi-entity/` (swapping
   `src/domain.js` only for the duration of that one build, restored immediately after), then checks

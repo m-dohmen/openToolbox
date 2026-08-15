@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 import { t, DEFAULT_LOCALE } from '../i18n.js'
-import { isSingleEntity, computeCounts } from './entities.js'
+import { isSingleEntity, computeCounts, materialize } from './entities.js'
 
 /**
  * Anbindung an einen OpenAI-kompatiblen Endpunkt (Azure AI Foundry, LiteLLM,
@@ -134,7 +134,18 @@ export function buildContext({ mode, entities, recordsByEntity, visible, activeK
   }
 
   const summary = countsSummary(activeKey, entities[activeKey], recordsByEntity[activeKey] ?? [], single)
-  const rows = mode === 'alle' ? (single ? recordsByEntity[activeKey] : recordsByEntity) : visible
+  // Berechnete Felder werden mitgeschickt - das Modell soll ueber Punktwerte
+  // und Restlaufzeiten reden koennen. Zurueckschreiben darf es sie nicht, das
+  // steht in den Anweisungen und wird bei der Pruefung abgelehnt.
+  const withComputed = (key, list) => list.map((r) => materialize(entities[key], r))
+  const rows =
+    mode === 'alle'
+      ? single
+        ? withComputed(activeKey, recordsByEntity[activeKey] ?? [])
+        : Object.fromEntries(
+            Object.entries(recordsByEntity).map(([key, list]) => [key, withComputed(key, list)]),
+          )
+      : withComputed(activeKey, visible)
   let json = JSON.stringify(rows)
   let note = ''
 
@@ -174,7 +185,9 @@ const fieldLine = (f) => {
           ? 'date as YYYY-MM-DD'
           : f.type === 'number'
             ? 'number'
-            : 'text'
+            : f.type === 'computed'
+              ? 'calculated from the other fields, read-only - never set it'
+              : 'text'
   return `  ${f.key} (${f.label}): ${type}${f.required ? ', required' : ''}`
 }
 

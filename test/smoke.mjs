@@ -131,6 +131,31 @@ if (rows !== 11) fail('erwartet 11 Zeilen')
 console.log('   isSecureContext:', await page.evaluate(() => window.isSecureContext))
 console.log('   crypto.subtle:', await page.evaluate(() => typeof crypto?.subtle?.deriveKey))
 
+// Berechnetes Feld: wird gerechnet statt gespeichert, ist sortierbar, und im
+// Formular schreibgeschuetzt statt ein Eingabefeld.
+const computedCells = await page
+  .locator('table tbody tr td.cell-computed')
+  .allInnerTexts()
+console.log('1a) Berechnete Spalte:', computedCells.join(' '))
+if (computedCells.length !== 11) fail('Berechnete Spalte fehlt in der Tabelle')
+if (!computedCells.some((t) => t.startsWith('-'))) fail('Ueberfaellige Eintraege ohne negative Restlaufzeit')
+if (!computedCells.some((t) => t === '—')) fail('Erledigte Eintraege sollten keine Restlaufzeit zeigen')
+
+await page.getByRole('columnheader', { name: /Left/ }).click()
+const sortedComputed = (await page.locator('table tbody tr td.cell-computed').allInnerTexts())
+  .filter((t) => t !== '—')
+  .map(Number)
+const ascending = sortedComputed.every((n, i, a) => i === 0 || a[i - 1] <= n)
+console.log('1b) Nach berechneter Spalte sortiert:', sortedComputed.join(' '), '| aufsteigend:', ascending)
+if (!ascending) fail('Sortierung nach berechnetem Feld ist nicht numerisch')
+
+await page.locator('table tbody tr').first().locator('.cell-id').click()
+await page.waitForSelector('.drawer')
+const computedControl = await page.locator('#f-daysLeft').evaluate((el) => el.tagName)
+console.log('1c) Berechnetes Feld im Formular als:', computedControl)
+if (computedControl !== 'OUTPUT') fail('Berechnetes Feld ist im Formular beschreibbar')
+await page.keyboard.press('Escape')
+
 // Neuen Datensatz anlegen
 await page.getByRole('button', { name: 'New action item' }).first().click()
 await page.locator('#f-title').fill('Smoke test entry')
@@ -150,6 +175,15 @@ const saved = resolve(tmp, 'runde1.html')
 await dl.saveAs(saved)
 const size = readFileSync(saved).length
 console.log('3) Datei geschrieben:', dl.suggestedFilename(), size, 'Bytes')
+
+// Die eigentliche Zusage berechneter Felder: sie landen nie im Datenbestand.
+// Stuenden sie drin, waeren sie in dem Moment veraltet, in dem sich eine ihrer
+// Quellen aendert - und niemand wuerde es merken.
+const savedPayload = readFileSync(saved, 'utf8').match(
+  /<script id="sb-payload"[^>]*>([\s\S]*?)<\/script>/,
+)[1]
+console.log('3a) "daysLeft" im gespeicherten Datenblock:', (savedPayload.match(/daysLeft/g) ?? []).length, 'mal')
+if (savedPayload.includes('daysLeft')) fail('Berechnetes Feld wurde in die Datei geschrieben')
 
 // Wiederöffnen: kommt der Datenstand zurück?
 const page2 = await ctx.newPage()

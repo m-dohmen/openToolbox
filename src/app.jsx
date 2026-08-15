@@ -21,6 +21,9 @@ import {
   resolveReferenceTitle,
   computeCounts,
   coerceField,
+  fieldValue,
+  materialize,
+  writableFields,
 } from './lib/entities.js'
 import { Wordmark } from './brand.jsx'
 import { paletteVariables } from './lib/color.js'
@@ -422,16 +425,24 @@ function Workbench({
 
   const counts = useMemo(() => computeCounts(entity, records), [records, activeKey])
 
+  /* Suche und Sortierung gehen über fieldValue, damit berechnete Felder sich
+     verhalten wie alle anderen - man kann nach ihnen sortieren und in ihnen
+     suchen, ohne dass sie je im Datensatz stünden. */
   const visible = useMemo(() => {
     const q = query.trim().toLowerCase()
     const out = records.filter(
       (r) =>
         schema.facets.every((key) => !facet[key] || r[key] === facet[key]) &&
-        (!q || schema.search.map((k) => r[k]).join(' ').toLowerCase().includes(q)),
+        (!q ||
+          schema.search
+            .map((k) => fieldValue(entity, r, k))
+            .join(' ')
+            .toLowerCase()
+            .includes(q)),
     )
     return out.sort((a, b) => {
-      const x = a[sort.key] ?? ''
-      const y = b[sort.key] ?? ''
+      const x = fieldValue(entity, a, sort.key) ?? ''
+      const y = fieldValue(entity, b, sort.key) ?? ''
       if (typeof x === 'number' && typeof y === 'number') return (x - y) * sort.dir
       return String(x).localeCompare(String(y), settings.locale) * sort.dir
     })
@@ -491,7 +502,7 @@ function Workbench({
       ...schema.fields.map((f) => ({ key: f.key, label: f.label })),
     ]
     const rows = visible.map((r) => {
-      const row = { ...r }
+      const row = materialize(entity, r)
       for (const f of referenceFields(schema)) {
         row[f.key] = resolveReferenceTitle(ENTITIES, recordsByEntity, f.entity, r[f.key]) ?? r[f.key]
       }
@@ -574,7 +585,7 @@ function Workbench({
       const taken = new Set()
       columns.forEach((column, index) => {
         const needle = simplify(column)
-        const hit = schema.fields.find(
+        const hit = writableFields(schema).find(
           (f) => !taken.has(f.key) && (simplify(f.label) === needle || simplify(f.key) === needle),
         )
         if (hit) {
@@ -880,6 +891,7 @@ function Workbench({
             key={activeKey + ':' + draft[schema.idField]}
             record={draft}
             schema={schema}
+            entity={entity}
             singular={schema.singular}
             entities={ENTITIES}
             recordsByEntity={recordsByEntity}
@@ -1014,7 +1026,7 @@ function CsvImportDialog({ state, schema, tr, onMap, onMode, onRun, onClose }) {
                   onChange={(e) => onMap(index, e.currentTarget.value)}
                 >
                   <option value="">{tr('import.ignore')}</option>
-                  {schema.fields.map((f) => (
+                  {writableFields(schema).map((f) => (
                     <option key={f.key} value={f.key}>
                       {f.label}
                     </option>
@@ -1094,7 +1106,7 @@ const FilterButton = ({ active, onClick, count, children }) => (
  * des Zieldatensatzes. Damit reicht das Schema aus, um die Liste zu erzeugen.
  */
 function Cell({ record, field, schema, entities, recordsByEntity, entity, onNavigateReference }) {
-  const value = record[field.key]
+  const value = fieldValue(entity, record, field.key)
 
   if (field.key === schema.titleField) {
     return (
@@ -1142,6 +1154,16 @@ function Cell({ record, field, schema, entities, recordsByEntity, entity, onNavi
 
   if (field.type === 'number') return <td class="cell-num">{value || '—'}</td>
 
+  // Berechnete Felder werden numerisch ausgerichtet, wenn sie eine Zahl
+  // liefern - das ist der weit haeufigere Fall (Punktwerte, Restlaufzeiten).
+  if (field.type === 'computed') {
+    return (
+      <td class={typeof value === 'number' ? 'cell-num cell-computed' : 'cell-computed'}>
+        {value === '' || value == null ? '—' : value}
+      </td>
+    )
+  }
+
   return <td>{value || '—'}</td>
 }
 
@@ -1156,7 +1178,7 @@ const Th = ({ sort, k, onSort, align, children }) => (
   </th>
 )
 
-function RecordDrawer({ record, schema, singular, entities, recordsByEntity, isNew, onCancel, onSave, onDelete, tr }) {
+function RecordDrawer({ record, schema, singular, entity, entities, recordsByEntity, isNew, onCancel, onSave, onDelete, tr }) {
   const [r, setR] = useState(record)
   const [confirm, setConfirm] = useState(false)
   const first = useRef(null)
@@ -1169,6 +1191,9 @@ function RecordDrawer({ record, schema, singular, entities, recordsByEntity, isN
   useEffect(() => first.current?.focus(), [])
 
   const set = (k) => (e) => setR({ ...r, [k]: e.currentTarget.value })
+  // Der Startfokus gehoert ins erste beschreibbare Feld - ein berechnetes an
+  // erster Stelle im Schema soll ihn nicht ins Leere laufen lassen.
+  const firstFocusKey = writableFields(schema)[0]?.key
 
   return (
     <aside class="drawer" role="dialog" aria-label={tr('drawer.ariaLabel')}>
@@ -1182,7 +1207,11 @@ function RecordDrawer({ record, schema, singular, entities, recordsByEntity, isN
           <div class="field" key={f.key}>
             <label for={'f-' + f.key}>{f.label}</label>
 
-            {f.type === 'enum' ? (
+            {f.type === 'computed' ? (
+              <output id={'f-' + f.key} class="field__computed">
+                {fieldValue(entity, r, f.key) || '—'}
+              </output>
+            ) : f.type === 'enum' ? (
               <select id={'f-' + f.key} value={r[f.key]} onChange={set(f.key)}>
                 {f.values.map((v) => (
                   <option key={v}>{v}</option>
@@ -1212,7 +1241,7 @@ function RecordDrawer({ record, schema, singular, entities, recordsByEntity, isN
             ) : (
               <input
                 id={'f-' + f.key}
-                ref={i === 0 ? first : undefined}
+                ref={f.key === firstFocusKey ? first : undefined}
                 value={r[f.key]}
                 onInput={set(f.key)}
               />

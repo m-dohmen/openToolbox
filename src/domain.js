@@ -20,7 +20,7 @@ export const SCHEMA = {
   /** Shown as a second line under the title, keeps the table narrow. */
   subField: 'area',
   /** Which fields appear as table columns, in order. */
-  list: ['title', 'owner', 'due', 'status', 'effort'],
+  list: ['title', 'owner', 'due', 'daysLeft', 'status', 'effort'],
   /** Enum fields listed here become filter groups in the sidebar. */
   facets: ['status', 'area'],
   /** Fields searched by the free text box. */
@@ -35,6 +35,22 @@ export const SCHEMA = {
     { key: 'status', label: 'Status', type: 'enum', values: STATUS },
     { key: 'effort', label: 'Effort in days', short: 'D', type: 'number' },
     { key: 'note', label: 'Note', type: 'text', long: true },
+    /**
+     * Berechnetes Feld: steht nie im Datensatz, wird bei jeder Anzeige neu
+     * gerechnet. Sortieren und Suchen funktionieren trotzdem darauf, Setzen
+     * nicht - weder von Hand noch durch das Modell.
+     */
+    {
+      key: 'daysLeft',
+      label: 'Days left',
+      short: 'Left',
+      type: 'computed',
+      compute: (r) => {
+        if (!r.due || r.status === 'done') return ''
+        const days = Math.round((new Date(r.due) - new Date().setHours(0, 0, 0, 0)) / 86400000)
+        return days
+      },
+    },
   ],
 }
 
