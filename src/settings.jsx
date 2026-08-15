@@ -54,6 +54,7 @@ export function SettingsPage({
   onExportCsv,
   onExportJson,
   onImportJson,
+  onImportCsv,
   onExportConfig,
   onImportConfig,
   onResetColors,
@@ -441,6 +442,7 @@ export function SettingsPage({
               <button class="btn" onClick={onExportCsv}>{tr('settings.csv')}</button>
               <button class="btn" onClick={onExportJson}>{tr('settings.json')}</button>
               <button class="btn" onClick={onImportJson}>{tr('sidebar.importJson')}</button>
+              <button class="btn" onClick={onImportCsv}>{tr('sidebar.importCsv')}</button>
             </div>
           </Row>
         </section>

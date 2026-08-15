@@ -11,7 +11,7 @@ import {
   pickFile,
 } from './lib/payload.js'
 import { seal, open as unseal, cryptoAvailable } from './lib/crypto.js'
-import { toCsv } from './lib/csv.js'
+import { toCsv, fromCsv } from './lib/csv.js'
 import * as domainModule from './domain.js'
 import {
   normalizeEntities,
@@ -20,6 +20,7 @@ import {
   findReferencingRecords,
   resolveReferenceTitle,
   computeCounts,
+  coerceField,
 } from './lib/entities.js'
 import { Wordmark } from './brand.jsx'
 import { paletteVariables } from './lib/color.js'
@@ -259,6 +260,7 @@ function Workbench({
   const [askKey, setAskKey] = useState(initialSettings.ai.enabled && !apiKey)
   const [toast, setToast] = useState(null)
   const [saving, setSaving] = useState(false)
+  const [csvImport, setCsvImport] = useState(null)
 
   const tr = translator(settings.locale)
   const entity = ENTITIES[activeKey]
@@ -538,6 +540,80 @@ function Workbench({
     }
   }
 
+  /**
+   * CSV kommt in zwei Schritten: erst lesen und die Spalten vorschlagsweise
+   * zuordnen, dann - nach Bestätigung im Dialog - zeilenweise durch dieselbe
+   * Typprüfung schicken, die auch KI-Vorschläge durchlaufen.
+   */
+  async function importCsv() {
+    const file = await pickFile('.csv,text/csv,text/plain')
+    if (!file) return
+    try {
+      const { columns, rows, delimiter } = fromCsv(await file.text())
+      if (!rows.length) {
+        notify(tr('import.empty'), 'error')
+        return
+      }
+      // Vorbelegung: Spaltenüberschrift gegen Feldbeschriftung und Feldschlüssel
+      // vergleichen, ohne Rücksicht auf Groß-/Kleinschreibung und Sonderzeichen.
+      const simplify = (s) => String(s).toLowerCase().replace(/[^a-z0-9äöüß]/g, '')
+      const mapping = {}
+      const taken = new Set()
+      columns.forEach((column, index) => {
+        const needle = simplify(column)
+        const hit = schema.fields.find(
+          (f) => !taken.has(f.key) && (simplify(f.label) === needle || simplify(f.key) === needle),
+        )
+        if (hit) {
+          mapping[index] = hit.key
+          taken.add(hit.key)
+        }
+      })
+      setCsvImport({ name: file.name, columns, rows, delimiter, mapping, mode: 'append', result: null })
+    } catch (err) {
+      notify(tr('toast.importCancelled', err.message), 'error')
+    }
+  }
+
+  function runCsvImport() {
+    const { columns, rows, mapping, mode } = csvImport
+    const mapped = Object.entries(mapping).filter(([, key]) => key)
+    if (!mapped.length) {
+      setCsvImport((s) => ({ ...s, result: { built: 0, problems: [tr('import.nothingMapped')] } }))
+      return
+    }
+
+    const problems = []
+    const built = []
+    // Zeilennummer aus Sicht des Anwenders: Kopfzeile ist Zeile 1.
+    rows.forEach((cells, i) => {
+      const where = tr('import.row', i + 2)
+      const record = { ...entity.emptyRecord() }
+      for (const [index, key] of mapped) {
+        const raw = cells[Number(index)]
+        if (raw === undefined || String(raw).trim() === '') continue
+        const outcome = coerceField(schema, key, raw, {
+          entities: ENTITIES,
+          recordsByEntity,
+        })
+        if (!outcome.ok) {
+          problems.push(tr(`actions.${outcome.code}`, where, ...outcome.params))
+          continue
+        }
+        record[key] = outcome.value
+      }
+      if (!String(record[schema.titleField] ?? '').trim()) {
+        problems.push(tr('import.needsTitle', where, schema.titleField))
+        return
+      }
+      record[schema.idField] = entity.uid()
+      built.push(record)
+    })
+
+    if (built.length) mutate(mode === 'replace' ? built : [...records, ...built])
+    setCsvImport((s) => ({ ...s, result: { built: built.length, problems } }))
+  }
+
   /* ---------------------------------------------------------- */
 
   return (
@@ -602,6 +678,7 @@ function Workbench({
           onExportCsv={exportCsv}
           onExportJson={exportJson}
           onImportJson={importJson}
+          onImportCsv={importCsv}
           onExportConfig={exportConfiguration}
           onImportConfig={importConfiguration}
           onResetColors={() => changeSettings({ colors: DEFAULT_COLORS })}
@@ -678,6 +755,7 @@ function Workbench({
               <button onClick={exportCsv}>{tr('sidebar.csv')}</button>
               <button onClick={exportJson}>{tr('sidebar.exportJson')}</button>
               <button onClick={importJson}>{tr('sidebar.importJson')}</button>
+              <button onClick={importCsv}>{tr('sidebar.importCsv')}</button>
             </div>
           </section>
         </aside>
@@ -838,12 +916,126 @@ function Workbench({
         </>
       )}
 
+      {csvImport && (
+        <>
+          <div class="scrim" onClick={() => setCsvImport(null)} />
+          <CsvImportDialog
+            state={csvImport}
+            schema={schema}
+            tr={tr}
+            onMap={(index, key) =>
+              setCsvImport((s) => ({ ...s, mapping: { ...s.mapping, [index]: key } }))
+            }
+            onMode={(mode) => setCsvImport((s) => ({ ...s, mode }))}
+            onRun={runCsvImport}
+            onClose={() => setCsvImport(null)}
+          />
+        </>
+      )}
+
       {toast && <div class={'toast' + (toast.kind === 'error' ? ' toast--error' : '')}>{toast.text}</div>}
     </div>
   )
 }
 
 /* ── Bausteine ────────────────────────────────────────────────── */
+
+/**
+ * Zwei Schritte in einem Dialog: erst die Spalten der Datei den Feldern
+ * zuordnen, danach das Ergebnis mit allen Beanstandungen. Der zweite Schritt
+ * verschweigt nichts - abgelehnte Zeilen werden benannt, nicht stillschweigend
+ * übergangen, wie schon bei den KI-Vorschlägen.
+ */
+function CsvImportDialog({ state, schema, tr, onMap, onMode, onRun, onClose }) {
+  const { name, columns, rows, delimiter, mapping, mode, result } = state
+
+  if (result) {
+    return (
+      <div class="modal modal--wide" role="dialog" aria-label={tr('import.resultTitle')}>
+        <h2>{tr('import.resultTitle')}</h2>
+        <p class={result.built ? 'note note--ok' : 'note note--warn'}>
+          {result.built ? tr('import.done', result.built) : tr('import.noneValid')}
+        </p>
+        {result.problems.length > 0 && (
+          <>
+            <p class="note note--warn">{tr('import.problemCount', result.problems.length)}</p>
+            <ul class="import__problems">
+              {result.problems.map((line, i) => (
+                <li key={i}>{line}</li>
+              ))}
+            </ul>
+          </>
+        )}
+        <div class="modal__foot">
+          <button class="btn btn--primary" onClick={onClose}>
+            {tr('common.close')}
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div class="modal modal--wide" role="dialog" aria-label={tr('import.title')}>
+      <h2>{tr('import.title')}</h2>
+      <p class="note">{tr('import.summary', name, rows.length, delimiter)}</p>
+      <p>{tr('import.lead')}</p>
+
+      <table class="import__map">
+        <thead>
+          <tr>
+            <th>{tr('import.columnHead')}</th>
+            <th>{tr('import.fieldHead')}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {columns.map((column, index) => (
+            <tr key={index}>
+              <td>
+                <code>{column || `#${index + 1}`}</code>
+                <small>{rows[0]?.[index]}</small>
+              </td>
+              <td>
+                <select
+                  value={mapping[index] ?? ''}
+                  onChange={(e) => onMap(index, e.currentTarget.value)}
+                >
+                  <option value="">{tr('import.ignore')}</option>
+                  {schema.fields.map((f) => (
+                    <option key={f.key} value={f.key}>
+                      {f.label}
+                    </option>
+                  ))}
+                </select>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      <div class="field">
+        <label>{tr('import.mode')}</label>
+        <div class="seg" role="group">
+          <button type="button" aria-pressed={String(mode === 'append')} onClick={() => onMode('append')}>
+            {tr('import.append')}
+          </button>
+          <button type="button" aria-pressed={String(mode === 'replace')} onClick={() => onMode('replace')}>
+            {tr('import.replace')}
+          </button>
+        </div>
+      </div>
+
+      <div class="modal__foot">
+        <button class="btn btn--quiet" onClick={onClose}>
+          {tr('common.cancel')}
+        </button>
+        <button class="btn btn--primary" onClick={onRun}>
+          {tr('import.run')}
+        </button>
+      </div>
+    </div>
+  )
+}
 
 function FileBar({ name, aiOn, dirty, saving, sealed, count, size, lastSaved, onSave, locale, tr }) {
   const dateLocale = locale === 'de' ? 'de-DE' : 'en-US'

@@ -422,6 +422,33 @@ tbody tr[data-selected="true"] td { background: var(--accent-soft); }
 .modal__foot { display: flex; gap: 8px; margin-top: 18px; }
 .modal__foot .btn--primary { margin-left: auto; }
 
+/* Zuordnungsdialog des CSV-Imports - breiter, weil zwei Spalten nebeneinander. */
+.modal--wide { width: min(640px, calc(100% - 32px)); max-height: calc(100vh - 64px); overflow-y: auto; }
+
+.import__map { width: 100%; border-collapse: collapse; margin: 4px 0 18px; }
+.import__map th {
+  text-align: left;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--muted);
+  font-weight: var(--tone-weight-semi);
+  padding: 0 0 6px;
+  border-bottom: 1px solid var(--line);
+}
+.import__map td { padding: 7px 0; border-bottom: 1px solid var(--line); vertical-align: middle; }
+.import__map td:last-child { width: 45%; padding-left: 12px; }
+.import__map code { font-family: var(--tone-mono); font-size: 12px; color: var(--ink-strong); }
+.import__map small { display: block; color: var(--muted); font-size: 11.5px; margin-top: 2px; }
+.import__map select { width: 100%; }
+
+.import__problems { margin: 0; padding-left: 18px; max-height: 220px; overflow-y: auto; }
+.import__problems li { color: var(--muted); font-size: 12.5px; margin-bottom: 4px; }
+
+/* Im Dialog steht der Umschalter für sich, nicht rechtsbündig über die volle
+   Breite wie in der Einstellungszeile, wo links die Beschriftung sitzt. */
+.modal .seg { justify-self: start; }
+
 .error { color: var(--flag); font-size: 12.5px; margin: 8px 0 0; }
 
 /* ── Gate ─────────────────────────────────────────────────────── */

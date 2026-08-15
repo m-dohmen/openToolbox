@@ -34,6 +34,8 @@ brandable (colours, logo, name) · bilingual interface (English, German) · ligh
 - **Brandable.** Five colours, product name and an SVG logo, all editable in the app and stored with
   the file. Export the configuration once and reuse it across every tool you build.
 - **Light and dark mode**, keyboard shortcuts, CSV and JSON export, responsive down to phone width.
+- **CSV import with column mapping**, so real data gets in without retyping it — see
+  [Getting data in](#getting-data-in).
 - **Two interface languages out of the box** (English, German), a setting that travels with the
   file. Adding a third is a small, mechanical change — see [Interface languages](#interface-languages).
 - **Multiple entities and relationships**, when one record type isn't enough — see
@@ -240,6 +242,32 @@ is safe to ship and finish later.
   regardless of the interface language, and the user never reads that text directly — only the
   model does.
 
+## Getting data in
+
+Three ways, all in the sidebar and in Settings → Data:
+
+- **CSV import** with a column-mapping step. Pick a file, and the dialog lists every column it
+  found next to a dropdown of the current entity's fields. Columns whose heading matches a field
+  label or key are preselected (case and punctuation are ignored); anything else you assign by
+  hand, and unassigned columns are left out. Choose whether to append to the existing records or
+  replace them.
+
+  Separator (`;`, `,` or tab), quoting and a leading BOM are detected from the file, so an Excel
+  export works without a preparation step. Every cell runs through the same type check as an
+  AI-proposed change: enum values are matched tolerantly, numbers and dates are validated, a
+  reference field accepts either the target's id or its title text. **Nothing fails silently** —
+  the result screen names every objection with its line number, a bad value in one cell leaves the
+  rest of the row intact, and a row without a title is skipped rather than imported half-empty.
+
+  Identifiers are always assigned by the application, never taken from the file — the same rule
+  that applies to records the AI creates.
+
+- **JSON import** — a flat array replaces the active entity's records; an object keyed by entity
+  replaces several at once. This is the format `Export JSON` writes, so it round-trips.
+
+- **The AI assistant**, on an explicit instruction, can create records from an attached document.
+  See [The AI assistant](#the-ai-assistant).
+
 ## Limits worth knowing
 
 - **Not saved means lost.** There is no autosave — without a target file there cannot be one. The
@@ -266,7 +294,8 @@ src/lib/payload.js     read and write the embedded data block
 src/lib/crypto.js      PBKDF2 + AES-GCM
 src/lib/ai.js          endpoint client, dialect negotiation, context building
 src/lib/actions.js     validation and application of AI-proposed changes
-src/lib/entities.js    normalizes SCHEMA/ENTITIES, reference-field and delete-guard helpers
+src/lib/entities.js    normalizes SCHEMA/ENTITIES, shared field type check, delete-guard helpers
+src/lib/csv.js         CSV writer and reader (separator sniffing, RFC 4180 quoting)
 src/lib/svg.js         logo sanitiser
 src/lib/color.js       palette derivation and contrast check
 test/smoke.mjs         end-to-end test against a real headless browser
@@ -284,7 +313,9 @@ Runs two suites, both against a real headless Chromium:
 - `test/smoke.mjs` — the single-entity path, against the already-built `dist/index.html`: startup,
   edit, save, reopen, encrypt, wrong passphrase, decrypt, dark mode, settings round-trip, AI dialect
   negotiation against a mock endpoint, attachments, proposed changes with a deliberately invalid one,
-  key handling and the branding pipeline with a deliberately malicious SVG. Around 29 assertions.
+  key handling, the branding pipeline with a deliberately malicious SVG, and a CSV import whose
+  fixture deliberately contains a row without a title, an unknown enum value and a misformatted
+  date. Around 35 assertions.
 - `test/multi-entity.mjs` — the `ENTITIES`/reference-field path: builds
   `examples/suppliers-certificates.domain.js` into its own `dist-multi-entity/` (swapping
   `src/domain.js` only for the duration of that one build, restored immediately after), then checks

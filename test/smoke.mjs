@@ -490,6 +490,75 @@ if (marks < 2) fail('Logo ersetzt die Wortmarke nicht')
 await page9.waitForTimeout(300)
 await page9.screenshot({ path: resolve(tmp, 'branding.png'), fullPage: false })
 
+// CSV-Import: Zuordnungsdialog, tolerante Typpruefung, benannte Beanstandungen.
+// Absichtlich gemischt: eine Zeile ohne Titel, ein unbekannter Aufzaehlungswert,
+// ein Datum im falschen Format, und eine Spalte, die die Vorbelegung nicht
+// erraten kann (deutsche Ueberschrift auf englischem Feld) und die deshalb von
+// Hand zugeordnet werden muss.
+const csvFixture = resolve(tmp, 'import.csv')
+writeFileSync(
+  csvFixture,
+  'Title;Owner;Area;Status;Aufwand in Tagen;Due date\r\n' +
+    'Recertify access rights;M. Voss;IT Operations;open;7;2026-11-30\r\n' +
+    'Supplier audit Nordwind;A. Reinke;Procurement;in progress;12;2026-09-15\r\n' +
+    ';X. No title;IT Operations;open;2;2026-10-01\r\n' +
+    'Wrong status;K. Lorenz;People;erledigt;3;2026-12-01\r\n' +
+    'Wrong date;D. Ahrens;Organization;open;5;31.12.2026\r\n',
+)
+
+const page10 = await ctx.newPage()
+page10.on('pageerror', (e) => errors.push(String(e)))
+await page10.goto('file://' + dist)
+await page10.waitForSelector('table tbody tr')
+const beforeImport = await page10.locator('table tbody tr').count()
+await page10.evaluate(() => {
+  const original = HTMLInputElement.prototype.click
+  HTMLInputElement.prototype.click = function () {
+    if (this.type === 'file') { window.__csvPicker = this; return }
+    return original.call(this)
+  }
+})
+await page10.getByText('Import CSV', { exact: true }).click()
+await page10.waitForFunction(() => window.__csvPicker)
+const csvHandle = await page10.evaluateHandle(() => window.__csvPicker)
+await csvHandle.asElement().setInputFiles(csvFixture)
+await page10.waitForSelector('.import__map', { timeout: 5000 })
+console.log('28) CSV-Zuordnungsdialog:', await page10.locator('.modal--wide .note').first().innerText())
+
+const autoMapped = await page10.locator('.import__map select').evaluateAll((els) =>
+  els.map((e) => e.value),
+)
+console.log('    Vorbelegte Zuordnung:', JSON.stringify(autoMapped))
+if (autoMapped.filter(Boolean).length !== 5) fail('Automatische Spaltenzuordnung unvollstaendig')
+if (autoMapped[4] !== '') fail('Deutsche Spaltenueberschrift haette nicht zugeordnet werden duerfen')
+
+await page10
+  .locator('.import__map tbody tr', { hasText: 'Aufwand in Tagen' })
+  .locator('select')
+  .selectOption('effort')
+await page10.screenshot({ path: resolve(tmp, 'csv-zuordnung.png') })
+await page10.getByRole('button', { name: 'Import', exact: true }).click()
+await page10.waitForSelector('.import__problems', { timeout: 5000 })
+console.log('29) Ergebnis:', await page10.locator('.modal--wide .note').first().innerText())
+const csvProblems = await page10.locator('.import__problems li').allInnerTexts()
+csvProblems.forEach((p) => console.log('      ' + p))
+if (csvProblems.length !== 3) fail('Erwartet 3 Beanstandungen aus der Testdatei')
+if (!csvProblems.some((p) => p.includes('no title'))) fail('Zeile ohne Titel nicht beanstandet')
+if (!csvProblems.some((p) => p.includes('erledigt'))) fail('Unbekannter Statuswert nicht beanstandet')
+if (!csvProblems.some((p) => p.includes('31.12.2026'))) fail('Falsches Datumsformat nicht beanstandet')
+await page10.screenshot({ path: resolve(tmp, 'csv-ergebnis.png') })
+await page10.getByRole('button', { name: 'Close' }).click()
+await page10.waitForTimeout(200)
+
+const afterImport = await page10.locator('table tbody tr').count()
+console.log('30) Zeilen', beforeImport, '->', afterImport, '(4 von 5 Zeilen gueltig)')
+if (afterImport !== beforeImport + 4) fail('Falsche Anzahl importierter Datensaetze')
+const importedRow = await page10.locator('tr:has-text("Recertify access rights")').innerText()
+console.log('    Importierte Zeile:', importedRow.replace(/\s+/g, ' '))
+if (!importedRow.includes('M. Voss')) fail('Zugeordnete Spalte kam nicht an')
+if (!/\b7\b/.test(importedRow)) fail('Von Hand zugeordnete Spalte kam nicht an')
+if (/A-\s*$/.test(importedRow)) fail('Kein Bezeichner vergeben')
+
 // Vorschau im hellen Modus
 await page3.getByLabel('Settings').click()
 await page3.waitForSelector('.settings')

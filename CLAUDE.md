@@ -130,6 +130,27 @@ Default title, subtitle, file name, colours and product name live in `DEFAULT_SE
 `DEFAULT_COLORS` and `DEFAULT_BRAND` at the top of `src/app.jsx`. Set them to match the tool you are
 building — the user can change all of them later in the settings page.
 
+## Getting the user's real data in
+
+You do not have to write an importer, and you should not paste the user's data into `seed()`.
+The built file imports CSV itself: the user picks a file, assigns columns to fields in a dialog,
+and every cell runs through the same type check as an AI-proposed change. Separator, quoting and
+BOM are detected. Identifiers are always assigned by the app, never read from the file.
+
+Two consequences for the schema you write:
+
+- **Field `label`s drive the automatic column mapping.** A column heading that matches a field's
+  label or key — ignoring case and punctuation — is preselected. If the user showed you a sample
+  of their spreadsheet, name the fields the way their columns are named and the mapping is right
+  on the first try. Anything unmatched the user assigns by hand, so a mismatch costs a click,
+  not a failed import.
+- **Keep `values` of an enum aligned with what their data actually contains.** Enum matching is
+  tolerant about case and spacing, but `erledigt` will not match `done`. Either use their wording
+  as the enum values, or expect those cells to be reported as objections.
+
+`seed()` stays what it is: 8–12 *demo* records so the file is not empty on first open. Tell the
+user they can replace them via `Import CSV` → *replace all*.
+
 ## Build and deliver
 
 ```bash
@@ -144,6 +165,7 @@ Deliver `dist/index.html`. Rename it to something meaningful. Tell the user:
 - Ctrl/Cmd+S or the Save button writes a **new** HTML file containing the data
 - nothing is auto-saved; the amber dot in the top bar means unsaved changes
 - many mail gateways strip `.html` attachments — send it zipped
+- their own data goes in via `Import CSV`; the shipped records are demo data
 
 ## Rules that are not negotiable
 

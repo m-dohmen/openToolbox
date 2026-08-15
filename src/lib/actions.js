@@ -16,74 +16,21 @@
  * unabhängig von der Sprache der Feldnamen und Daten selbst.
  */
 
-import { resolveReferenceTitle } from './entities.js'
+import { resolveReferenceTitle, coerceField, findField } from './entities.js'
 
 const OPS = ['create', 'update', 'delete']
 
-const findField = (schema, key) => schema.fields.find((f) => f.key === key)
-
-/** Aufzählungswerte tolerant zuordnen — Groß- und Kleinschreibung, Leerzeichen. */
-function matchEnum(values, raw) {
-  const needle = String(raw).trim().toLowerCase()
-  return values.find((v) => v.toLowerCase() === needle) ?? null
-}
-
-/** Referenzwert tolerant auflösen: erst per Id, dann per Titelfeld-Text. */
-function matchReference(entities, recordsByEntity, field, raw) {
-  const target = entities[field.entity]
-  if (!target) return null
-  const pool = recordsByEntity[field.entity] ?? []
-  const byId = pool.find((r) => String(r[target.schema.idField]) === String(raw))
-  if (byId) return byId[target.schema.idField]
-  const needle = String(raw).trim().toLowerCase()
-  const byTitle = pool.find((r) => String(r[target.schema.titleField]).toLowerCase() === needle)
-  return byTitle ? byTitle[target.schema.idField] : null
-}
-
+/**
+ * Prüft einen Wert über die geteilte Typprüfung (lib/entities.js) und
+ * übersetzt einen etwaigen Fehlercode in einen Satz für die Beanstandungsliste.
+ */
 function coerce(schema, key, raw, problems, where, tr, entities, recordsByEntity) {
-  const field = findField(schema, key)
-  if (!field) {
-    problems.push(tr('actions.notField', where, key))
+  const result = coerceField(schema, key, raw, { entities, recordsByEntity })
+  if (!result.ok) {
+    problems.push(tr(`actions.${result.code}`, where, ...result.params))
     return undefined
   }
-
-  if (field.type === 'enum') {
-    const hit = matchEnum(field.values, raw)
-    if (!hit) {
-      problems.push(tr('actions.notEnum', where, raw, field.label, field.values.join(', ')))
-      return undefined
-    }
-    return hit
-  }
-
-  if (field.type === 'reference') {
-    const id = matchReference(entities, recordsByEntity, field, raw)
-    if (id === null) {
-      problems.push(tr('actions.notReference', where, raw, field.label))
-      return undefined
-    }
-    return id
-  }
-
-  if (field.type === 'number') {
-    const n = Number(raw)
-    if (Number.isNaN(n)) {
-      problems.push(tr('actions.notNumber', where, raw, field.label))
-      return undefined
-    }
-    return n
-  }
-
-  if (field.type === 'date') {
-    const value = String(raw).trim()
-    if (value && !/^\d{4}-\d{2}-\d{2}$/.test(value)) {
-      problems.push(tr('actions.notDate', where, raw))
-      return undefined
-    }
-    return value
-  }
-
-  return raw == null ? '' : String(raw)
+  return result.value
 }
 
 /** Anzeigewert für ein Feld - Referenzen werden zum Titel des Ziels aufgelöst. */

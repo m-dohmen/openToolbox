@@ -52,6 +52,7 @@ const STRINGS = {
     'sidebar.csv': 'CSV for Excel',
     'sidebar.exportJson': 'Export JSON',
     'sidebar.importJson': 'Import JSON',
+    'sidebar.importCsv': 'Import CSV',
 
     'search.placeholder': 'Search titles, owners, notes…',
     'search.counter': (visible, total) => `${visible} of ${total}`,
@@ -124,6 +125,29 @@ const STRINGS = {
     'common.load': 'Load',
     'common.test': 'Test',
     'common.gotIt': 'Got it',
+    'common.close': 'Close',
+
+    'import.title': 'Import CSV',
+    'import.summary': (name, rows, delimiter) =>
+      `${name} · ${rows} data ${rows === 1 ? 'row' : 'rows'} · separator "${delimiter === '\t' ? 'Tab' : delimiter}"`,
+    'import.lead':
+      'Assign the columns of the file to the fields of this tool. Unassigned columns are left out. ' +
+      'Identifiers are always assigned by the application, never taken from the file.',
+    'import.columnHead': 'Column in the file',
+    'import.fieldHead': 'Target field',
+    'import.ignore': '— leave out —',
+    'import.mode': 'Existing records',
+    'import.append': 'keep, append',
+    'import.replace': 'replace all',
+    'import.run': 'Import',
+    'import.row': (n) => `Line ${n}`,
+    'import.needsTitle': (where, titleField) => `${where}: no ${titleField}, line skipped.`,
+    'import.nothingMapped': 'No column is assigned to a field.',
+    'import.empty': 'The file contains no data rows.',
+    'import.resultTitle': 'Import result',
+    'import.done': (n) => `${n} ${n === 1 ? 'record' : 'records'} imported — not saved yet.`,
+    'import.noneValid': 'No line could be imported.',
+    'import.problemCount': (n) => `${n} ${n === 1 ? 'objection' : 'objections'}:`,
 
     'contextMode.sichtbar': 'View',
     'contextMode.alle': 'All',
@@ -360,6 +384,7 @@ const STRINGS = {
     'sidebar.csv': 'CSV für Excel',
     'sidebar.exportJson': 'JSON exportieren',
     'sidebar.importJson': 'JSON importieren',
+    'sidebar.importCsv': 'CSV importieren',
 
     'search.placeholder': 'Titel, Verantwortliche, Notizen durchsuchen…',
     'search.counter': (visible, total) => `${visible} von ${total}`,
@@ -432,6 +457,29 @@ const STRINGS = {
     'common.load': 'Laden',
     'common.test': 'Testen',
     'common.gotIt': 'Verstanden',
+    'common.close': 'Schließen',
+
+    'import.title': 'CSV importieren',
+    'import.summary': (name, rows, delimiter) =>
+      `${name} · ${rows} ${rows === 1 ? 'Datenzeile' : 'Datenzeilen'} · Trennzeichen "${delimiter === '\t' ? 'Tab' : delimiter}"`,
+    'import.lead':
+      'Ordne die Spalten der Datei den Feldern dieses Werkzeugs zu. Nicht zugeordnete Spalten ' +
+      'bleiben außen vor. Kennungen vergibt immer die Anwendung, nie die Datei.',
+    'import.columnHead': 'Spalte in der Datei',
+    'import.fieldHead': 'Zielfeld',
+    'import.ignore': '— weglassen —',
+    'import.mode': 'Vorhandene Datensätze',
+    'import.append': 'behalten, anhängen',
+    'import.replace': 'alle ersetzen',
+    'import.run': 'Importieren',
+    'import.row': (n) => `Zeile ${n}`,
+    'import.needsTitle': (where, titleField) => `${where}: kein ${titleField}, Zeile übersprungen.`,
+    'import.nothingMapped': 'Keine Spalte ist einem Feld zugeordnet.',
+    'import.empty': 'Die Datei enthält keine Datenzeilen.',
+    'import.resultTitle': 'Ergebnis des Imports',
+    'import.done': (n) => `${n} ${n === 1 ? 'Datensatz' : 'Datensätze'} importiert — noch nicht gespeichert.`,
+    'import.noneValid': 'Keine Zeile konnte importiert werden.',
+    'import.problemCount': (n) => `${n} ${n === 1 ? 'Beanstandung' : 'Beanstandungen'}:`,
 
     'contextMode.sichtbar': 'Ansicht',
     'contextMode.alle': 'Alle',
