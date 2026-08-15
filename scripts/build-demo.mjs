@@ -18,6 +18,7 @@ import { fileURLToPath } from 'node:url'
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const domainPath = resolve(root, 'src/domain.js')
 const appPath = resolve(root, 'src/app.jsx')
+const indexPath = resolve(root, 'index.html')
 const examplePath = resolve(root, 'examples/portfolio.domain.js')
 
 const DEMO = {
@@ -29,6 +30,7 @@ const DEMO = {
 
 const originalDomain = readFileSync(domainPath, 'utf8')
 const originalApp = readFileSync(appPath, 'utf8')
+const originalIndex = readFileSync(indexPath, 'utf8')
 
 try {
   writeFileSync(domainPath, readFileSync(examplePath, 'utf8'))
@@ -41,10 +43,20 @@ try {
   }
   writeFileSync(appPath, app)
 
+  // Der Fenstertitel steht statisch in index.html und wuerde sonst weiter
+  // "Action items" sagen, waehrend die Demo Projekte zeigt.
+  const index = originalIndex.replace(
+    /<title>[^<]*<\/title>/,
+    `<title>${DEMO.title} — openToolbox</title>`,
+  )
+  if (index === originalIndex) throw new Error('<title> not found in index.html')
+  writeFileSync(indexPath, index)
+
   execFileSync('npx', ['vite', 'build', '--outDir', 'docs/demo'], { cwd: root, stdio: 'inherit' })
 } finally {
   writeFileSync(domainPath, originalDomain)
   writeFileSync(appPath, originalApp)
+  writeFileSync(indexPath, originalIndex)
 }
 
-console.log('\nDemo written to docs/demo/index.html — src/domain.js and src/app.jsx restored.')
+console.log('\nDemo written to docs/demo/index.html — domain.js, app.jsx and index.html restored.')
