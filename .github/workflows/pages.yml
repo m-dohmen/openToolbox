@@ -30,6 +30,11 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run build
+      # Die Schaudemo aus examples/portfolio.domain.js liegt unter /demo/ -
+      # frisch gebaut, damit die veroeffentlichte Fassung nie hinter dem
+      # eingecheckten Stand zurueckfaellt.
+      - run: npm run build:demo
+      - run: cp -r docs/demo dist/demo
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist
