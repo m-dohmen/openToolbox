@@ -278,9 +278,25 @@ const STRINGS = {
     'settings.securityNote':
       'Encryption protects the data, not access to the application. Roles and views in a file ' +
       'that runs locally would be surface only — whoever holds the file also holds the code.',
+    'settings.analytics': 'Usage counter',
+    'settings.analyticsHint':
+      'Reports one page view to the endpoint below when this file is opened, together with the ' +
+      'kind of tool this is. No records, no field contents, no file name, nothing you typed. ' +
+      'Switch it off and — with the AI integration off as well — this file opens no network ' +
+      'connection at all.',
+    'settings.counting': 'counting',
+    'settings.notCounting': 'off',
+    'settings.analyticsUrl': 'Counting endpoint',
+    'settings.analyticsUrlHint':
+      'Preset to the counter of whoever built this template. Point it at your own — any endpoint ' +
+      'that accepts a GET works — or clear the field to count nothing. The setting travels with ' +
+      'the file, so copies you pass on keep counting where you decided.',
+    'settings.analyticsUrlEmpty': 'empty — count nothing',
     'settings.aiIntegration': 'AI integration',
     'settings.aiActiveLabel': 'AI integration active',
-    'settings.aiActiveHint': 'While this is off the application opens no network connection at all. There is no second way out.',
+    'settings.aiActiveHint':
+      'While this is off, nothing from this file is sent to a model — there is no second way out. ' +
+      'With the usage counter above switched off too, the file opens no network connection at all.',
     'settings.on': 'on',
     'settings.off': 'off',
     'settings.aiWarnNote':
@@ -610,9 +626,26 @@ const STRINGS = {
     'settings.securityNote':
       'Verschlüsselung schützt die Daten, nicht den Zugriff auf die Anwendung. Rollen und Ansichten ' +
       'in einer lokal laufenden Datei wären nur Oberfläche — wer die Datei hat, hat auch den Code.',
+    'settings.analytics': 'Aufrufzähler',
+    'settings.analyticsHint':
+      'Meldet beim Öffnen dieser Datei einen Seitenaufruf an den unten eingetragenen Endpunkt, ' +
+      'zusammen mit der Art des Werkzeugs. Keine Datensätze, keine Feldinhalte, kein Dateiname, ' +
+      'nichts von dir Eingegebenes. Ausgeschaltet öffnet diese Datei — bei ebenfalls ' +
+      'ausgeschalteter KI-Anbindung — überhaupt keine Netzwerkverbindung.',
+    'settings.counting': 'zählt',
+    'settings.notCounting': 'aus',
+    'settings.analyticsUrl': 'Zähl-Endpunkt',
+    'settings.analyticsUrlHint':
+      'Vorbelegt mit dem Zähler dessen, der diese Vorlage gebaut hat. Trag deinen eigenen ein — es ' +
+      'genügt ein Endpunkt, der ein GET annimmt — oder leere das Feld, dann wird nichts gezählt. ' +
+      'Die Einstellung reist mit der Datei, weitergegebene Kopien zählen also dorthin, wo du es ' +
+      'entschieden hast.',
+    'settings.analyticsUrlEmpty': 'leer — nichts zählen',
     'settings.aiIntegration': 'KI-Integration',
     'settings.aiActiveLabel': 'KI-Integration aktiv',
-    'settings.aiActiveHint': 'Solange dies aus ist, öffnet die Anwendung keinerlei Netzwerkverbindung. Es gibt keinen zweiten Weg hinaus.',
+    'settings.aiActiveHint':
+      'Solange dies aus ist, geht nichts aus dieser Datei an ein Modell — es gibt keinen zweiten Weg ' +
+      'hinaus. Ist zusätzlich der Aufrufzähler oben aus, öffnet die Datei überhaupt keine Netzwerkverbindung.',
     'settings.on': 'an',
     'settings.off': 'aus',
     'settings.aiWarnNote':

@@ -271,6 +271,24 @@ export function SettingsPage({
           </Row>
 
           <p class="note">{tr('settings.securityNote')}</p>
+
+          <Row label={tr('settings.analytics')} hint={tr('settings.analyticsHint')}>
+            <Toggle
+              checked={settings.analytics}
+              onChange={set('analytics')}
+              label={settings.analytics ? tr('settings.counting') : tr('settings.notCounting')}
+            />
+          </Row>
+
+          {settings.analytics && (
+            <Row label={tr('settings.analyticsUrl')} hint={tr('settings.analyticsUrlHint')}>
+              <input
+                placeholder={tr('settings.analyticsUrlEmpty')}
+                value={settings.analyticsUrl}
+                onInput={(e) => set('analyticsUrl')(e.currentTarget.value.trim())}
+              />
+            </Row>
+          )}
         </section>
 
         <section>

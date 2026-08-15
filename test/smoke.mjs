@@ -559,6 +559,72 @@ if (!importedRow.includes('M. Voss')) fail('Zugeordnete Spalte kam nicht an')
 if (!/\b7\b/.test(importedRow)) fail('Von Hand zugeordnete Spalte kam nicht an')
 if (/A-\s*$/.test(importedRow)) fail('Kein Bezeichner vergeben')
 
+// Aufrufzaehler: zaehlt vorbelegt, laesst sich auf einen eigenen Endpunkt
+// umstellen (reist mit der Datei), und schweigt abgeschaltet vollstaendig.
+const countSpy = async (page) => {
+  const hits = []
+  for (const pattern of ['**goatcounter.com/**', '**zaehler.intern/**']) {
+    await page.route(pattern, (route) => {
+      hits.push(route.request().url())
+      route.fulfill({ status: 200, body: '' })
+    })
+  }
+  return hits
+}
+
+const page11 = await ctx.newPage()
+page11.on('pageerror', (e) => errors.push(String(e)))
+const countHits = await countSpy(page11)
+await page11.goto('file://' + dist)
+await page11.waitForSelector('table tbody tr')
+await page11.waitForTimeout(400)
+console.log('31) Zaehler vorbelegt:', countHits.length, 'Aufruf |', countHits[0] ?? '-')
+if (countHits.length !== 1) fail('Aufrufzaehler hat nicht gezaehlt')
+if (!countHits[0]?.includes('p=opentoolbox')) fail('Zaehlpfad fehlt')
+if (countHits[0]?.includes('action-items')) fail('Dateiname darf nicht im Zaehlaufruf stehen')
+
+await page11.getByLabel('Settings').click()
+await page11.waitForSelector('.settings')
+await page11.locator('input[placeholder="empty — count nothing"]').fill('https://zaehler.intern/count')
+const dlOwn = await Promise.all([
+  page11.waitForEvent('download', { timeout: 15000 }),
+  page11.locator('.filebar__save').click(),
+]).then(([d]) => d)
+const ownCounter = resolve(tmp, 'zaehler-eigen.html')
+await dlOwn.saveAs(ownCounter)
+
+const page12 = await ctx.newPage()
+page12.on('pageerror', (e) => errors.push(String(e)))
+const ownHits = await countSpy(page12)
+await page12.goto('file://' + ownCounter)
+await page12.waitForSelector('table tbody tr')
+await page12.waitForTimeout(400)
+console.log('32) Eigener Endpunkt:', ownHits[0] ?? '-')
+if (!ownHits[0]?.startsWith('https://zaehler.intern/')) fail('Eigener Zaehl-Endpunkt reist nicht mit')
+
+await page12.getByLabel('Settings').click()
+await page12.waitForSelector('.settings')
+await page12.getByText('counting', { exact: true }).click()
+await page12.waitForTimeout(200)
+const dlOff = await Promise.all([
+  page12.waitForEvent('download', { timeout: 15000 }),
+  page12.locator('.filebar__save').click(),
+]).then(([d]) => d)
+const offCounter = resolve(tmp, 'zaehler-aus.html')
+await dlOff.saveAs(offCounter)
+
+const page13 = await ctx.newPage()
+page13.on('pageerror', (e) => errors.push(String(e)))
+let foreignRequests = 0
+page13.on('request', (r) => {
+  if (!r.url().startsWith('file://') && !r.url().startsWith('data:')) foreignRequests++
+})
+await page13.goto('file://' + offCounter)
+await page13.waitForSelector('table tbody tr')
+await page13.waitForTimeout(400)
+console.log('33) Abgeschaltet — fremde Requests insgesamt:', foreignRequests)
+if (foreignRequests !== 0) fail('Abgeschalteter Zaehler oeffnet trotzdem eine Verbindung')
+
 // Vorschau im hellen Modus
 await page3.getByLabel('Settings').click()
 await page3.waitForSelector('.settings')

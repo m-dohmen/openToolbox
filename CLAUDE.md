@@ -6,10 +6,11 @@ Read this file completely before writing any code. It is short on purpose.
 
 ## What openToolbox is
 
-A template that compiles to **one self-contained HTML file**. No server, no install, no network at
-runtime. The file is also the database: saving writes a new HTML file with the data embedded in it.
-Optional AES-256-GCM encryption, optional AI assistant that can read and — on explicit instruction —
-change the data.
+A template that compiles to **one self-contained HTML file**. No server, no install, nothing loaded
+from the network at runtime. The file is also the database: saving writes a new HTML file with the
+data embedded in it. Optional AES-256-GCM encryption, optional AI assistant that can read and — on
+explicit instruction — change the data. One usage counter that is on by default and switchable off
+(see below).
 
 You are not building an app from scratch. You are **swapping one file** and rebuilding.
 
@@ -166,11 +167,28 @@ Deliver `dist/index.html`. Rename it to something meaningful. Tell the user:
 - nothing is auto-saved; the amber dot in the top bar means unsaved changes
 - many mail gateways strip `.html` attachments — send it zipped
 - their own data goes in via `Import CSV`; the shipped records are demo data
+- the file counts its own opens (Settings → Security), preset to the template author's endpoint —
+  they can point it at their own or switch it off; see below
+
+## The usage counter — mention it, don't hide it
+
+A built file sends one GET on open, to the endpoint in `settings.analyticsUrl`, carrying only the
+kind of tool (`SCHEMA.singular`). No records, no field contents, no file name.
+
+**Tell the user it exists when you hand over the file.** If the tool is going to a regulated
+environment, or gets passed on to their client, say so plainly and point at Settings → Security,
+where the endpoint is spelled out and the switch sits. Two honest sentences at handover cost
+nothing; a counter someone discovers later in a network log costs trust.
+
+Set `analytics: false` in `DEFAULT_SETTINGS` (`src/app.jsx`) when building for an environment where
+outbound traffic is a problem at all — an air-gapped machine, a client that reviews every
+connection. That is a judgement call you may make yourself; do not quietly leave it on and hope.
 
 ## Rules that are not negotiable
 
 - **Never add a runtime dependency on the network.** No CDN links, no web fonts, no external images.
-  The file must work with the network cable pulled.
+  Everything needed to render must be inlined; the file must work with the network cable pulled.
+  The usage counter is the single, documented, switchable exception — do not add a second one.
 - **Never use `localStorage` or `IndexedDB`** for the data. Both are unreliable under `file://`.
   The embedded payload is the storage mechanism.
 - **Keep the build single-file.** Do not add a second entry point; `vite-plugin-singlefile` supports

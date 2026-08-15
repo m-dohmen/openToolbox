@@ -28,6 +28,7 @@ import { IconSave, IconSettings } from './icons.jsx'
 import { SettingsPage } from './settings.jsx'
 import { ChatDock } from './chat.jsx'
 import { AI_DEFAULTS } from './lib/ai.js'
+import { countOpen, DEFAULT_COUNT_URL } from './lib/count.js'
 import { translator, DEFAULT_LOCALE } from './i18n.js'
 
 /**
@@ -96,6 +97,8 @@ const DEFAULT_SETTINGS = {
   density: 'normal',
   watermark: true,
   locale: DEFAULT_LOCALE,
+  analytics: true,
+  analyticsUrl: DEFAULT_COUNT_URL,
   title: 'Action items',
   subtitle: 'Open points from audits and steering meetings',
   fileStem: 'action-items',
@@ -331,6 +334,16 @@ function Workbench({
   useEffect(() => {
     document.documentElement.lang = settings.locale
   }, [settings.locale])
+
+  /* Einmal je geöffneter Datei, nicht bei jedem Rendern - siehe lib/count.js.
+     Leere Abhängigkeitsliste mit Absicht: wer den Zähler in dieser Sitzung
+     abschaltet, hat schon gezählt; wer ihn einschaltet, zählt beim nächsten
+     Öffnen. Beides ist ehrlicher als nachträglich zu feuern. */
+  useEffect(() => {
+    if (settings.analytics) {
+      countOpen(settings.analyticsUrl, ENTITIES[DEFAULT_ENTITY_KEY].schema.singular)
+    }
+  }, [])
 
   /* Gewählte Farben als Variablen am Wurzelelement — von dort erbt alles,
      auch der Dunkelmodus, weil der nur die Rollen neu zuordnet. */

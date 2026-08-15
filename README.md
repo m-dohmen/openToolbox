@@ -23,7 +23,9 @@ brandable (colours, logo, name) · bilingual interface (English, German) · ligh
 
 ## What you get
 
-- **One file.** ~90 KB, self-contained. Double-click, it runs. Pull the network cable, it still runs.
+- **One file.** ~90 KB, self-contained. Double-click, it runs. Pull the network cable, it still runs
+  — the only thing it would miss is the [usage counter](#the-usage-counter), which is one visible
+  setting away from off.
 - **The file is the database.** Save writes a new HTML file with the records embedded. No backend,
   no browser storage, no sync.
 - **Optional encryption.** AES-256-GCM, key derived through PBKDF2 with 310,000 rounds. Without the
@@ -146,10 +148,31 @@ There is deliberately **no browser storage**. `IndexedDB` and `localStorage` are
 `file://` — Chrome refuses `IndexedDB` when third-party cookies are blocked, and `localStorage` is
 shared across all local files in some browsers. The embedded payload works everywhere.
 
+## The usage counter
+
+The one thing in a built file that reaches the network on its own. On open it sends a single GET
+to a counting endpoint with **the kind of tool this is** — `SCHEMA.singular`, e.g. `action item`.
+That is all: no records, no field contents, no file name, no title, nothing anyone typed.
+
+Three deliberate decisions, because a file like this gets passed on to people who did not build it:
+
+- **The endpoint is a visible, editable setting**, not a constant baked into the code. It comes
+  preset to the counter of whoever built the template. Point it at your own, or clear the field and
+  nothing is counted. The setting travels with the file, so copies you hand to a client count where
+  *you* decided — or nowhere.
+- **It's a normal switch in Settings → Security**, labelled, with the endpoint spelled out next to
+  it. Not a hidden pixel.
+- **The path is the tool kind, never `fileStem`.** The file name is end-user editable and in
+  practice carries client names (`kunde-xy-risikoregister`). Sending that to a third party would
+  leak something that belongs to the file's recipient, so it is deliberately not sent.
+
+Switch the counter off, leave the AI integration off, and the file opens **no** network connection
+at all — verifiable in the network tab, and asserted by the test suite.
+
 ## The AI assistant
 
-Switched off by default. While off, the application opens no network connection at all — there is
-no second way out.
+Switched off by default. While off, the AI integration opens no network connection at all — there
+is no second way out.
 
 **Compatibility is negotiated, not assumed.** "OpenAI-compatible" is a family of dialects, not a
 standard. Current reasoning models require `max_completion_tokens` and reject a custom temperature;
@@ -296,6 +319,7 @@ src/lib/ai.js          endpoint client, dialect negotiation, context building
 src/lib/actions.js     validation and application of AI-proposed changes
 src/lib/entities.js    normalizes SCHEMA/ENTITIES, shared field type check, delete-guard helpers
 src/lib/csv.js         CSV writer and reader (separator sniffing, RFC 4180 quoting)
+src/lib/count.js       the usage counter — the only self-initiated network call in the file
 src/lib/svg.js         logo sanitiser
 src/lib/color.js       palette derivation and contrast check
 test/smoke.mjs         end-to-end test against a real headless browser
@@ -315,7 +339,9 @@ Runs two suites, both against a real headless Chromium:
   negotiation against a mock endpoint, attachments, proposed changes with a deliberately invalid one,
   key handling, the branding pipeline with a deliberately malicious SVG, and a CSV import whose
   fixture deliberately contains a row without a title, an unknown enum value and a misformatted
-  date. Around 35 assertions.
+  date, plus the usage counter in all three of its states (preset, pointed at a different endpoint,
+  and switched off — the last one asserting that the file makes no outbound request whatsoever).
+  Around 40 assertions.
 - `test/multi-entity.mjs` — the `ENTITIES`/reference-field path: builds
   `examples/suppliers-certificates.domain.js` into its own `dist-multi-entity/` (swapping
   `src/domain.js` only for the duration of that one build, restored immediately after), then checks
