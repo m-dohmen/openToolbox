@@ -43,9 +43,24 @@ alter Regel handelt.
 ## Anwenden
 
 ```bash
-./.multica/setup.sh --dry-run    # zeigen, was passieren würde
-./.multica/setup.sh              # anlegen oder aktualisieren
+cp .multica/.env.example .multica/.env   # einmalig: Runtime eintragen
+./.multica/setup.sh --dry-run            # zeigen, was passieren würde
+./.multica/setup.sh                      # anlegen oder aktualisieren
 ```
+
+### Nichts Umgebungsspezifisches im Repository
+
+In diesen Dateien steht **keine einzige UUID**. Der Workspace wird über seinen
+Slug (`opentoolbox`) aufgelöst, die Runtime über ihren Namen aus
+`MULTICA_RUNTIME`. `.multica/.env` ist über `.gitignore` ausgeschlossen.
+
+Geheimnisse gibt es hier ohnehin keine — die Anmeldung macht `multica login`,
+das Token liegt in der CLI-Konfiguration. Aber Ids und Maschinennamen sind
+Topologie: Wer sie in einem öffentlichen Repository stehen lässt, verrät den
+Aufbau eines fremden Workspace und lädt jeden, der die Datei kopiert, dazu
+ein, versehentlich Agenten dort einzurichten, wo er nichts zu suchen hat.
+`setup.sh` bricht deshalb ab, statt auf einen Vorgabewert zurückzufallen,
+und zeigt die verfügbaren Runtimes an.
 
 **Die Dateien hier sind die Quelle.** Wer eine Instruktion in der
 Multica-Oberfläche ändert, verliert die Änderung beim nächsten Lauf. Ändern,

@@ -2,11 +2,13 @@
 
 Die CLI liegt auf dem PATH. Setze den Workspace **ausschließlich** über die
 Umgebungsvariable — `multica workspace switch` verstellt den Default für alle
-anderen Agenten auf derselben Maschine:
+anderen Agenten auf derselben Maschine. Die Id löst du über den Slug auf, statt
+sie irgendwo abzuschreiben; sie ändert sich, der Slug nicht:
 
 ```bash
-export MULTICA_WORKSPACE_ID="56cfee6a-3c08-4233-a6be-2d82ffbba9d3"   # openToolbox
-multica auth status                                                  # muss den Nutzer zeigen
+export MULTICA_WORKSPACE_ID="$(multica workspace list --output json |
+  python3 -c "import json,sys; print(next(w['id'] for w in json.load(sys.stdin) if w['slug']=='opentoolbox'))")"
+multica auth status   # muss den angemeldeten Nutzer zeigen
 ```
 
 | Zweck | Befehl |

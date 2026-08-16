@@ -4,3 +4,6 @@ dist-multi-entity/
 test/.out/
 .DS_Store
 docs/.social-preview.html
+
+# Umgebungsspezifische Multica-Konfiguration (siehe .multica/.env.example)
+.multica/.env

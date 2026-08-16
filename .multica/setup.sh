@@ -13,9 +13,18 @@
 #   ./.multica/setup.sh --dry-run  # nur zeigen, was passieren würde
 set -euo pipefail
 
-WORKSPACE_ID="56cfee6a-3c08-4233-a6be-2d82ffbba9d3"   # openToolbox
-RUNTIME_ID="a9f8cff2-531c-4bab-85b2-d4ea27f10934"     # Claude (ppi-ai.de)
-MODEL="claude-sonnet-5"
+# Nichts Umgebungsspezifisches steht in dieser Datei. Der Workspace wird ueber
+# seinen Slug aufgeloest, die Runtime ueber ihren Namen aus der Umgebung. Beides
+# laesst sich in .multica/.env ueberschreiben (nicht eingecheckt, siehe
+# .env.example) oder direkt als Umgebungsvariable setzen.
+#
+# UUIDs gehoeren nicht in ein oeffentliches Repository: sie sind zwar keine
+# Credentials und geben ohne Token keinen Zugriff, verraten aber die Topologie
+# eines fremden Workspace — und wer die Datei kopiert, richtet sonst versehentlich
+# Agenten in einem Workspace ein, der ihm nicht gehoert.
+
+WORKSPACE_SLUG="${MULTICA_WORKSPACE_SLUG:-opentoolbox}"
+MODEL="${MULTICA_MODEL:-claude-sonnet-5}"
 SQUAD_NAME="BUILD"
 
 DRY=""
@@ -23,10 +32,53 @@ DRY=""
 
 cd "$(dirname "$0")/.."
 AGENTS_DIR=".multica/agents"
-export MULTICA_WORKSPACE_ID="$WORKSPACE_ID"
+
+# shellcheck source=/dev/null
+[[ -f .multica/.env ]] && source .multica/.env
 
 command -v multica >/dev/null || { echo "multica CLI nicht gefunden."; exit 1; }
 multica auth status >/dev/null 2>&1 || { echo "Nicht angemeldet: multica login"; exit 1; }
+
+# Workspace ueber den Slug aufloesen.
+WORKSPACE_ID="$(multica workspace list --output json |
+  python3 -c "
+import json,sys
+print(next((w['id'] for w in json.load(sys.stdin) if w['slug']==sys.argv[1]), ''))" "$WORKSPACE_SLUG")"
+if [[ -z "$WORKSPACE_ID" ]]; then
+  echo "Workspace mit Slug '$WORKSPACE_SLUG' nicht gefunden. Vorhanden:"
+  multica workspace list --output json | python3 -c "
+import json,sys
+for w in json.load(sys.stdin): print(f\"  {w['slug']:20} {w['name']}\")"
+  echo "Anderen Slug setzen: MULTICA_WORKSPACE_SLUG=<slug> $0"
+  exit 1
+fi
+export MULTICA_WORKSPACE_ID="$WORKSPACE_ID"
+
+# Runtime ueber ihren Namen aufloesen. Bewusst ohne Vorgabewert: welche Maschine
+# die Agenten ausfuehrt, ist eine Entscheidung der jeweiligen Umgebung und darf
+# nicht aus einer eingecheckten Datei kommen.
+if [[ -z "${MULTICA_RUNTIME:-}" ]]; then
+  echo "MULTICA_RUNTIME ist nicht gesetzt — Name der Runtime, auf der die Agenten laufen."
+  echo "Verfuegbar:"
+  multica runtime list --output json | python3 -c "
+import json,sys
+d=json.load(sys.stdin); d=d if isinstance(d,list) else d.get('runtimes',d)
+for r in d:
+    if r.get('status')=='online': print(f\"  {r['name']}\")"
+  echo
+  echo "Setzen, z. B.:  echo 'export MULTICA_RUNTIME=\"…\"' >> .multica/.env"
+  exit 1
+fi
+
+RUNTIME_ID="$(multica runtime list --output json |
+  python3 -c "
+import json,sys
+d=json.load(sys.stdin); d=d if isinstance(d,list) else d.get('runtimes',d)
+print(next((r['id'] for r in d if r['name']==sys.argv[1]), ''))" "$MULTICA_RUNTIME")"
+[[ -n "$RUNTIME_ID" ]] || { echo "Runtime '$MULTICA_RUNTIME' nicht gefunden."; exit 1; }
+
+echo "Workspace: $WORKSPACE_SLUG · Runtime: $MULTICA_RUNTIME · Modell: $MODEL"
+echo
 
 # Instruktion = gemeinsames Produktprofil + Multica-Spielregeln + Rollentext.
 # Zusammengesetzt statt kopiert: sonst laufen sechs Beschreibungen desselben
@@ -53,7 +105,8 @@ upsert_agent() {
   # Menschliche Ausgabe nach stderr: stdout gehoert der Agenten-Id, die der
   # Aufrufer per $( ) einfaengt.
   if [[ -n "$DRY" ]]; then
-    printf '  %-26s %-14s %5s Zeichen Instruktion\n' "$name" "${id:+aktualisieren}${id:-anlegen}" "${#ins}" >&2
+    local what="anlegen"; [[ -n "$id" ]] && what="aktualisieren"
+    printf '  %-26s %-14s %5s Zeichen Instruktion\n' "$name" "$what" "${#ins}" >&2
     return
   fi
 
