@@ -1427,3 +1427,71 @@ tbody tr[data-selected="true"] td { background: var(--accent-soft); }
 .filebar__budget[data-full="true"] .filebar__meter > span { background: var(--pending); }
 
 .cell-attach { color: var(--muted); font-size: 12.5px; }
+
+/* ── Startseite ───────────────────────────────────────────────── */
+
+.home { flex: 1; overflow: auto; background: var(--bg); padding: 32px 20px 48px; }
+.home__inner {
+  max-width: 700px;
+  margin: 0 auto;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  padding: 30px 34px;
+  box-shadow: var(--shadow);
+}
+.home__badge {
+  margin: 0 0 12px;
+  font-family: var(--mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--accent-text);
+}
+.home__editor {
+  width: 100%;
+  min-height: 260px;
+  font-family: var(--mono);
+  font-size: 12.5px;
+  line-height: 1.6;
+  resize: vertical;
+}
+.home__preview {
+  border: 1px dashed var(--line);
+  border-radius: var(--r);
+  padding: 14px 18px;
+  margin-top: 6px;
+}
+.home__foot { display: flex; gap: 10px; align-items: center; margin-top: 26px; }
+.home__locked { display: inline-flex; align-items: center; gap: 6px; color: var(--muted); font-size: 12.5px; }
+
+/* Fliesstext. Bewusst grosszuegiger als der Rest der Anwendung - hier wird
+   gelesen, nicht gescannt. */
+.prose { color: var(--ink); font-size: 14.5px; line-height: 1.65; }
+.prose > :first-child { margin-top: 0; }
+.prose > :last-child { margin-bottom: 0; }
+.prose h2 { font-size: 21px; margin: 0 0 14px; color: var(--ink-strong); }
+.prose h3 { font-size: 16px; margin: 24px 0 8px; color: var(--ink-strong); }
+.prose h4 { font-size: 14px; margin: 20px 0 6px; color: var(--ink-strong); }
+.prose p { margin: 0 0 12px; }
+.prose ul, .prose ol { margin: 0 0 12px; padding-left: 22px; }
+.prose li { margin-bottom: 4px; }
+.prose a { color: var(--accent-text); }
+.prose code {
+  font-family: var(--mono);
+  font-size: 0.88em;
+  background: var(--line-soft);
+  padding: 1px 5px;
+  border-radius: var(--r);
+}
+.prose blockquote {
+  margin: 0 0 12px;
+  padding: 2px 0 2px 14px;
+  border-left: 3px solid var(--accent);
+  color: var(--muted);
+}
+.prose hr { border: none; border-top: 1px solid var(--line); margin: 22px 0; }
+
+@media print {
+  .home__foot, .home__badge { display: none; }
+}

@@ -207,6 +207,32 @@ validation are reference-aware too: it can name the target record by id or by it
 Everything else — CSV/JSON export, encryption, branding, the interface language toggle — already
 understands this shape without any further change.
 
+## The start page
+
+A tool that lands straight on a table assumes the recipient already knows what it is. Usually they
+do not — they want a sentence on what this is for, who maintains it and where to ask.
+
+`DEFAULT_HOME` at the top of `src/app.jsx` holds that text, and the app opens on it whenever it is
+not empty. **Write it for the tool you build.** It is the first thing your user's recipients see,
+and the shipped default talks about openToolbox rather than about their tool.
+
+The text is a small Markdown subset — `#`/`##`/`###`, `-` and `1.` lists, `>` quotes, `---`,
+`**bold**`, `*italic*`, `` `code` `` and `[text](url)`. Everything else stays plain text: it is
+parsed into a tree and rendered as nodes, never inserted as HTML, so nothing in that field can
+become markup in a file that gets passed around.
+
+Two things to know:
+
+- **Editing happens on the page itself**, and the settings lock covers it. Protect the settings and
+  the *Edit this page* button becomes a note saying so — otherwise the protection would be half a
+  measure, since this is where it says what the tool is.
+- **The text lives with the settings**, so it sits outside the encrypted envelope and stays readable
+  before anyone unlocks the file. That is right for "what is this" and wrong for anything
+  confidential. Say so if the tool is encrypted.
+
+Set it to `''` when a start page would only be a click in the way — a tool someone opens twenty
+times a day does not need one.
+
 ## Optional: a guided entry wizard
 
 The list plus the edit form assume the recipient knows the tool. Someone who gets the file in order

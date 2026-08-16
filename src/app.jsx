@@ -36,6 +36,7 @@ import { SettingsPage } from './settings.jsx'
 import { DashboardView } from './dashboard.jsx'
 import { WizardView } from './wizard.jsx'
 import { MergeDialog } from './merge.jsx'
+import { HomeView } from './home.jsx'
 import { extractPayload, diffAll, applyMerge } from './lib/merge.js'
 import { diffTrail, trailFor } from './lib/trail.js'
 import {
@@ -141,6 +142,28 @@ const DEFAULT_LINKS = [
   { icon: GITHUB_MARK, url: 'https://github.com/m-dohmen/openToolbox', label: 'openToolbox on GitHub' },
 ]
 
+/* Text der Startseite. Steht als eigene Konstante, damit ein Werkzeugbauer
+   (und das Demo-Skript) ihn an einer Stelle ersetzen kann. Leerer Text heisst,
+   dass es die Startseite nicht gibt - wie beim Dashboard entscheidet der
+   Inhalt und nicht ein zusaetzlicher Schalter.
+
+   Er liegt bei den Einstellungen und damit ausserhalb des verschluesselten
+   Umschlags: die Beschreibung eines Werkzeugs soll auch vor dem Entsperren
+   lesbar sein. Nichts Vertrauliches hineinschreiben. */
+const DEFAULT_HOME = `# About this tool
+
+Built with **openToolbox** — one HTML file that is the application and the database at the same
+time. Saving writes a new file with the records embedded in it.
+
+## What to do here
+
+- Open a record from the list to edit it
+- \`Ctrl\`/\`Cmd\`+\`S\` saves — nothing is written automatically
+- Bring your own data in through *Import CSV*
+
+> Replace this text with what your recipients need to know: what the tool is for, who maintains it,
+> and where to ask questions. The button below opens the data.`
+
 const DEFAULT_SETTINGS = {
   theme: 'system',
   density: 'normal',
@@ -158,6 +181,7 @@ const DEFAULT_SETTINGS = {
      im Wizard, fuer Empfaenger, die genau eine Sache melden sollen. Ohne
      WIZARD-Export im Schema hat der Schalter keine Wirkung. */
   mode: 'workbench',
+  home: DEFAULT_HOME,
   /* Obergrenze fuer alle Anhaenge zusammen, in MB. Siehe lib/attach.js: ohne
      harte Grenze macht der dritte Scan aus dem Werkzeug einen Mailanhang, den
      kein Gateway mehr durchlaesst. */
@@ -335,9 +359,12 @@ function Workbench({
   const [recordsByEntity, setRecordsByEntity] = useState(initialRecordsByEntity)
   const [activeKey, setActiveKey] = useState(DEFAULT_ENTITY_KEY)
   const [settings, setSettings] = useState(initialSettings)
-  const [view, setView] = useState(
-    WIZARD && initialSettings.mode === 'intake' ? 'wizard' : 'list',
-  )
+  const [view, setView] = useState(() => {
+    if (WIZARD && initialSettings.mode === 'intake') return 'wizard'
+    // Die Startseite ist genau dann der Einstieg, wenn jemand einen Text
+    // hinterlegt hat. Ein leerer Willkommensschirm waere nur ein Klick.
+    return String(initialSettings.home ?? '').trim() ? 'home' : 'list'
+  })
   const [dirty, setDirty] = useState(fresh)
   const [lastSaved, setLastSaved] = useState(savedAt)
   const [query, setQuery] = useState('')
@@ -366,6 +393,7 @@ function Workbench({
   const tr = translator(settings.locale)
   const showHints = settings.examplePrompts
   const settingsLocked = Boolean(settings.lock) && !unlocked
+  const homeText = String(settings.home ?? '').trim()
   const entity = ENTITIES[activeKey]
   const schema = entity.schema
   const records = recordsByEntity[activeKey]
@@ -930,7 +958,9 @@ function Workbench({
         </div>
       </header>
 
-      {view !== 'settings' && view !== 'wizard' && <Hint show={showHints} id="header" tr={tr} />}
+      {view !== 'settings' && view !== 'wizard' && view !== 'home' && (
+        <Hint show={showHints} id="header" tr={tr} />
+      )}
 
       {view === 'settings' ? (
         <SettingsPage
@@ -972,7 +1002,7 @@ function Workbench({
         />
       ) : (
       <>
-      {!intake && (ENTITY_KEYS.length > 1 || DASHBOARD || settings.auditLog || WIZARD) && (
+      {!intake && (ENTITY_KEYS.length > 1 || DASHBOARD || settings.auditLog || WIZARD || homeText) && (
         <div class="entity-tabs" role="tablist" aria-label={tr('entities.tabsLabel')}>
           {ENTITY_KEYS.length > 1 &&
             ENTITY_KEYS.map((key) => (
@@ -988,8 +1018,17 @@ function Workbench({
                 {ENTITIES[key].schema.plural}
               </button>
             ))}
-          {(DASHBOARD || settings.auditLog || WIZARD) && (
+          {(DASHBOARD || settings.auditLog || WIZARD || homeText) && (
             <div class="entity-tabs__views">
+              {homeText && (
+                <button
+                  role="tab"
+                  aria-selected={String(view === 'home')}
+                  onClick={() => setView('home')}
+                >
+                  {tr('view.home')}
+                </button>
+              )}
               <button
                 role="tab"
                 aria-selected={String(view === 'list')}
@@ -1028,7 +1067,16 @@ function Workbench({
           )}
         </div>
       )}
-      {intake || (view === 'wizard' && WIZARD) ? (
+      {view === 'home' && !intake ? (
+        <HomeView
+          text={settings.home ?? ''}
+          locked={settingsLocked}
+          onChange={(next) => changeSettings({ home: next })}
+          onStart={() => setView('list')}
+          startLabel={tr('home.start', schema.plural)}
+          tr={tr}
+        />
+      ) : intake || (view === 'wizard' && WIZARD) ? (
         <WizardView
           wizard={WIZARD}
           entities={ENTITIES}

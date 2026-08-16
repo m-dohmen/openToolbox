@@ -83,6 +83,7 @@ s'impriment en un PDF propre.
   champ.
 - **Un journal des modifications au niveau du champ**, déduit automatiquement à chaque enregistrement : quel enregistrement, quel champ, avant et après.
 - **Des pièces jointes avec un budget de taille visible**, car un outil qu'on ne peut plus envoyer par courriel n'est plus cet outil.
+- **Une page d'accueil modifiable**, pour que le fichier s'explique avant d'afficher un tableau.
 
 ## Démarrage rapide
 

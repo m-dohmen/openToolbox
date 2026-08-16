@@ -401,6 +401,25 @@ const STRINGS = {
       'All attachments in this file together, in MB. Raise it only if you know the route the file ' +
       'takes — many mail gateways refuse attachments beyond about 10 MB.',
 
+    'view.home': 'Start',
+    'home.start': (plural) => `Open the ${plural}`,
+    'home.edit': 'Edit this page',
+    'home.editing': 'Editing the start page',
+    'home.editorLabel': 'Text of the start page',
+    'home.preview': 'Preview',
+    'home.empty': 'No text yet. Edit this page to say what this tool is for.',
+    'home.locked':
+      'Protected — unlock the settings to edit this page.',
+    'home.syntax':
+      '# heading · - list · 1. numbered · > quote · --- rule · **bold** · *italic* · `code` · ' +
+      '[text](url). Anything else stays plain text.',
+    'settings.home': 'Start page',
+    'settings.homeHint':
+      'What the tool is for, who maintains it, where to ask. Edited on the page itself; empty ' +
+      'means there is no start page. Stored with the settings, so it stays readable even in an ' +
+      'encrypted file — do not put anything confidential in it.',
+    'settings.homeClear': 'Remove the start page',
+
     'view.wizard': 'Guided entry',
     'wizard.title': 'Guided entry',
     'wizard.stepOf': (at, total) => `Step ${at} of ${total}`,
@@ -961,6 +980,25 @@ const STRINGS = {
     'settings.attachmentBudgetHint':
       'Alle Anhänge dieser Datei zusammen, in MB. Nur anheben, wenn der Weg der Datei bekannt ist — ' +
       'viele Mail-Gateways weisen Anhänge ab etwa 10 MB ab.',
+
+    'view.home': 'Start',
+    'home.start': (plural) => `Zu den ${plural}`,
+    'home.edit': 'Diese Seite bearbeiten',
+    'home.editing': 'Startseite bearbeiten',
+    'home.editorLabel': 'Text der Startseite',
+    'home.preview': 'Vorschau',
+    'home.empty': 'Noch kein Text. Diese Seite bearbeiten und sagen, wofür das Werkzeug da ist.',
+    'home.locked':
+      'Geschützt — zum Bearbeiten die Einstellungen entsperren.',
+    'home.syntax':
+      '# Überschrift · - Liste · 1. nummeriert · > Zitat · --- Linie · **fett** · *kursiv* · ' +
+      '`code` · [Text](url). Alles andere bleibt einfacher Text.',
+    'settings.home': 'Startseite',
+    'settings.homeHint':
+      'Wofür das Werkzeug da ist, wer es pflegt, wo man fragt. Bearbeitet wird auf der Seite ' +
+      'selbst; leer heißt, es gibt keine Startseite. Liegt bei den Einstellungen und bleibt damit ' +
+      'auch in einer verschlüsselten Datei lesbar — nichts Vertrauliches hineinschreiben.',
+    'settings.homeClear': 'Startseite entfernen',
 
     'view.wizard': 'Geführte Erfassung',
     'wizard.title': 'Geführte Erfassung',

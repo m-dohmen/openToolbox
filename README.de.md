@@ -125,6 +125,8 @@ Dashboard · CSV-Import · Änderungsprotokoll · Versionsnummern.**
   was neben dem Werkzeug liegt — siehe [Die dunkle Leiste oben](#die-dunkle-leiste-oben).
 - **Prüfregeln über Felder hinweg**, identisch durchgesetzt im Formular, beim CSV-Import und bei
   Vorschlägen der KI — siehe [Ein eigenes Werkzeug bauen](#ein-eigenes-werkzeug-bauen).
+- **Eine bearbeitbare Startseite**, damit die Datei sich erklärt, bevor sie eine Tabelle zeigt —
+  siehe [Die Startseite](#die-startseite).
 - **Eine geführte Erfassung** und ein Erfassungsmodus, der die Datei direkt darin öffnet — siehe
   [Geführte Erfassung](#geführte-erfassung).
 - **Rückläufer zusammenführen**, Datensatz für Datensatz und mit Feldvergleich — siehe
@@ -282,6 +284,27 @@ Zeile ohne Titel wird übersprungen statt halbleer importiert.
 
 Kennungen vergibt immer die Anwendung, nie die Datei — dieselbe Regel wie bei Datensätzen, die die
 KI anlegt.
+
+## Die Startseite
+
+Ein Werkzeug, das direkt auf einer Tabelle landet, setzt voraus, dass der Empfänger weiß, was er da
+vor sich hat. Meistens weiß er es nicht — er will einen Satz dazu, wofür das gut ist, wer es pflegt
+und wo man fragt. Die Anwendung öffnet auf dieser Seite, sobald Text darin steht.
+
+![Die Startseite](docs/screenshots/home.png)
+
+Bearbeitet wird in der Anwendung selbst, in einem kleinen Markdown-Teilsatz: Überschriften, Listen,
+Zitate, Trennlinie, `**fett**`, `*kursiv*`, `` `code` `` und `[Verweise](url)`. Alles andere bleibt
+einfacher Text — der Inhalt wird zu einer Baumstruktur geparst und als Knoten gerendert, nie als
+HTML eingesetzt. Nichts, was dort steht, kann in einer herumgereichten Datei zu Markup werden.
+
+Zwei Dinge dazu. **Der Schutz der Einstellungen deckt diese Seite mit ab** — sind sie geschützt,
+wird aus dem Bearbeiten-Knopf ein entsprechender Hinweis, denn sonst wäre der Schutz eine halbe
+Sache. Und **der Text liegt bei den Einstellungen**, also außerhalb des verschlüsselten Umschlags
+und lesbar, bevor jemand die Datei entsperrt: richtig für „was ist das", falsch für alles
+Vertrauliche.
+
+Leerer Text heißt, dass es die Startseite nicht gibt.
 
 ## Geführte Erfassung
 

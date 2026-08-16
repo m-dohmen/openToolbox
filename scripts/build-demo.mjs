@@ -28,6 +28,23 @@ const DEMO = {
   version: '2.1',
 }
 
+/* Die Startseite der Demo. Sie ist der erste Eindruck fuer jeden, der die
+   Demo oeffnet - eine Vorlagen-Standardseite waere dort verschenkt. */
+const DEMO_HOME = `# Project portfolio
+
+A worked example built with **openToolbox**: engagements, their milestones, and where the budget
+stands. Everything you see comes out of one file, \`src/domain.js\`.
+
+## What to try
+
+- **List** — two record types that reference each other, calculated columns, filters that count
+- **Dashboard** — the same data as tiles, drawn without a charting library
+- **Guided entry** — a short wizard that creates an engagement and its first milestone in one run
+- **Merge a file** — reconcile a copy that came back from someone else
+
+> This page is editable in the app itself. In a tool you deliver, put here what the recipients
+> need: what it is for, who maintains it, and where to ask.`
+
 const originalDomain = readFileSync(domainPath, 'utf8')
 const originalApp = readFileSync(appPath, 'utf8')
 const originalIndex = readFileSync(indexPath, 'utf8')
@@ -41,6 +58,14 @@ try {
     if (!pattern.test(app)) throw new Error(`DEFAULT_SETTINGS.${key} not found in src/app.jsx`)
     app = app.replace(pattern, `$1'${value}'`)
   }
+  /* Der Text enthaelt selbst Backticks (Inline-Code) und landet in einem
+     Template-Literal - beide muessen escaped werden, sonst endet das Literal
+     mitten im Satz. Ersetzung als Funktion, damit $ in der Vorlage nichts
+     bedeutet. */
+  const homePattern = /const DEFAULT_HOME = `[\s\S]*?`\n/
+  if (!homePattern.test(app)) throw new Error('DEFAULT_HOME not found in src/app.jsx')
+  const escaped = DEMO_HOME.replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\$\{/g, '\\${')
+  app = app.replace(homePattern, () => 'const DEFAULT_HOME = `' + escaped + '`\n')
   writeFileSync(appPath, app)
 
   // Der Fenstertitel steht statisch in index.html und wuerde sonst weiter

@@ -34,6 +34,9 @@ const page = await ctx.newPage()
 
 const openDemo = async () => {
   await page.goto('file://' + demo)
+  // Seit der Startseite ist die Liste nicht mehr der Einstieg.
+  await page.waitForSelector('.home, table tbody tr')
+  if (await page.locator('.home').count()) await page.locator('.home__foot .btn--primary').click()
   await page.waitForSelector('table tbody tr')
   await page.waitForTimeout(250)
 }
@@ -48,6 +51,11 @@ const setPrompts = async (on) => {
   await page.waitForSelector('table tbody tr')
   await page.waitForTimeout(200)
 }
+
+await page.goto('file://' + demo)
+await page.waitForSelector('.home')
+await page.waitForTimeout(300)
+await shot(page, 'home')
 
 await openDemo()
 

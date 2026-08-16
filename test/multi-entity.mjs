@@ -78,6 +78,9 @@ page.on('pageerror', (e) => errors.push(String(e)))
 page.on('console', (m) => m.type() === 'error' && errors.push(m.text()))
 
 await page.goto('file://' + dist)
+// Seit der Startseite ist die Liste nicht mehr der Einstieg.
+await page.waitForSelector('.home, table tbody tr')
+if (await page.locator('.home').count()) await page.locator('.home__foot .btn--primary').click()
 await page.waitForSelector('table tbody tr')
 
 // 1) Umschalter zwischen Entitaeten

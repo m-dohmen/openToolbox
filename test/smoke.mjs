@@ -4,6 +4,7 @@ import { createServer } from 'node:http'
 import { buildUrl, parseHeaders } from '../src/lib/ai.js'
 import { safeUrl } from '../src/lib/links.js'
 import { applyActions } from '../src/lib/actions.js'
+import { parse } from '../src/lib/markdown.js'
 import { translator } from '../src/i18n.js'
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs'
 import { resolve, dirname } from 'node:path'
@@ -35,6 +36,20 @@ async function saveTo(page, target, note) {
   ])
   await download.saveAs(target)
   return download
+}
+
+/**
+ * Datei oeffnen und in der Liste landen. Seit der Startseite ist die Liste
+ * nicht mehr der Einstieg - die Pruefungen unten interessiert aber fast immer
+ * die Tabelle, nicht der Begruessungstext.
+ */
+async function openList(page, file) {
+  await page.goto('file://' + file)
+  await page.waitForSelector('.home, table tbody tr', { timeout: 5000 })
+  if (await page.locator('.home').count()) {
+    await page.locator('.home__foot .btn--primary').click()
+  }
+  await page.waitForSelector('table tbody tr', { timeout: 5000 })
 }
 
 const fail = (m) => {
@@ -203,6 +218,18 @@ const good = applyActions(
 console.log('    Mit Verantwortlichem:', JSON.stringify(good.done))
 if (good.problems.length || good.next.records[0].status !== 'done') fail('Zulaessiger Vorschlag wurde abgelehnt')
 
+/* Der Startseitentext wird nicht als HTML abgelegt, sondern als kleiner
+   Markdown-Teilsatz geparst und aus einer Baumstruktur gerendert. Alles, was
+   nicht in der Liste steht, muss Text bleiben. */
+const md = parse('# H\n\nText with <b>markup</b> and <script>alert(1)</script>\n\n- a\n- b\n\n[x](javascript:alert(1))')
+const mdJson = JSON.stringify(md)
+console.log('0c) Startseiten-Renderer:', md.map((b) => b.type).join(' '))
+if (!mdJson.includes('<script>alert(1)<\\/script>') && !mdJson.includes('<script>alert(1)</script>')) {
+  fail('Markup haette als Text erhalten bleiben muessen')
+}
+if (mdJson.includes('"url":"javascript')) fail('javascript:-Adresse landete in einem Verweis')
+if (md.filter((b) => b.type === 'list')[0]?.items.length !== 2) fail('Aufzaehlung falsch geparst')
+
 const browser = await chromium.launch()
 const ctx = await browser.newContext({ acceptDownloads: true, viewport: { width: 1280, height: 850 } })
 // Headless kennt keinen nativen Dateidialog -> Download-Pfad erzwingen.
@@ -216,8 +243,7 @@ const errors = []
 page.on('pageerror', (e) => errors.push(String(e)))
 page.on('console', (m) => m.type() === 'error' && errors.push(m.text()))
 
-await page.goto('file://' + dist)
-await page.waitForSelector('table tbody tr', { timeout: 5000 })
+await openList(page, dist)
 
 const rows = await page.locator('table tbody tr').count()
 console.log('1) Start über file:// — Zeilen gerendert:', rows)
@@ -278,8 +304,7 @@ if (savedPayload.includes('daysLeft')) fail('Berechnetes Feld wurde in die Datei
 // Wiederöffnen: kommt der Datenstand zurück?
 const page2 = await ctx.newPage()
 page2.on('pageerror', (e) => errors.push(String(e)))
-await page2.goto('file://' + saved)
-await page2.waitForSelector('table tbody tr')
+await openList(page2, saved)
 const rows3 = await page2.locator('table tbody tr').count()
 const hasTest = await page2.getByText('Smoke test entry').count()
 console.log('4) Neu geöffnet — Zeilen:', rows3, '| Testeintrag gefunden:', hasTest === 1)
@@ -322,6 +347,8 @@ console.log('6) Falsche Passphrase abgewiesen:', await page3.locator('.error').i
 await page3.screenshot({ path: resolve(tmp, 'sperrbildschirm.png') })
 await page3.locator('#gate-pass').fill('korrekt-pferd-batterie')
 await page3.getByRole('button', { name: 'Unlock' }).click()
+await page3.waitForSelector('.home, table tbody tr', { timeout: 15000 })
+if (await page3.locator('.home').count()) await page3.locator('.home__foot .btn--primary').click()
 await page3.waitForSelector('table tbody tr', { timeout: 15000 })
 const rows4 = await page3.locator('table tbody tr').count()
 console.log('7) Richtige Passphrase — Zeilen:', rows4)
@@ -374,8 +401,7 @@ await page4.screenshot({ path: resolve(tmp, 'sperrbildschirm-dunkel.png') })
 // KI-Integration gegen den nachgebauten Endpunkt
 const page5 = await ctx.newPage()
 page5.on('pageerror', (e) => errors.push(String(e)))
-await page5.goto('file://' + dist)
-await page5.waitForSelector('table tbody tr')
+await openList(page5, dist)
 await page5.getByLabel('Settings').click()
 await page5.waitForSelector('.settings')
 await page5.getByText('off', { exact: true }).click()
@@ -526,8 +552,7 @@ writeFileSync(cfgPfad, JSON.stringify(cfg))
 
 const page9 = await ctx.newPage()
 page9.on('pageerror', (e) => errors.push(String(e)))
-await page9.goto('file://' + dist)
-await page9.waitForSelector('table tbody tr')
+await openList(page9, dist)
 await page9.getByLabel('Settings').click()
 await page9.waitForSelector('.settings')
 // Der Dateidialog laeuft ueber ein erzeugtes Element - dessen Klick abfangen
@@ -616,8 +641,7 @@ writeFileSync(
 
 const page10 = await ctx.newPage()
 page10.on('pageerror', (e) => errors.push(String(e)))
-await page10.goto('file://' + dist)
-await page10.waitForSelector('table tbody tr')
+await openList(page10, dist)
 const beforeImport = await page10.locator('table tbody tr').count()
 await page10.evaluate(() => {
   const original = HTMLInputElement.prototype.click
@@ -683,8 +707,7 @@ const countSpy = async (page) => {
 const page11 = await ctx.newPage()
 page11.on('pageerror', (e) => errors.push(String(e)))
 const countHits = await countSpy(page11)
-await page11.goto('file://' + dist)
-await page11.waitForSelector('table tbody tr')
+await openList(page11, dist)
 await page11.waitForTimeout(400)
 console.log('31) Zaehler vorbelegt:', countHits.length, 'Aufruf |', countHits[0] ?? '-')
 if (countHits.length !== 1) fail('Aufrufzaehler hat nicht gezaehlt')
@@ -700,8 +723,7 @@ await saveTo(page11, ownCounter, 'eigener Zaehler')
 const page12 = await ctx.newPage()
 page12.on('pageerror', (e) => errors.push(String(e)))
 const ownHits = await countSpy(page12)
-await page12.goto('file://' + ownCounter)
-await page12.waitForSelector('table tbody tr')
+await openList(page12, ownCounter)
 await page12.waitForTimeout(400)
 console.log('32) Eigener Endpunkt:', ownHits[0] ?? '-')
 if (!ownHits[0]?.startsWith('https://zaehler.intern/')) fail('Eigener Zaehl-Endpunkt reist nicht mit')
@@ -719,8 +741,7 @@ let foreignRequests = 0
 page13.on('request', (r) => {
   if (!r.url().startsWith('file://') && !r.url().startsWith('data:')) foreignRequests++
 })
-await page13.goto('file://' + offCounter)
-await page13.waitForSelector('table tbody tr')
+await openList(page13, offCounter)
 await page13.waitForTimeout(400)
 console.log('33) Abgeschaltet — fremde Requests insgesamt:', foreignRequests)
 if (foreignRequests !== 0) fail('Abgeschalteter Zaehler oeffnet trotzdem eine Verbindung')
@@ -730,8 +751,7 @@ if (foreignRequests !== 0) fail('Abgeschalteter Zaehler oeffnet trotzdem eine Ve
 const page14 = await ctx.newPage()
 page14.on('pageerror', (e) => errors.push(String(e)))
 page14.on('console', (m) => m.type() === 'error' && errors.push(m.text()))
-await page14.goto('file://' + dist)
-await page14.waitForSelector('table tbody tr')
+await openList(page14, dist)
 const railOverdue = await page14.locator('.kpi .is-flag dd').innerText()
 
 await page14.getByRole('tab', { name: 'Dashboard' }).click()
@@ -799,8 +819,7 @@ await page14.emulateMedia({ media: 'screen' })
 const page15 = await ctx.newPage()
 page15.on('pageerror', (e) => errors.push(String(e)))
 page15.on('console', (m) => m.type() === 'error' && errors.push(m.text()))
-await page15.goto('file://' + dist)
-await page15.waitForSelector('table tbody tr')
+await openList(page15, dist)
 
 const hintCount = await page15.locator('.hint').count()
 const hintPrompt = await page15.locator('.hint__prompt q').first().innerText()
@@ -925,8 +944,7 @@ if (/"lock":\s*\{[^}]*"123"/.test(lockedSource)) fail('Wort steht im Klartext in
 
 const page16 = await ctx.newPage()
 page16.on('pageerror', (e) => errors.push(String(e)))
-await page16.goto('file://' + lockedFile)
-await page16.waitForSelector('table tbody tr')
+await openList(page16, lockedFile)
 await page16.getByLabel('Settings').click()
 await page16.waitForSelector('.settings__locked')
 const reopened = page16.locator('.suffixed input')
@@ -938,8 +956,7 @@ await page16.close()
 const page17 = await ctx.newPage()
 page17.on('pageerror', (e) => errors.push(String(e)))
 page17.on('console', (m) => m.type() === 'error' && errors.push(m.text()))
-await page17.goto('file://' + dist)
-await page17.waitForSelector('table tbody tr')
+await openList(page17, dist)
 
 const barDefault = await page17.locator('.filebar__name').innerText()
 const linkDefault = await page17.locator('.filebar__links a').getAttribute('href')
@@ -994,8 +1011,7 @@ const linkFile = resolve(tmp, 'mit-verweisen.html')
 await saveTo(page17, linkFile, 'Kopfzeile und Verweise gesetzt')
 const page18 = await ctx.newPage()
 page18.on('pageerror', (e) => errors.push(String(e)))
-await page18.goto('file://' + linkFile)
-await page18.waitForSelector('table tbody tr')
+await openList(page18, linkFile)
 const reopenedBar = await page18.locator('.filebar__name').innerText()
 const reopenedLinks = await page18.locator('.filebar__links a').evaluateAll((els) =>
   els.map((e) => e.getAttribute('title')),
@@ -1009,8 +1025,7 @@ await page18.close()
 const page19 = await ctx.newPage()
 page19.on('pageerror', (e) => errors.push(String(e)))
 page19.on('console', (m) => m.type() === 'error' && errors.push(m.text()))
-await page19.goto('file://' + dist)
-await page19.waitForSelector('table tbody tr')
+await openList(page19, dist)
 
 const before = await page19.locator('table tbody tr').count()
 await page19.getByRole('button', { name: /^New / }).click()
@@ -1072,8 +1087,7 @@ await page19.close()
 const page20 = await ctx.newPage()
 page20.on('pageerror', (e) => errors.push(String(e)))
 page20.on('console', (m) => m.type() === 'error' && errors.push(m.text()))
-await page20.goto('file://' + dist)
-await page20.waitForSelector('table tbody tr')
+await openList(page20, dist)
 const rowsBeforeWizard = await page20.locator('table tbody tr').count()
 
 await page20.getByRole('tab', { name: 'Guided entry' }).click()
@@ -1163,8 +1177,7 @@ await page21.close()
 const page22 = await ctx.newPage()
 page22.on('pageerror', (e) => errors.push(String(e)))
 page22.on('console', (m) => m.type() === 'error' && errors.push(m.text()))
-await page22.goto('file://' + dist)
-await page22.waitForSelector('table tbody tr')
+await openList(page22, dist)
 
 // Die "zurueckgeschickte" Kopie: ein Datensatz geaendert, einer neu.
 await page22.locator('table tbody tr').first().locator('.cell-id').click()
@@ -1186,8 +1199,7 @@ await page22.close()
 const page23 = await ctx.newPage()
 page23.on('pageerror', (e) => errors.push(String(e)))
 page23.on('console', (m) => m.type() === 'error' && errors.push(m.text()))
-await page23.goto('file://' + dist)
-await page23.waitForSelector('table tbody tr')
+await openList(page23, dist)
 await page23.getByRole('button', { name: /^New / }).click()
 await page23.waitForSelector('.drawer')
 await page23.locator('#f-title').fill('Only in my copy')
@@ -1255,8 +1267,7 @@ await page23.close()
 const page24 = await ctx.newPage()
 page24.on('pageerror', (e) => errors.push(String(e)))
 page24.on('console', (m) => m.type() === 'error' && errors.push(m.text()))
-await page24.goto('file://' + dist)
-await page24.waitForSelector('table tbody tr')
+await openList(page24, dist)
 
 // Ein Feld aendern, einen Datensatz anlegen, einen loeschen
 await page24.locator('table tbody tr').first().locator('.cell-id').click()
@@ -1330,8 +1341,7 @@ await page24.close()
 const page25 = await ctx.newPage()
 page25.on('pageerror', (e) => errors.push(String(e)))
 page25.on('console', (m) => m.type() === 'error' && errors.push(m.text()))
-await page25.goto('file://' + dist)
-await page25.waitForSelector('table tbody tr')
+await openList(page25, dist)
 
 const budgetBefore = await page25.locator('.filebar__budget').innerText()
 console.log('77) Budgetanzeige ab Werk:', budgetBefore)
@@ -1395,8 +1405,7 @@ if (!attachSource.includes('nachweis.txt')) fail('Der Anhang wurde nicht mitgesp
 
 const page26 = await ctx.newPage()
 page26.on('pageerror', (e) => errors.push(String(e)))
-await page26.goto('file://' + attachFile)
-await page26.waitForSelector('table tbody tr')
+await openList(page26, attachFile)
 await page26.locator('.cell-attach:has-text("nachweis.txt")').click()
 await page26.waitForSelector('.drawer')
 const [attachDownload] = await Promise.all([
@@ -1410,6 +1419,72 @@ console.log('83) Wieder heruntergeladen:', attachDownload.suggestedFilename(),
 if (readFileSync(back).length !== readFileSync(evidence).length) fail('Der Anhang kam nicht unveraendert zurueck')
 await page26.close()
 await page25.close()
+
+/* Startseite: erklaert das Werkzeug, bevor jemand auf Daten schaut. Bearbeitbar
+   auf der Seite selbst - aber nur, solange die Einstellungen offen sind. */
+const page27 = await ctx.newPage()
+page27.on('pageerror', (e) => errors.push(String(e)))
+page27.on('console', (m) => m.type() === 'error' && errors.push(m.text()))
+await page27.goto('file://' + dist)
+await page27.waitForSelector('.home')
+console.log('84) Startansicht:', await page27.locator('.prose h2').first().innerText(),
+  '| Reiter:', (await page27.locator('.entity-tabs__views button').allInnerTexts()).join('/'))
+if ((await page27.locator('table').count()) !== 0) fail('Die Liste haette nicht der Einstieg sein duerfen')
+
+await page27.locator('.home__foot .btn--primary').click()
+await page27.waitForSelector('table tbody tr')
+console.log('85) Nach dem Startknopf — Zeilen:', await page27.locator('table tbody tr').count())
+
+// Bearbeiten, mit Markup in der Eingabe
+await page27.getByRole('tab', { name: 'Start' }).click()
+await page27.waitForSelector('.home')
+await page27.getByRole('button', { name: 'Edit this page' }).click()
+await page27.waitForSelector('.home__editor')
+await page27.locator('.home__editor').fill(
+  '# Audit findings 2026\n\nMaintained by **M. Dohmen**. <script>alert(1)</script>\n\n- One finding per record',
+)
+await page27.waitForTimeout(200)
+const previewHtml = await page27.locator('.home__preview').innerHTML()
+console.log('86) Vorschau — script-Element vorhanden:', previewHtml.includes('<script'),
+  '| als Text sichtbar:', (await page27.locator('.home__preview').innerText()).includes('<script>'))
+if (previewHtml.includes('<script')) fail('Markup aus dem Text wurde zu echtem Markup')
+if (!(await page27.locator('.home__preview strong').count())) fail('Fettschrift wird nicht gerendert')
+
+await page27.locator('.home__foot .btn--primary').click()
+await page27.waitForSelector('.home__editor', { state: 'detached' })
+console.log('87) Nach dem Uebernehmen:', await page27.locator('.prose h2').innerText())
+if ((await page27.locator('.prose h2').innerText()) !== 'Audit findings 2026') fail('Der Text wurde nicht uebernommen')
+
+// Schutz der Einstellungen deckt die Startseite mit ab
+await page27.getByLabel('Settings').click()
+await page27.waitForSelector('.settings')
+await page27.locator('.setting', { hasText: 'Protect settings' }).getByRole('button').first().click()
+await page27.waitForSelector('#lock-word')
+await page27.locator('#lock-word').fill('123')
+await page27.locator('.modal__foot .btn--primary').click()
+await page27.waitForSelector('.settings__locked')
+await page27.getByRole('button', { name: 'Back to the list' }).click()
+await page27.getByRole('tab', { name: 'Start' }).click()
+await page27.waitForSelector('.home')
+console.log('88) Geschuetzt — Bearbeiten-Knopf:', await page27.getByRole('button', { name: 'Edit this page' }).count(),
+  '| Hinweis:', await page27.locator('.home__locked').innerText())
+if ((await page27.getByRole('button', { name: 'Edit this page' }).count()) !== 0) {
+  fail('Die Startseite laesst sich trotz Schutz bearbeiten')
+}
+
+// Text reist mit der Datei
+const homeFile = resolve(tmp, 'mit-startseite.html')
+await saveTo(page27, homeFile, 'Startseite geschrieben')
+await page27.close()
+
+const page28 = await ctx.newPage()
+page28.on('pageerror', (e) => errors.push(String(e)))
+await page28.goto('file://' + homeFile)
+await page28.waitForSelector('.home')
+console.log('89) Nach erneutem Oeffnen:', await page28.locator('.prose h2').innerText())
+if ((await page28.locator('.prose h2').innerText()) !== 'Audit findings 2026') fail('Der Text reist nicht mit der Datei')
+await page28.screenshot({ path: resolve(tmp, 'startseite.png') })
+await page28.close()
 
 // Vorschau im hellen Modus
 await page3.getByLabel('Settings').click()

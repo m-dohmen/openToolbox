@@ -110,6 +110,8 @@ dashboard · CSV import · change log · version numbers.**
   sits next to the tool — see [The dark bar at the top](#the-dark-bar-at-the-top).
 - **Validation rules across fields**, enforced identically in the form, the CSV import and
   AI-proposed changes — see [Building your own tool](#building-your-own-tool).
+- **An editable start page**, so the file can explain itself before showing a table — see
+  [The start page](#the-start-page).
 - **A guided entry wizard**, and an intake mode that opens the file straight into it — see
   [Guided entry](#guided-entry).
 - **Merging a copy that came back**, record by record, with a field-level diff — see
@@ -225,6 +227,26 @@ instructions describe every entity and how they connect, and it can name a refer
 or by title text. `examples/suppliers-certificates.domain.js` is a minimal working example, and
 `examples/portfolio.domain.js` — the one behind the [live demo](https://m-dohmen.github.io/openToolbox/demo/)
 — is the full-dress version using every feature at once.
+
+## The start page
+
+A tool that lands straight on a table assumes you already know what it is. Usually the recipient
+does not — they want a sentence on what it is for, who maintains it and where to ask. The app opens
+on that page whenever it has text.
+
+![The start page](docs/screenshots/home.png)
+
+Edited in the app itself, in a small Markdown subset: headings, lists, quotes, a rule, `**bold**`,
+`*italic*`, `` `code` `` and `[links](url)`. Everything else stays plain text — the text is parsed
+into a tree and rendered as nodes, never inserted as HTML, so nothing written there can become
+markup in a file that gets passed around.
+
+Two things worth knowing. **The settings lock covers this page too** — protect the settings and the
+edit button turns into a note saying so, because otherwise the protection would be half a measure.
+And **the text lives with the settings**, so it sits outside the encrypted envelope and stays
+readable before anyone unlocks the file: right for "what is this", wrong for anything confidential.
+
+Empty text means there is no start page at all.
 
 ## Guided entry
 
@@ -643,6 +665,8 @@ src/lib/actions.js     validation and application of AI-proposed changes
 src/lib/entities.js    normalizes SCHEMA/ENTITIES, shared field type check, delete-guard helpers
 src/lib/csv.js         CSV writer and reader (separator sniffing, RFC 4180 quoting)
 src/lib/count.js       the usage counter — the only self-initiated network call in the file
+src/home.jsx           the start page and its editor
+src/lib/markdown.js    the small Markdown subset — parsed to a tree, never to HTML
 src/lib/attach.js      attachments — reading, budget, safe name and type
 src/lib/trail.js       field-level change trail, derived on save
 src/merge.jsx          merge dialog: three groups, field-level diff

@@ -347,6 +347,14 @@ export function SettingsPage({
             <input value={settings.subtitle} onInput={(e) => set('subtitle')(e.currentTarget.value)} />
           </Row>
 
+          <Row label={tr('settings.home')} hint={tr('settings.homeHint')}>
+            <div class="setting__buttons">
+              <button class="btn btn--danger" disabled={!settings.home?.trim()} onClick={() => set('home')('')}>
+                {tr('settings.homeClear')}
+              </button>
+            </div>
+          </Row>
+
           <Row label={tr('settings.tagline')} hint={tr('settings.taglineHint')}>
             <input
               placeholder={tr('filebar.tagline')}
