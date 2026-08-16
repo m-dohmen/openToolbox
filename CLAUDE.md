@@ -236,6 +236,13 @@ the recipient:
 `version` is empty by default. Set it in `DEFAULT_SETTINGS` if the tool has a meaningful starting
 version; otherwise leave it and let the user set one at the first save.
 
+**Set `copyright` to whoever owns the tool.** It defaults to `'© openToolbox'` with a link to the
+template, which is right for a fresh checkout and wrong for anything you deliver — the notice at the
+bottom of the settings page belongs to your user or their client, not to the template it was built
+from. Set `copyright` and `copyrightUrl` in `DEFAULT_SETTINGS`, or tell the user where to change them
+(Settings → Application). The `based on openToolbox` line underneath stays either way and is not
+editable.
+
 ## The usage counter — mention it, don't hide it
 
 A built file sends one GET on open, to the endpoint in `settings.analyticsUrl`, carrying only the

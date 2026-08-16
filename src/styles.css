@@ -877,6 +877,9 @@ tbody tr[data-selected="true"] td { background: var(--accent-soft); }
 .settings__logo { flex: none; font-size: 14px; }
 .settings__foot p { margin: 0 0 3px; color: var(--muted); font-size: 12.5px; }
 .settings__foot a { color: inherit; text-decoration: underline; text-decoration-color: currentColor; }
+/* Der Hinweis des Werkzeugbauers steht ueber der Herkunftszeile und traegt
+   etwas mehr Gewicht - er gehoert ihm, die Zeile darunter der Vorlage. */
+.settings__copyright { color: var(--ink) !important; }
 .settings__foot a:hover { color: var(--tone-accent); }
 
 /* ── Einstellungen: Zusatzfelder ──────────────────────────────── */

@@ -782,6 +782,34 @@ await page15.waitForSelector('table tbody tr')
 console.log('41) Hinweiskaesten nach dem Abschalten:', await page15.locator('.hint').count())
 if ((await page15.locator('.hint').count()) !== 0) fail('Beispiel-Prompts liessen sich nicht abschalten')
 
+// Copyright-Hinweis: gehoert dem, der das Werkzeug baut. Vorbelegt mit
+// openToolbox, frei ueberschreibbar, Link optional - darunter steht immer
+// unveraendert die Herkunftszeile.
+await page15.getByLabel('Settings').click()
+await page15.waitForSelector('.settings')
+const footDefault = await page15.locator('.settings__foot').innerText()
+console.log('42) Fusszeile ab Werk:', footDefault.replace(/\n/g, ' | '))
+if (!footDefault.includes('© openToolbox')) fail('Voreingestellter Copyright-Hinweis fehlt')
+if (!footDefault.includes('based on openToolbox')) fail('Herkunftszeile fehlt')
+
+const crField = page15.locator('.setting', { hasText: 'Copyright notice' }).locator('input')
+await crField.fill('© 2026 Muster Consulting GmbH')
+await page15.waitForTimeout(150)
+const footCustom = await page15.locator('.settings__foot').innerText()
+console.log('    Nach eigener Angabe:', footCustom.split('\n')[0])
+if (!footCustom.includes('Muster Consulting')) fail('Eigener Copyright-Hinweis wird nicht angezeigt')
+if (!footCustom.includes('based on openToolbox')) fail('Herkunftszeile darf nicht verschwinden')
+
+const crUrl = page15.locator('.setting', { hasText: 'Copyright link' }).locator('input')
+await crUrl.fill('')
+await page15.waitForTimeout(150)
+console.log('43) Ohne Link Verweise im Hinweis:', await page15.locator('.settings__copyright a').count())
+if ((await page15.locator('.settings__copyright a').count()) !== 0) {
+  fail('Leerer Link erzeugt trotzdem einen Verweis')
+}
+await page15.getByRole('button', { name: 'Back to the list' }).click()
+await page15.waitForSelector('table tbody tr')
+
 // Vorschau im hellen Modus
 await page3.getByLabel('Settings').click()
 await page3.waitForSelector('.settings')

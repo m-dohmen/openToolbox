@@ -437,8 +437,16 @@ const STRINGS = {
     'settings.configNote':
       'Loading only takes what is defined here; anything else is dropped and named in the ' +
       'notice. If the loaded configuration has AI switched on, the application asks for the key afterwards.',
-    'settings.copyrightPre': (year) => `© ${year} `,
-    'settings.copyrightPost': ' · openToolbox · Apache License 2.0',
+    'settings.copyrightField': 'Copyright notice',
+    'settings.copyrightFieldHint':
+      'Shown at the bottom of this page. Put your own or your client\'s notice here — this is your ' +
+      'tool, not the template it was built from.',
+    'settings.copyrightUrl': 'Copyright link',
+    'settings.copyrightUrlHint':
+      'Optional. Makes the notice above a link — your company site, an intranet page. Leave empty ' +
+      'for plain text.',
+    'settings.copyrightUrlEmpty': 'no link',
+    'settings.basedOn': 'based on openToolbox',
     'settings.runsLocally': 'Single-file application. Runs locally, without a server and without installation.',
     'settings.probeReachable': (answer) => `Endpoint reachable. Reply: ${answer}`,
     'settings.logoApplied': 'Logo applied.',
@@ -865,8 +873,16 @@ const STRINGS = {
       'Beim Laden wird nur übernommen, was hier definiert ist; alles andere wird verworfen und im ' +
       'Hinweis benannt. Ist KI in der geladenen Konfiguration eingeschaltet, fragt die Anwendung ' +
       'anschließend nach dem Schlüssel.',
-    'settings.copyrightPre': (year) => `© ${year} `,
-    'settings.copyrightPost': ' · openToolbox · Apache License 2.0',
+    'settings.copyrightField': 'Copyright-Hinweis',
+    'settings.copyrightFieldHint':
+      'Erscheint unten auf dieser Seite. Trag hier deinen eigenen oder den deines Kunden ein — das ' +
+      'ist dein Werkzeug, nicht die Vorlage, aus der es entstanden ist.',
+    'settings.copyrightUrl': 'Copyright-Link',
+    'settings.copyrightUrlHint':
+      'Optional. Macht den Hinweis darüber zu einem Link — Firmenseite, Intranetseite. Leer lassen ' +
+      'für reinen Text.',
+    'settings.copyrightUrlEmpty': 'kein Link',
+    'settings.basedOn': 'basiert auf openToolbox',
     'settings.runsLocally': 'Anwendung in einer Datei. Läuft lokal, ohne Server und ohne Installation.',
     'settings.probeReachable': (answer) => `Endpunkt erreichbar. Antwort: ${answer}`,
     'settings.logoApplied': 'Logo übernommen.',

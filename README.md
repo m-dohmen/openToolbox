@@ -219,6 +219,13 @@ Entries live with the records, not with the settings — so in an encrypted file
 **inside** the envelope, where notes like "budget corrected after the audit finding" belong. Switch
 the log off in Settings and saving asks nothing.
 
+### Who the copyright line belongs to
+
+The notice at the bottom of the settings page is a free-text setting, because the tool you build
+from this template is yours, not the template's. It ships as `© openToolbox` linking to the project,
+with an optional link field of its own — replace both with your own or your client's. Underneath,
+a fixed line reads `based on openToolbox · Apache License 2.0` and links back here.
+
 ## Example prompts
 
 The built file explains how to change itself. At the places you would typically want to adjust —

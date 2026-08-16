@@ -276,6 +276,21 @@ export function SettingsPage({
               <span>.html</span>
             </div>
           </Row>
+
+          <Row label={tr('settings.copyrightField')} hint={tr('settings.copyrightFieldHint')}>
+            <input
+              value={settings.copyright}
+              onInput={(e) => set('copyright')(e.currentTarget.value)}
+            />
+          </Row>
+
+          <Row label={tr('settings.copyrightUrl')} hint={tr('settings.copyrightUrlHint')}>
+            <input
+              placeholder={tr('settings.copyrightUrlEmpty')}
+              value={settings.copyrightUrl}
+              onInput={(e) => set('copyrightUrl')(e.currentTarget.value.trim())}
+            />
+          </Row>
         </section>
 
         <section>
@@ -509,12 +524,26 @@ export function SettingsPage({
         <footer class="settings__foot">
           <Wordmark brand={settings.brand} class="settings__logo" />
           <div>
+            {settings.copyright && (
+              <p class="settings__copyright">
+                {settings.copyrightUrl ? (
+                  <a href={settings.copyrightUrl} target="_blank" rel="noopener noreferrer">
+                    {settings.copyright}
+                  </a>
+                ) : (
+                  settings.copyright
+                )}
+              </p>
+            )}
             <p>
-              {tr('settings.copyrightPre', new Date().getFullYear())}
-              <a href="https://www.linkedin.com/in/michael-dohmen-cloud/" target="_blank" rel="noopener noreferrer">
-                M. Dohmen
+              <a
+                href="https://github.com/m-dohmen/openToolbox"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {tr('settings.basedOn')}
               </a>
-              {tr('settings.copyrightPost')}
+              {' · Apache License 2.0'}
             </p>
             <p>{tr('settings.runsLocally')}</p>
           </div>

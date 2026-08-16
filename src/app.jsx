@@ -113,6 +113,11 @@ const DEFAULT_SETTINGS = {
   version: '',
   examplePrompts: true,
   auditLog: true,
+  /* Der Hinweis unten auf der Einstellungsseite gehoert dem, der das Werkzeug
+     baut - nicht der Vorlage. Vorbelegt mit openToolbox, damit dort nicht
+     versehentlich ein fremder Name stehen bleibt; siehe settings.jsx. */
+  copyright: '© openToolbox',
+  copyrightUrl: 'https://m-dohmen.github.io/openToolbox/',
   colors: DEFAULT_COLORS,
   brand: DEFAULT_BRAND,
   ai: AI_DEFAULTS,
