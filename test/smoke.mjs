@@ -3,6 +3,8 @@ import { chromium } from 'playwright'
 import { createServer } from 'node:http'
 import { buildUrl, parseHeaders } from '../src/lib/ai.js'
 import { safeUrl } from '../src/lib/links.js'
+import { applyActions } from '../src/lib/actions.js'
+import { translator } from '../src/i18n.js'
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs'
 import { resolve, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -154,6 +156,52 @@ for (const [input, expected] of urlGuard) {
   else fail(`safeUrl: ${JSON.stringify(input)} -> ${JSON.stringify(got)}, erwartet ${JSON.stringify(expected)}`)
 }
 console.log(`0a) Adresspruefung der Verweise: ${guardOk}/${urlGuard.length} Faelle korrekt`)
+
+/* Der dritte Weg durch die Regeln: ein Vorschlag des Modells. Direkt gegen
+   applyActions geprueft, weil der nachgebaute Endpunkt weiter oben absichtlich
+   regelkonforme Aenderungen liefert. */
+const ruleSchema = {
+  idField: 'id',
+  singular: 'item',
+  plural: 'items',
+  titleField: 'title',
+  list: ['title'],
+  facets: [],
+  search: ['title'],
+  fields: [
+    { key: 'title', label: 'Title', type: 'text', required: true },
+    { key: 'owner', label: 'Owner', type: 'text' },
+    { key: 'status', label: 'Status', type: 'enum', values: ['open', 'done'] },
+  ],
+  rules: [{ when: (r) => r.status === 'done', require: ['owner'], message: 'Closed needs an owner.' }],
+}
+const ruleEntities = {
+  records: {
+    schema: ruleSchema,
+    uid: () => 'X-1',
+    emptyRecord: () => ({ id: '', title: '', owner: '', status: 'open' }),
+    seed: () => [],
+    isDone: () => false,
+    isOverdue: () => false,
+  },
+}
+const ruleTr = translator('en')
+const start = { records: [{ id: 'X-9', title: 'Existing', owner: '', status: 'open' }] }
+const bad = applyActions(start, [{ op: 'update', id: 'X-9', changes: { status: 'done' } }], ruleEntities, ruleTr, 'records')
+console.log('0b) Regelverstoss im KI-Vorschlag:', JSON.stringify(bad.problems))
+if (!bad.problems.some((p) => p.includes('Closed needs an owner'))) fail('Regel greift nicht bei KI-Vorschlaegen')
+if (bad.next.records[0].status !== 'open') fail('Abgelehnter Vorschlag wurde trotzdem angewandt')
+
+// Derselbe Vorschlag mit Verantwortlichem geht durch - und zwar vollstaendig.
+const good = applyActions(
+  start,
+  [{ op: 'update', id: 'X-9', changes: { status: 'done', owner: 'M. Voss' } }],
+  ruleEntities,
+  ruleTr,
+  'records',
+)
+console.log('    Mit Verantwortlichem:', JSON.stringify(good.done))
+if (good.problems.length || good.next.records[0].status !== 'done') fail('Zulaessiger Vorschlag wurde abgelehnt')
 
 const browser = await chromium.launch()
 const ctx = await browser.newContext({ acceptDownloads: true, viewport: { width: 1280, height: 850 } })
@@ -956,6 +1004,68 @@ console.log('53) Nach erneutem Oeffnen:', reopenedBar, '|', reopenedLinks.join('
 if (!reopenedBar.includes('Muster Consulting')) fail('Kopfzeilentext reist nicht mit der Datei')
 if (reopenedLinks[1] !== 'QM handbook') fail('Verweise reisen nicht mit der Datei')
 await page18.close()
+
+// Prüfregeln: eine Stelle im Schema, drei Wege (Formular, CSV, KI-Vorschlag).
+const page19 = await ctx.newPage()
+page19.on('pageerror', (e) => errors.push(String(e)))
+page19.on('console', (m) => m.type() === 'error' && errors.push(m.text()))
+await page19.goto('file://' + dist)
+await page19.waitForSelector('table tbody tr')
+
+const before = await page19.locator('table tbody tr').count()
+await page19.getByRole('button', { name: /^New / }).click()
+await page19.waitForSelector('.drawer')
+await page19.locator('#f-title').fill('Rule check')
+await page19.locator('#f-status').selectOption('in progress')
+await page19.locator('.drawer__foot .btn--primary').click()
+await page19.waitForSelector('.field__objection')
+console.log('54) Regel im Formular:', await page19.locator('.field__objection').first().innerText())
+if ((await page19.locator('table tbody tr').count()) !== before) fail('Regelverstoss wurde trotzdem gespeichert')
+if (!(await page19.locator('.drawer__objections').isVisible())) fail('Sammelmeldung fehlt')
+
+// Verstoss beheben, dann laesst sich speichern
+await page19.locator('#f-owner').fill('A. Reinke')
+await page19.locator('.drawer__foot .btn--primary').click()
+await page19.waitForSelector('.drawer', { state: 'detached' })
+console.log('55) Nach dem Beheben gespeichert — Zeilen:', await page19.locator('table tbody tr').count())
+if ((await page19.locator('table tbody tr').count()) !== before + 1) fail('Nach dem Beheben liess sich nicht speichern')
+
+// Ein frisches Formular ist nicht sofort rot
+await page19.getByRole('button', { name: /^New / }).click()
+await page19.waitForSelector('.drawer')
+console.log('56) Frisches Formular — Beanstandungen sichtbar:', await page19.locator('.field__objection').count())
+if ((await page19.locator('.field__objection').count()) !== 0) fail('Leeres Formular zeigt sofort Beanstandungen')
+await page19.keyboard.press('Escape')
+
+// Dieselbe Regel beim CSV-Import
+const ruleCsv = resolve(tmp, 'regeln.csv')
+writeFileSync(
+  ruleCsv,
+  'Title;Owner;Status;Effort in days\n' +
+    'With an owner;M. Voss;in progress;3\n' +
+    'Without an owner;;in progress;3\n',
+)
+await page19.evaluate(() => {
+  const original = HTMLInputElement.prototype.click
+  HTMLInputElement.prototype.click = function () {
+    if (this.type === 'file') { window.__csvPicker = this; return }
+    return original.call(this)
+  }
+})
+await page19.getByText('Import CSV', { exact: true }).click()
+await page19.waitForFunction(() => window.__csvPicker)
+const ruleHandle = await page19.evaluateHandle(() => window.__csvPicker)
+await ruleHandle.asElement().setInputFiles(ruleCsv)
+await page19.waitForSelector('.import__map')
+await page19.getByRole('button', { name: 'Import', exact: true }).click()
+await page19.waitForSelector('.import__problems li')
+const ruleProblem = await page19.locator('.import__problems li').first().innerText()
+const ruleOutcome = await page19.locator('.modal--wide .note').first().innerText()
+console.log('57) Regel beim Import:', ruleProblem, '|', ruleOutcome)
+if (!ruleProblem.includes('needs an owner')) fail('Regel greift beim CSV-Import nicht')
+if (!ruleOutcome.startsWith('1 record')) fail('Genau eine Zeile haette durchkommen muessen')
+await page19.getByRole('button', { name: 'Close' }).click()
+await page19.close()
 
 // Vorschau im hellen Modus
 await page3.getByLabel('Settings').click()

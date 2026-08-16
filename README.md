@@ -57,6 +57,16 @@ reference to another record type and read-only calculated fields.</td>
 <td><b>Light and dark</b>, stored with the file. Category shades reverse direction in dark mode so
 neither end of the range disappears.</td>
 </tr>
+<tr>
+<td><img src="docs/screenshots/validation.png" alt="A validation rule refusing a save"></td>
+<td><img src="docs/screenshots/settings-locked.png" alt="The settings page protected"></td>
+</tr>
+<tr>
+<td><b>Rules decide when a record may be saved</b> — here a milestone in progress without an owner.
+The same rule rejects the row on CSV import and is handed to the AI as a constraint.</td>
+<td><b>The settings page can be locked</b> against accidental change. Fields stay visible and
+readable; a word re-enables them for the session.</td>
+</tr>
 </table>
 
 ---
@@ -96,6 +106,8 @@ dashboard · CSV import · change log · version numbers.**
   reconfigured by accident — see [Locking the settings](#locking-the-settings).
 - **An editable header line and up to five links** in the dark bar at the top, pointing at whatever
   sits next to the tool — see [The dark bar at the top](#the-dark-bar-at-the-top).
+- **Validation rules across fields**, enforced identically in the form, the CSV import and
+  AI-proposed changes — see [Building your own tool](#building-your-own-tool).
 
 ## Quick start
 
@@ -139,6 +151,22 @@ derivation goes stale the moment one of its inputs changes, and nobody notices. 
 searches, sums into the overview tile and lands in the CSV export like any other field; it is
 read-only in the form, and the AI is told so and rejected by name if it tries to set one. The
 shipped demo has one: *Days left*, counting down to the due date.
+
+And conditions **between** fields go in `rules`:
+
+```js
+rules: [
+  { when: (r) => r.status === 'done', require: ['owner'],
+    message: 'An item that is under way needs an owner.' },
+]
+```
+
+The value is the single place it runs: **the form, the CSV import and anything the AI proposes all
+pass through the same check.** One rule in the schema hardens all three at once. In the form the
+objection appears under the field and the save is refused; an offending CSV row is skipped and
+named; the model is told the message up front and gets it back as the reason if it ignores it.
+`required: true` on a field is enforced the same way — and a numeric `0` counts as filled, because
+zero is usually a real answer.
 
 That schema alone produces the table columns, the edit form, the sidebar filters, the CSV export,
 the instructions sent to the AI model and the validation of anything the model proposes back.

@@ -16,7 +16,13 @@
  * unabhängig von der Sprache der Feldnamen und Daten selbst.
  */
 
-import { resolveReferenceTitle, coerceField, findField } from './entities.js'
+import {
+  resolveReferenceTitle,
+  coerceField,
+  findField,
+  materialize,
+  validateRecord,
+} from './entities.js'
 
 const OPS = ['create', 'update', 'delete']
 
@@ -84,6 +90,13 @@ export function applyActions(recordsByEntity, actions, entities, tr, defaultEnti
         problems.push(tr('actions.needsTitle', where, schema.titleField))
         return
       }
+      /* Dieselben Regeln, die im Formular gelten. Ein Vorschlag, der einen
+         unzulaessigen Datensatz erzeugen wuerde, wird benannt statt angewandt. */
+      const broken = validateRecord(schema, materialize(entity, record), tr)
+      if (broken.length) {
+        for (const o of broken) problems.push(`${where}: ${o.message}`)
+        return
+      }
       record[schema.idField] = entity.uid()
       next[entityKey].push(record)
       done.push(tr('actions.created', record[schema.titleField], record[schema.idField]))
@@ -105,19 +118,30 @@ export function applyActions(recordsByEntity, actions, entities, tr, defaultEnti
 
     const changes = action.changes ?? action.record ?? {}
     const applied = []
+    /* Erst auf einer Kopie sammeln: die Regeln beurteilen den Datensatz als
+       Ganzes, und ein halb angewandter Vorschlag waere schlimmer als ein
+       abgelehnter. */
+    const candidate = { ...next[entityKey][position] }
     for (const [key, value] of Object.entries(changes)) {
       if (key === schema.idField) continue
       const clean = coerce(schema, key, value, problems, where, tr, entities, next)
       if (clean === undefined) continue
-      const before = next[entityKey][position][key]
+      const before = candidate[key]
       if (String(before) === String(clean)) continue
-      next[entityKey][position][key] = clean
+      candidate[key] = clean
       const beforeShown = displayValue(entities, next, schema, key, before)
       const afterShown = displayValue(entities, next, schema, key, clean)
       applied.push(`${findField(schema, key).label}: ${beforeShown || '—'} → ${afterShown || '—'}`)
     }
-    if (applied.length) done.push(tr('actions.updated', id, applied.join(', ')))
-    else problems.push(tr('actions.nothingToChange', where, id))
+    if (!applied.length) return problems.push(tr('actions.nothingToChange', where, id))
+
+    const broken = validateRecord(schema, materialize(entity, candidate), tr)
+    if (broken.length) {
+      for (const o of broken) problems.push(`${where}: ${o.message}`)
+      return
+    }
+    next[entityKey][position] = candidate
+    done.push(tr('actions.updated', id, applied.join(', ')))
   })
 
   return { next, done, problems }

@@ -72,6 +72,16 @@ anderen Datensatztyp auflöst, und schreibgeschützten berechneten Feldern.</td>
 <td><b>Hell und dunkel</b>, mit der Datei gespeichert. Die Kategorieabstufungen drehen im
 Dunkelmodus die Richtung, damit kein Ende der Reihe verschwindet.</td>
 </tr>
+<tr>
+<td><img src="docs/screenshots/validation.png" alt="Eine Regel verweigert das Speichern"></td>
+<td><img src="docs/screenshots/settings-locked.png" alt="Die geschützte Einstellungsseite"></td>
+</tr>
+<tr>
+<td><b>Regeln entscheiden, wann gespeichert werden darf</b> — hier ein Meilenstein in Arbeit ohne
+Verantwortlichen. Dieselbe Regel weist die Zeile beim CSV-Import ab und geht als Bedingung an die KI.</td>
+<td><b>Die Einstellungsseite lässt sich sperren</b>. Die Felder bleiben sichtbar und lesbar; ein
+Wort gibt sie für die Sitzung wieder frei.</td>
+</tr>
 </table>
 
 ---
@@ -113,6 +123,8 @@ Dashboard · CSV-Import · Änderungsprotokoll · Versionsnummern.**
   [Einstellungen sperren](#einstellungen-sperren).
 - **Eine änderbare Kopfzeile und bis zu fünf Verweise** in der dunklen Leiste ganz oben, auf das,
   was neben dem Werkzeug liegt — siehe [Die dunkle Leiste oben](#die-dunkle-leiste-oben).
+- **Prüfregeln über Felder hinweg**, identisch durchgesetzt im Formular, beim CSV-Import und bei
+  Vorschlägen der KI — siehe [Ein eigenes Werkzeug bauen](#ein-eigenes-werkzeug-bauen).
 
 ## Schnellstart
 
@@ -156,6 +168,22 @@ gespeicherte Ableitung ist in dem Moment falsch, in dem sich eine ihrer Quellen 
 merkt es. Sortieren, Suchen, Summieren in der Übersicht und der CSV-Export funktionieren trotzdem
 darauf; im Formular ist es schreibgeschützt, und die KI wird darauf hingewiesen und beim Versuch,
 es zu setzen, namentlich abgewiesen.
+
+Bedingungen **zwischen** Feldern stehen in `rules`:
+
+```js
+rules: [
+  { when: (r) => r.status === 'done', require: ['owner'],
+    message: 'Ein Punkt in Arbeit braucht einen Verantwortlichen.' },
+]
+```
+
+Der Wert liegt im einen Aufrufort: **Formular, CSV-Import und die Vorschläge der KI laufen alle
+durch dieselbe Prüfung.** Eine Regel im Schema härtet alle drei Wege gleichzeitig. Im Formular
+erscheint die Beanstandung unter dem Feld und das Speichern wird verweigert; eine verstoßende
+CSV-Zeile wird übersprungen und benannt; das Modell bekommt die Meldung vorab und als Begründung
+zurück, wenn es sie übergeht. `required: true` am Feld wird genauso durchgesetzt — und eine
+numerische `0` zählt als gefüllt, denn null ist meistens eine echte Angabe.
 
 Dieses Schema allein erzeugt die Tabellenspalten, das Formular, die Filter in der Seitenleiste, den
 CSV-Export, die Anweisungen an das KI-Modell und die Prüfung dessen, was das Modell zurückschlägt.

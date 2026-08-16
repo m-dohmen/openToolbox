@@ -75,6 +75,8 @@ s'impriment en un PDF propre.
   des données ne soit pas reconfiguré par mégarde.
 - **Une ligne d'en-tête modifiable et jusqu'à cinq liens** dans la barre sombre du haut, vers ce qui
   accompagne l'outil.
+- **Des règles de validation entre champs**, appliquées à l'identique dans le formulaire, à
+  l'import CSV et aux changements proposés par l'IA.
 
 ## Démarrage rapide
 

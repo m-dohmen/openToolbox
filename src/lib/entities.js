@@ -194,3 +194,75 @@ export function computeCounts(entity, records) {
   }
   return c
 }
+
+/* ── Prüfregeln auf Datensatzebene ──────────────────────────────
+ *
+ * `coerceField` prüft einen Wert für sich: Typ, Aufzählungswert, Zieldatensatz
+ * einer Referenz. Was es nicht sehen kann, sind Bedingungen zwischen Feldern -
+ * "Kosten sind Pflicht, sobald der Status erledigt ist", "die Fälligkeit darf
+ * nicht in der Vergangenheit liegen". Genau die stehen als `rules` im Schema
+ * und werden hier ausgewertet.
+ *
+ * Eine Regel:
+ *
+ *   {
+ *     when:    (r) => r.status === 'done',   // optional, sonst gilt sie immer
+ *     require: ['cost'],                     // Kurzform: diese Felder gefüllt
+ *     check:   (r) => r.due >= r.start,      // optional, true heißt in Ordnung
+ *     message: 'Erledigte Punkte brauchen Kosten.',
+ *     fields:  ['cost'],                     // optional, sonst `require`
+ *   }
+ *
+ * Wichtig ist der eine Aufrufort: Formular, CSV-Import und die vom Modell
+ * vorgeschlagenen Änderungen laufen alle hierdurch. Eine Regel im Schema härtet
+ * damit alle drei Wege gleichzeitig, statt an drei Stellen nachgezogen zu werden.
+ */
+
+/** Leer im Sinne der Prüfung. Die Null bleibt ein Wert - sie ist oft gemeint. */
+export const isBlank = (value) =>
+  value === undefined || value === null || String(value).trim() === ''
+
+/**
+ * Prüft einen ganzen Datensatz. Liefert eine Liste von Beanstandungen
+ * `{ message, fields }` - leer heißt in Ordnung.
+ *
+ * `tr` wird nur für die eingebaute Pflichtfeldmeldung gebraucht; die Texte der
+ * Regeln stehen im Schema und damit in der Sprache, in der das Werkzeug gebaut
+ * wurde - genau wie die Feldbeschriftungen.
+ */
+export function validateRecord(schema, record, tr) {
+  const objections = []
+
+  // Aus `required: true` am Feld. Bisher stand das nur in den Anweisungen an
+  // das Modell und wurde nirgends durchgesetzt.
+  for (const field of writableFields(schema)) {
+    if (field.required && isBlank(record[field.key])) {
+      objections.push({
+        message: tr ? tr('validation.required', field.label) : `${field.label} is required.`,
+        fields: [field.key],
+      })
+    }
+  }
+
+  for (const rule of schema.rules ?? []) {
+    try {
+      if (rule.when && !rule.when(record)) continue
+
+      const missing = (rule.require ?? []).filter((key) => isBlank(record[key]))
+      const failed = rule.check ? !rule.check(record) : false
+      if (!missing.length && !failed) continue
+
+      const message = typeof rule.message === 'function' ? rule.message(record) : rule.message
+      objections.push({
+        message: message ?? 'Invalid record.',
+        fields: rule.fields ?? (missing.length ? missing : (rule.require ?? [])),
+      })
+    } catch (err) {
+      // Eine Regel, die selbst wirft, darf das Speichern nicht blockieren -
+      // aber sie soll auch nicht still verschwinden.
+      objections.push({ message: `Rule failed: ${err.message}`, fields: rule.fields ?? [] })
+    }
+  }
+
+  return objections
+}

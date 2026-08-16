@@ -52,6 +52,28 @@ export const SCHEMA = {
       },
     },
   ],
+  /**
+   * Bedingungen zwischen Feldern. `coerceField` prüft jeden Wert für sich und
+   * kann so etwas nicht sehen: dass ein Punkt ohne Verantwortlichen nicht in
+   * Arbeit sein kann, weiß nur, wer beide Felder zugleich anschaut.
+   *
+   * Die Regeln gelten im Formular, beim CSV-Import und für Vorschläge des
+   * Modells - eine Stelle, drei Wege. `message` steht in der Sprache, in der
+   * das Werkzeug gebaut wurde, wie die Feldbeschriftungen auch.
+   */
+  rules: [
+    {
+      when: (r) => r.status === 'in progress' || r.status === 'done',
+      require: ['owner'],
+      message: 'An item that is under way needs an owner.',
+    },
+    {
+      when: (r) => r.status === 'done',
+      check: (r) => Number(r.effort) > 0,
+      fields: ['effort'],
+      message: 'A closed item needs the effort it actually took.',
+    },
+  ],
 }
 
 export const uid = () =>

@@ -72,6 +72,8 @@ son anchuras CSS y el anillo es un único círculo SVG. Ambas vistas se imprimen
   datos no se reconfigure por accidente.
 - **Una línea de cabecera editable y hasta cinco enlaces** en la barra oscura superior, apuntando a
   lo que acompaña a la herramienta.
+- **Reglas de validación entre campos**, aplicadas igual en el formulario, en la importación CSV y
+  en los cambios que propone la IA.
 
 ## Inicio rápido
 

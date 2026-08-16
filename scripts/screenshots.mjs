@@ -73,6 +73,22 @@ await page.waitForTimeout(250)
 await shot(page, 'record')
 await page.keyboard.press('Escape')
 
+/* Eine Regel, die zuschlaegt: Meilenstein in Arbeit, aber ohne
+   Verantwortlichen. Der Klick auf Uebernehmen deckt die Beanstandung auf. */
+await page.getByRole('tab', { name: 'Milestones' }).click()
+await page.waitForSelector('table tbody tr')
+await page.getByRole('button', { name: /^New / }).click()
+await page.waitForSelector('.drawer')
+await page.locator('#f-title').fill('Hand over the reporting workstream')
+await page.locator('#f-status').selectOption('in progress')
+await page.locator('.drawer__foot .btn--primary').click()
+await page.waitForSelector('.field__objection')
+await page.waitForTimeout(200)
+await shot(page, 'validation')
+await page.keyboard.press('Escape')
+await page.getByRole('tab', { name: 'Projects' }).click()
+await page.waitForSelector('table tbody tr')
+
 /* Dunkelmodus auf dem Dashboard - dort ist der Unterschied am deutlichsten. */
 await page.getByLabel('Settings').click()
 await page.waitForSelector('.settings')

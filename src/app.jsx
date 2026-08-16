@@ -27,6 +27,7 @@ import {
   fieldValue,
   materialize,
   writableFields,
+  validateRecord,
 } from './lib/entities.js'
 import { Wordmark } from './brand.jsx'
 import { paletteVariables } from './lib/color.js'
@@ -748,6 +749,13 @@ function Workbench({
         problems.push(tr('import.needsTitle', where, schema.titleField))
         return
       }
+      /* Dieselben Regeln wie im Formular. Eine Zeile, die als Datensatz nicht
+         zulaessig waere, darf nicht ueber den Import hereinkommen. */
+      const objections = validateRecord(schema, materialize(entity, record), tr)
+      if (objections.length) {
+        for (const o of objections) problems.push(tr('validation.rowRejected', where, o.message))
+        return
+      }
       record[schema.idField] = entity.uid()
       built.push(record)
     })
@@ -1443,6 +1451,7 @@ const Th = ({ sort, k, onSort, align, children }) => (
 function RecordDrawer({ record, schema, singular, entity, entities, recordsByEntity, isNew, onCancel, onSave, onDelete, showHints, tr }) {
   const [r, setR] = useState(record)
   const [confirm, setConfirm] = useState(false)
+  const [touched, setTouched] = useState({})
   const first = useRef(null)
 
   // `key` beim Aufrufer (Entität + Id) montiert diese Komponente pro
@@ -1452,10 +1461,26 @@ function RecordDrawer({ record, schema, singular, entity, entities, recordsByEnt
   // auf den veralteten record-Prop zurück, was schnelle Eingaben verschluckte.
   useEffect(() => first.current?.focus(), [])
 
-  const set = (k) => (e) => setR({ ...r, [k]: e.currentTarget.value })
+  const set = (k) => (e) => {
+    setTouched((s) => ({ ...s, [k]: true }))
+    setR({ ...r, [k]: e.currentTarget.value })
+  }
   // Der Startfokus gehoert ins erste beschreibbare Feld - ein berechnetes an
   // erster Stelle im Schema soll ihn nicht ins Leere laufen lassen.
   const firstFocusKey = writableFields(schema)[0]?.key
+
+  /* Beanstandungen laufen mit jeder Eingabe mit, angezeigt wird aber erst,
+     was der Nutzer beruehrt hat - ein frisches Formular soll nicht sofort rot
+     sein. Der Speichern-Knopf bleibt bedienbar und deckt beim Klick alles auf:
+     ein ausgegrauter Knopf ohne Begruendung ist die schlechtere Sackgasse. */
+  const objections = validateRecord(schema, materialize(entity, r), tr)
+  const messagesFor = (key) =>
+    objections.filter((o) => o.fields.includes(key) && touched[key]).map((o) => o.message)
+
+  function apply() {
+    if (!objections.length) return onSave(r)
+    setTouched(Object.fromEntries(schema.fields.map((f) => [f.key, true])))
+  }
 
   return (
     <aside class="drawer" role="dialog" aria-label={tr('drawer.ariaLabel')}>
@@ -1495,7 +1520,10 @@ function RecordDrawer({ record, schema, singular, entity, entities, recordsByEnt
                 type="number"
                 step="0.5"
                 value={r[f.key]}
-                onInput={(e) => setR({ ...r, [f.key]: Number(e.currentTarget.value) })}
+                onInput={(e) => {
+                  setTouched((s) => ({ ...s, [f.key]: true }))
+                  setR({ ...r, [f.key]: Number(e.currentTarget.value) })
+                }}
               />
             ) : f.type === 'date' ? (
               <input id={'f-' + f.key} type="date" value={r[f.key]} onInput={set(f.key)} />
@@ -1509,16 +1537,22 @@ function RecordDrawer({ record, schema, singular, entity, entities, recordsByEnt
                 onInput={set(f.key)}
               />
             )}
+
+            {messagesFor(f.key).map((m) => (
+              <p class="field__objection" key={m}>{m}</p>
+            ))}
           </div>
         ))}
       </div>
 
+      {objections.length > 0 && Object.keys(touched).length > 0 && (
+        <p class="drawer__objections" role="status">
+          {tr('validation.blocked', objections.length)}
+        </p>
+      )}
+
       <div class="drawer__foot">
-        <button
-          class="btn btn--primary"
-          disabled={!String(r[schema.titleField] ?? '').trim()}
-          onClick={() => onSave(r)}
-        >
+        <button class="btn btn--primary" onClick={apply}>
           {tr('common.apply')}
         </button>
         <button class="btn btn--quiet" onClick={onCancel}>

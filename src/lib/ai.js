@@ -197,6 +197,17 @@ const fieldLine = (f) => {
  * Änderungen vorschlägt. Bewusst als Textprotokoll statt über Tool-Calling:
  * die Hälfte der kompatiblen Endpunkte unterstützt Werkzeuge gar nicht oder anders.
  */
+/* Die Regeln aus dem Schema als Saetze. Ihre Bedingungen sind Funktionen und
+   damit nicht uebertragbar - der `message`-Text ist es, und genau der ist die
+   Begruendung, die das Modell spaeter zurueckbekaeme, wenn es sie verletzt.
+   Ihn vorher mitzuliefern spart den Fehlversuch. */
+function ruleLines(schema) {
+  const rules = (schema.rules ?? [])
+    .map((r) => (typeof r.message === 'function' ? null : r.message))
+    .filter(Boolean)
+  return rules.length ? `\n  Constraints on a whole record:\n${rules.map((m) => `    - ${m}`).join('\n')}` : ''
+}
+
 export function buildInstructions(entities, allowWrite) {
   const single = isSingleEntity(entities)
   const entries = Object.entries(entities)
@@ -204,12 +215,12 @@ export function buildInstructions(entities, allowWrite) {
   const base = single
     ? (() => {
         const schema = entries[0][1].schema
-        return `Shape of one record (${schema.singular}), identifier in field ${schema.idField}:\n${schema.fields.map(fieldLine).join('\n')}`
+        return `Shape of one record (${schema.singular}), identifier in field ${schema.idField}:\n${schema.fields.map(fieldLine).join('\n')}${ruleLines(schema)}`
       })()
     : entries
         .map(([key, entity]) => {
           const schema = entity.schema
-          return `Entity "${key}" (${schema.plural}), identifier in field ${schema.idField}:\n${schema.fields.map(fieldLine).join('\n')}`
+          return `Entity "${key}" (${schema.plural}), identifier in field ${schema.idField}:\n${schema.fields.map(fieldLine).join('\n')}${ruleLines(schema)}`
         })
         .join('\n\n')
 

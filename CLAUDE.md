@@ -92,6 +92,40 @@ it is read-only and a write is rejected by name).
 Use it for scores (`likelihood × impact`), remaining time, percentages, budget variance — anything
 a consultant would otherwise recompute in a spreadsheet and paste back in wrong.
 
+### Validation rules
+
+`required: true` on a field is enforced. Beyond that, conditions **between** fields belong in
+`rules` on the schema — a per-field type check cannot see them:
+
+```js
+rules: [
+  {
+    when: (r) => r.status === 'done',        // optional; without it the rule always applies
+    require: ['cost'],                       // shorthand: these fields must be filled
+    check: (r) => Number(r.cost) > 0,        // optional predicate; true means fine
+    fields: ['cost'],                        // which fields to flag; defaults to `require`
+    message: 'A closed item needs its actual cost.',
+  },
+]
+```
+
+The point is the single place it runs. **The form, the CSV import and AI-proposed changes all pass
+through the same check** — one rule in the schema hardens all three at once instead of being
+retrofitted in three places. In the form the objection appears under the offending field and the
+save is refused; in the import the row is skipped and named; the AI is told the `message` up front
+and gets it back as the reason if it proposes something that violates it.
+
+Two details worth knowing when you write rules:
+
+- **A number `0` counts as filled.** `require` treats empty string, `null` and `undefined` as
+  missing, nothing else — a cost of zero is usually a real answer.
+- **`message` is your text, in your language**, like the field labels. Only the built-in
+  "X is required." comes from the interface translation.
+
+Write rules for the things a reviewer would otherwise catch by eye: an item in progress with no
+owner, a closing date before the start date, a mandatory justification on a rejection. Do not
+recreate type checks — `enum`, `date` and `number` are already enforced.
+
 `examples/risk-register.domain.js` is a complete working example. Copy it over `src/domain.js` and
 build to see the whole app change.
 

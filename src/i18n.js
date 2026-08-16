@@ -330,9 +330,10 @@ const STRINGS = {
     'hint.dashboard.prompt':
       'Add a dashboard tile showing effort per owner as a bar chart, and one counting only the items due within the next 14 days.',
     'hint.form':
-      'The form is generated from the fields — including a calculated field that is derived rather than typed in.',
+      'The form is generated from the fields — including calculated fields and the rules that decide ' +
+      'when a record may be saved.',
     'hint.form.prompt':
-      'Add a calculated field "Risk score" that multiplies likelihood by impact, and show it in the table.',
+      'Make the note mandatory as soon as the status is "waiting", and say why in the message.',
     'hint.import':
       'CSV import maps the columns of your file onto these fields; matching headings are preselected.',
     'hint.import.prompt':
@@ -356,6 +357,11 @@ const STRINGS = {
     'settings.securityNote':
       'Encryption protects the data, not access to the application. Roles and views in a file ' +
       'that runs locally would be surface only — whoever holds the file also holds the code.',
+    'validation.required': (label) => `${label} is required.`,
+    'validation.blocked': (n) =>
+      n === 1 ? '1 objection — the record was not saved.' : `${n} objections — the record was not saved.`,
+    'validation.rowRejected': (where, message) => `${where}: ${message} Line skipped.`,
+
     'settings.tagline': 'Header line',
     'settings.taglineHint':
       'The text after the file name in the dark bar at the top. Leave empty for the standard line, ' +
@@ -807,9 +813,10 @@ const STRINGS = {
     'hint.dashboard.prompt':
       'Ergänze eine Dashboard-Kachel mit dem Aufwand je Verantwortlichem als Balken, und eine, die nur die in den nächsten 14 Tagen fälligen Einträge zählt.',
     'hint.form':
-      'Das Formular entsteht aus den Feldern — einschließlich berechneter Felder, die abgeleitet statt eingetippt werden.',
+      'Das Formular entsteht aus den Feldern — einschließlich berechneter Felder und der Regeln, ' +
+      'die entscheiden, wann ein Datensatz gespeichert werden darf.',
     'hint.form.prompt':
-      'Ergänze ein berechnetes Feld "Risikowert", das Wahrscheinlichkeit mal Auswirkung rechnet, und zeige es in der Tabelle.',
+      'Mache die Notiz zur Pflicht, sobald der Status "waiting" ist, und begründe das in der Meldung.',
     'hint.import':
       'Der CSV-Import ordnet die Spalten deiner Datei diesen Feldern zu; passende Überschriften sind vorbelegt.',
     'hint.import.prompt':
@@ -833,6 +840,11 @@ const STRINGS = {
     'settings.securityNote':
       'Verschlüsselung schützt die Daten, nicht den Zugriff auf die Anwendung. Rollen und Ansichten ' +
       'in einer lokal laufenden Datei wären nur Oberfläche — wer die Datei hat, hat auch den Code.',
+    'validation.required': (label) => `${label} ist ein Pflichtfeld.`,
+    'validation.blocked': (n) =>
+      n === 1 ? '1 Beanstandung — der Datensatz wurde nicht gespeichert.' : `${n} Beanstandungen — der Datensatz wurde nicht gespeichert.`,
+    'validation.rowRejected': (where, message) => `${where}: ${message} Zeile übersprungen.`,
+
     'settings.tagline': 'Kopfzeile',
     'settings.taglineHint':
       'Der Text hinter dem Dateinamen in der dunklen Leiste ganz oben. Leer lassen für den ' +

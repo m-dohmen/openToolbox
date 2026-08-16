@@ -61,6 +61,21 @@ export const ENTITIES = {
         },
         { key: 'note', label: 'Note', type: 'text', long: true },
       ],
+      /* Bedingungen zwischen Feldern. Gelten im Formular, beim CSV-Import und
+         fuer Vorschlaege des Modells - eine Stelle, drei Wege. */
+      rules: [
+        {
+          when: (r) => r.phase !== 'Initiation',
+          require: ['lead'],
+          message: 'A project past initiation needs an engagement lead.',
+        },
+        {
+          when: (r) => r.start && r.end,
+          check: (r) => r.end >= r.start,
+          fields: ['end'],
+          message: 'The planned end cannot be before the start.',
+        },
+      ],
     },
     uid: () => 'P-' + Math.random().toString(36).slice(2, 6).toUpperCase(),
     emptyRecord: () => ({
@@ -131,6 +146,13 @@ export const ENTITIES = {
           },
         },
         { key: 'note', label: 'Note', type: 'text', long: true },
+      ],
+      rules: [
+        {
+          when: (r) => r.status !== 'open',
+          require: ['owner'],
+          message: 'A milestone that has started needs an owner.',
+        },
       ],
     },
     uid: () => 'M-' + Math.random().toString(36).slice(2, 6).toUpperCase(),
