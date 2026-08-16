@@ -19,6 +19,19 @@ Gebaut ist sie für einen Ablauf im Besonderen:
 Man richtet einen KI-Agenten auf dieses Repository, und er hat alles, was er braucht — das Gerüst,
 und [`AGENTS.md`](AGENTS.md), das ihm sagt, was er fragen und welche Datei er ändern soll.
 
+Noch einen Schritt kürzer wird es mit dem Skill in [`plugin/`](plugin/) — einmal installiert,
+beschreibt man das gewünschte Werkzeug in einem beliebigen Verzeichnis, und der Agent holt sich die
+Vorlage selbst. Claude Code und Codex lesen dieselbe `SKILL.md`:
+
+```bash
+claude plugin marketplace add m-dohmen/openToolbox
+claude plugin install opentoolbox@opentoolbox
+```
+
+Für Codex das Verzeichnis `plugin/skills/opentoolbox-tool` nach `~/.codex/skills/` kopieren — siehe
+[`plugin/README.md`](plugin/README.md). Nötig ist der Skill nicht; der Satz oben funktioniert auch
+ohne ihn.
+
 ---
 
 ## Ansehen

@@ -19,6 +19,11 @@ Il est conçu pour une manière de travailler bien précise :
 On pointe un agent de codage IA vers ce dépôt et il dispose de tout le nécessaire : le cadre, et le
 fichier [`AGENTS.md`](AGENTS.md) qui lui indique exactement quoi demander et quel fichier modifier.
 
+Une étape de moins avec le skill de [`plugin/`](plugin/) : une fois installé, décrivez l'outil
+souhaité dans n'importe quel répertoire et l'agent va chercher le modèle lui-même. Claude Code et
+Codex lisent le même `SKILL.md` — installation dans [`plugin/README.md`](plugin/README.md). Rien
+d'obligatoire : la phrase ci-dessus fonctionne sans lui.
+
 ---
 
 ## Voir le résultat

@@ -1,0 +1,19 @@
+{
+  "name": "opentoolbox",
+  "description": "The openToolbox template as an installable skill: build a small internal tool that ships as one self-contained HTML file.",
+  "owner": {
+    "name": "Michael Dohmen",
+    "url": "https://github.com/m-dohmen"
+  },
+  "plugins": [
+    {
+      "name": "opentoolbox",
+      "source": "./plugin",
+      "description": "Build a small internal tool that ships as one self-contained HTML file — no server, no install, no database.",
+      "version": "0.1.0",
+      "author": {
+        "name": "Michael Dohmen"
+      }
+    }
+  ]
+}

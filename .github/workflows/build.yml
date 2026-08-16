@@ -29,6 +29,34 @@ jobs:
             echo "External reference found in the built file."
             exit 1
           fi
+      - name: Check the agent instructions and the skill are intact
+        run: |
+          # CLAUDE.md is a copy of AGENTS.md; a change to one without the other
+          # silently gives Claude Code stale instructions.
+          if ! diff -q AGENTS.md CLAUDE.md; then
+            echo "CLAUDE.md differs from AGENTS.md — run 'cp AGENTS.md CLAUDE.md' and commit."
+            exit 1
+          fi
+          node -e '
+            const fs = require("node:fs")
+            const market = JSON.parse(fs.readFileSync(".claude-plugin/marketplace.json", "utf8"))
+            const plugin = JSON.parse(fs.readFileSync("plugin/.claude-plugin/plugin.json", "utf8"))
+            const skill = fs.readFileSync("plugin/skills/opentoolbox-tool/SKILL.md", "utf8")
+            const fail = (m) => { console.error(m); process.exit(1) }
+            if (!market.name || !market.owner || !Array.isArray(market.plugins)) fail("marketplace.json: name, owner and plugins are required.")
+            for (const p of market.plugins) {
+              if (!p.name || !p.source) fail("marketplace.json: every plugin needs name and source.")
+              if (typeof p.source === "string" && !fs.existsSync(p.source)) fail(`marketplace.json: source ${p.source} does not exist.`)
+            }
+            if (!plugin.name) fail("plugin.json: name is required.")
+            const front = skill.match(/^---\n([\s\S]*?)\n---/)
+            if (!front) fail("SKILL.md: no YAML frontmatter.")
+            for (const key of ["name", "description"]) {
+              if (!new RegExp(`^${key}:`, "m").test(front[1])) fail(`SKILL.md: frontmatter is missing ${key}.`)
+            }
+            console.log("Plugin manifests and skill frontmatter look sound.")
+          '
+
       - run: npm run build:demo
       - name: Check the committed demo is current
         run: |

@@ -4,6 +4,13 @@ Instructions for an AI assistant asked to build a tool **on the basis of openToo
 
 Read this file completely before writing any code. It is short on purpose.
 
+> **If you are editing this file:** `plugin/skills/opentoolbox-tool/SKILL.md` is an installable
+> skill for Claude Code and Codex that walks a user through the same build. The split is
+> deliberate — **this file holds the knowledge** (schema shape, field types, the rules that break a
+> single-file build), **the skill holds the procedure** (fetch, interview, build, verify, hand
+> over), and the skill defers to this file where they overlap. Do not copy schema documentation
+> into the skill; two descriptions of the same thing drift apart.
+
 ## What openToolbox is
 
 A template that compiles to **one self-contained HTML file**. No server, no install, nothing loaded

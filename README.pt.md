@@ -19,6 +19,11 @@ Ele foi feito para uma forma de trabalhar bem específica:
 Basta apontar um agente de IA para este repositório e ele já tem tudo de que precisa: o arcabouço e
 o [`AGENTS.md`](AGENTS.md), que lhe diz exatamente o que perguntar e qual arquivo alterar.
 
+Dá para encurtar mais um passo com o skill em [`plugin/`](plugin/): instalado uma vez, você descreve
+a ferramenta que quer em qualquer diretório e o agente busca o modelo sozinho. Claude Code e Codex
+leem o mesmo `SKILL.md` — instalação em [`plugin/README.md`](plugin/README.md). Não é obrigatório: a
+frase acima funciona sem ele.
+
 ---
 
 ## Ver funcionando

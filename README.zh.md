@@ -14,6 +14,8 @@ openToolbox 是一个模板，用于那些需要四处流转的小型内部工�
 
 把 AI 编码代理指向这个仓库，它就拥有了所需的一切——框架本身，以及告诉它该问什么、该改哪个文件的 [`AGENTS.md`](AGENTS.md)。
 
+还能再省一步：安装 [`plugin/`](plugin/) 里的 skill 后，在任意目录描述你想要的工具即可，代理会自己取来模板。Claude Code 和 Codex 读同一个 `SKILL.md`——安装方式见 [`plugin/README.md`](plugin/README.md)。skill 并非必需，上面那句话不装也能用。
+
 ---
 
 ## 先看看

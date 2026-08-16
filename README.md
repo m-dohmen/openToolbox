@@ -263,6 +263,22 @@ The assistant reads [`AGENTS.md`](AGENTS.md), asks what a record looks like, wri
 runs the build and hands you the finished HTML file. `AGENTS.md` also lists the mistakes that break
 a single-file build, so the assistant does not have to rediscover them.
 
+### Install the skill and skip the first step
+
+`AGENTS.md` only helps once the agent is already in this repository. The skill in
+[`plugin/`](plugin/) is the entry point from outside: install it once, then describe the tool you
+want in any directory and the agent fetches the template itself, runs the interview, builds and
+hands over. Claude Code and Codex read the same `SKILL.md`.
+
+```bash
+claude plugin marketplace add m-dohmen/openToolbox
+claude plugin install opentoolbox@opentoolbox
+```
+
+For Codex, copy `plugin/skills/opentoolbox-tool` into `~/.codex/skills/` — see
+[`plugin/README.md`](plugin/README.md). Nothing about the skill is required; it is convenience, and
+the prompt above works without it.
+
 ## Why single-file
 
 Three constraints that keep coming up in regulated and corporate environments:
@@ -491,6 +507,7 @@ src/settings.jsx       settings page
 src/dashboard.jsx      dashboard tiles (stat, bar, donut) — no charting library
 src/hint.jsx           the example-prompt boxes
 scripts/build-demo.mjs builds examples/portfolio.domain.js into docs/demo/
+plugin/                installable skill for Claude Code and Codex (see plugin/README.md)
 scripts/screenshots.mjs regenerates the images in this README
 src/chat.jsx           AI assistant dock
 src/brand.jsx          wordmark and uploaded logo

@@ -1,0 +1,14 @@
+{
+  "name": "opentoolbox",
+  "displayName": "openToolbox",
+  "version": "0.1.0",
+  "description": "Build a small internal tool that ships as one self-contained HTML file — no server, no install, no database.",
+  "author": {
+    "name": "Michael Dohmen",
+    "url": "https://github.com/m-dohmen"
+  },
+  "homepage": "https://m-dohmen.github.io/openToolbox/",
+  "repository": "https://github.com/m-dohmen/openToolbox",
+  "license": "Apache-2.0",
+  "keywords": ["single-file", "html", "internal-tools", "no-backend", "offline"]
+}

@@ -19,6 +19,11 @@ Está pensada para una forma de trabajar en concreto:
 Se apunta un agente de IA a este repositorio y ya tiene todo lo necesario: el marco de trabajo y el
 archivo [`AGENTS.md`](AGENTS.md), que le indica exactamente qué preguntar y qué archivo modificar.
 
+Se puede acortar un paso más con el skill de [`plugin/`](plugin/): instalado una vez, describes la
+herramienta que quieres en cualquier directorio y el agente se trae la plantilla solo. Claude Code y
+Codex leen el mismo `SKILL.md` — instalación en [`plugin/README.md`](plugin/README.md). No es
+obligatorio: la frase de arriba funciona sin él.
+
 ---
 
 ## Verlo en funcionamiento
