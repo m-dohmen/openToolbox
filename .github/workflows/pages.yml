@@ -30,11 +30,22 @@ jobs:
           cache: npm
       - run: npm ci
       - run: npm run build
-      # Die Schaudemo aus examples/portfolio.domain.js liegt unter /demo/ -
-      # frisch gebaut, damit die veroeffentlichte Fassung nie hinter dem
-      # eingecheckten Stand zurueckfaellt.
+      # Alle Schaudemos, frisch gebaut, damit die veroeffentlichte Fassung nie
+      # hinter dem eingecheckten Stand zurueckfaellt.
       - run: npm run build:demo
-      - run: cp -r docs/demo dist/demo
+      - name: Copy the demos into the site
+        run: |
+          cp -r docs/demos dist/demos
+          # /demo/ ist der alte Einzelpfad. Bestehende Verweise in READMEs,
+          # Wiki und aelteren Releases zeigen dorthin und sollen nicht ins
+          # Leere laufen.
+          cp -r docs/demo dist/demo
+          # Die Uebersichtsseite bindet ../logo.svg ein, also /logo.svg.
+          cp docs/logo.svg dist/logo.svg
+          test -f dist/demos/index.html
+          test -f dist/demos/ppwr-packaging/index.html
+          test -f dist/demo/index.html
+          test -f dist/logo.svg
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist
