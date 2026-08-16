@@ -97,6 +97,29 @@ await page.getByLabel('Settings').click()
 await page.waitForSelector('.settings')
 await page.waitForTimeout(250)
 await shot(page, 'settings', { fullPage: true })
+
+/* Dieselbe Seite gesperrt: die Felder bleiben sichtbar und lesbar, nur eben
+   nicht bedienbar - genau das soll das Bild zeigen. */
+await page.locator('.setting', { hasText: 'Protect settings' }).getByRole('button').first().click()
+await page.waitForSelector('#lock-word')
+await page.locator('#lock-word').fill('kickoff')
+await page.locator('.modal__foot .btn--primary').click()
+await page.waitForSelector('.settings__locked')
+// Ganz nach oben: der Hinweisbalken mit dem Entsperren-Knopf ist das Neue am
+// Bild, die ausgegrauten Felder darunter erklaeren sich dann von selbst.
+await page.locator('.settings').evaluate((el) => el.scrollTo(0, 0))
+await page.waitForTimeout(400)
+await shot(page, 'settings-locked')
+
+/* Wieder aufschliessen und den Schutz entfernen, damit die folgenden Bilder
+   und die gespeicherte Demo-Datei davon nichts mitbekommen. */
+await page.locator('.settings__locked .btn').click()
+await page.waitForSelector('#lock-word')
+await page.locator('#lock-word').fill('kickoff')
+await page.locator('.modal__foot .btn--primary').click()
+await page.waitForSelector('.settings__locked', { state: 'detached' })
+await page.locator('.setting', { hasText: 'Protect settings' }).getByRole('button', { name: 'Remove protection' }).click()
+
 await page.getByRole('button', { name: 'Back to the list' }).click()
 await page.waitForSelector('table tbody tr')
 
