@@ -1226,3 +1226,87 @@ tbody tr[data-selected="true"] td { background: var(--accent-soft); }
   color: var(--ink);
   font-size: 12.5px;
 }
+
+/* ── Geführte Erfassung ───────────────────────────────────────── */
+
+/* Bewusst schmal und mittig: der Wizard ist kein Arbeitsplatz, sondern ein
+   Weg von A nach B. Alles, was ablenkt, ist hier weggelassen. */
+.wizard { flex: 1; overflow: auto; background: var(--bg); padding: 32px 20px 48px; }
+.wizard__inner {
+  max-width: 620px;
+  margin: 0 auto;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  padding: 26px 28px;
+  box-shadow: var(--shadow);
+}
+.wizard__inner--done { text-align: center; }
+
+.wizard__badge {
+  margin: 0 0 6px;
+  font-family: var(--mono);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--accent-text);
+}
+.wizard__inner h2 { margin: 0 0 8px; font-size: 19px; color: var(--ink-strong); }
+.wizard__lead { margin: 0 0 18px; color: var(--muted); font-size: 13px; }
+
+/* Fortschritt als Reihe von Marken - kein Prozentbalken, weil die Schritte
+   unterschiedlich lang sind und eine Prozentzahl das Gegenteil suggeriert. */
+.wizard__rail {
+  display: flex;
+  gap: 6px;
+  list-style: none;
+  margin: 0 0 22px;
+  padding: 0;
+  flex-wrap: wrap;
+}
+.wizard__rail li {
+  flex: 1 1 90px;
+  border-top: 3px solid var(--line);
+  padding-top: 7px;
+  font-size: 11.5px;
+  color: var(--faint);
+}
+.wizard__rail li[data-state="past"] { border-top-color: var(--ok); color: var(--muted); }
+.wizard__rail li[data-state="now"] {
+  border-top-color: var(--accent);
+  color: var(--ink-strong);
+  font-weight: var(--tone-weight-bold);
+}
+
+.wizard__body { display: flex; flex-direction: column; gap: 14px; }
+.wizard__csv { display: flex; flex-direction: column; gap: 12px; align-items: flex-start; }
+.wizard__csv .import__map { width: 100%; }
+.wizard__csv input[type="file"] { font-size: 12.5px; }
+
+.wizard__review section + section { margin-top: 18px; }
+.wizard__review dl {
+  margin: 0 0 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  background: var(--line-soft);
+}
+.wizard__review dl > div { display: flex; gap: 10px; padding: 2px 0; font-size: 13px; }
+.wizard__review dt { flex: 0 0 38%; color: var(--muted); }
+.wizard__review dd { margin: 0; color: var(--ink-strong); }
+
+.wizard__objections {
+  margin: 16px 0 0;
+  padding: 9px 12px;
+  border-left: 3px solid var(--flag);
+  background: var(--flag-soft);
+  color: var(--ink);
+  font-size: 12.5px;
+}
+
+.wizard__foot { display: flex; gap: 8px; margin-top: 22px; }
+.wizard__inner--done .wizard__foot { justify-content: center; }
+
+@media print {
+  .wizard { display: none; }
+}

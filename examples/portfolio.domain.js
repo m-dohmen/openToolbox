@@ -234,3 +234,39 @@ export const DASHBOARD = {
     { type: 'donut', entity: 'milestones', groupBy: 'status', label: 'Milestones by status' },
   ],
 }
+
+/**
+ * Geführte Erfassung über zwei Entitäten hinweg: erst das Projekt, dann ein
+ * Meilenstein dazu. Die Entwürfe bekommen ihre Id zu Beginn des Durchlaufs -
+ * deshalb kann das Referenzfeld im zweiten Schritt schon auf das Projekt aus
+ * dem ersten zeigen.
+ */
+export const WIZARD = {
+  title: 'Add an engagement',
+  intro: 'Three steps: the engagement, its first milestone, then a check before anything is written.',
+  steps: [
+    {
+      id: 'project',
+      label: 'Engagement',
+      entity: 'projects',
+      fields: ['name', 'client', 'lead', 'phase', 'risk', 'budget', 'start', 'end'],
+    },
+    {
+      id: 'milestone',
+      label: 'First milestone',
+      entity: 'milestones',
+      fields: ['title', 'projectId', 'owner', 'due', 'status', 'effort'],
+      // Ein Vorschlag ohne Zusage braucht noch keinen Meilenstein.
+      when: (drafts) => drafts.projects?.phase !== 'Initiation',
+    },
+    {
+      id: 'more',
+      label: 'More milestones',
+      entity: 'milestones',
+      type: 'csv',
+      when: (drafts) => Boolean(drafts.projects?.name),
+    },
+    { id: 'check', label: 'Check', type: 'review' },
+  ],
+  done: { message: 'The engagement is in the file.', allowAnother: true },
+}

@@ -173,6 +173,42 @@ const newRowChip = await page.locator('tr:has-text("New audit certificate") .ref
 console.log('    Aufgeloester Supplier des neuen Datensatzes:', newRowChip)
 if (newRowChip !== 'Nordwind IT GmbH') fail('Reference per Titel-Text wurde nicht korrekt aufgeloest')
 
+// Gefuehrte Erfassung ueber zwei Entitaeten: der Entwurf des ersten Schritts
+// muss im zweiten schon als Referenzziel auswaehlbar sein.
+await page.getByRole('tab', { name: 'Guided entry' }).click()
+await page.waitForSelector('.wizard')
+await page.locator('#f-name').fill('Suedwind Logistik GmbH')
+await page.waitForTimeout(150)
+await page.locator('.wizard__foot .btn--primary').click()
+await page.waitForSelector('#f-supplierId')
+const refOptions = await page.locator('#f-supplierId option').allInnerTexts()
+console.log('11) Referenzziele im zweiten Schritt:', refOptions.length, '| Entwurf dabei:',
+  refOptions.includes('Suedwind Logistik GmbH'))
+if (!refOptions.includes('Suedwind Logistik GmbH')) {
+  fail('Der Entwurf aus Schritt 1 ist im Referenzfeld von Schritt 2 nicht waehlbar')
+}
+
+await page.locator('#f-title').fill('ISO 9001 certificate')
+await page.locator('#f-supplierId').selectOption({ label: 'Suedwind Logistik GmbH' })
+await page.locator('.wizard__foot .btn--primary').click()
+await page.waitForSelector('.wizard__review')
+const wizReview = await page.locator('.wizard__review').innerText()
+console.log('12) Vorschau ueber beide Entitaeten:', wizReview.split('\n').filter((l) => l.includes('×')).join(' | '))
+await page.locator('.wizard__foot .btn--primary').click()
+await page.waitForSelector('.wizard__inner--done')
+
+await page.locator('.wizard__foot .btn--quiet').click()
+await page.getByRole('tab', { name: 'suppliers' }).click()
+await page.waitForSelector('table tbody tr')
+const supplierRowsAfterWizard = await page.locator('table tbody tr').count()
+await page.getByRole('tab', { name: 'certificates' }).click()
+const certRowsFinal = await page.locator('table tbody tr').count()
+console.log('13) Nach dem Durchlauf — Suppliers:', supplierRowsAfterWizard, '| Certificates:', certRowsFinal)
+if (supplierRowsAfterWizard !== 6 || certRowsFinal !== 11) fail('Wizard hat nicht in beide Entitaeten geschrieben')
+const wizChip = await page.locator('tr:has-text("ISO 9001 certificate") .ref-chip').innerText()
+console.log('    Aufgeloester Supplier:', wizChip)
+if (wizChip !== 'Suedwind Logistik GmbH') fail('Referenz auf den im selben Durchlauf angelegten Datensatz fehlt')
+
 console.log(errors.length ? '\nKonsolenfehler:\n' + errors.join('\n') : '\nKeine Konsolenfehler.')
 await browser.close()
 mock.close()

@@ -74,13 +74,13 @@ Dunkelmodus die Richtung, damit kein Ende der Reihe verschwindet.</td>
 </tr>
 <tr>
 <td><img src="docs/screenshots/validation.png" alt="Eine Regel verweigert das Speichern"></td>
-<td><img src="docs/screenshots/settings-locked.png" alt="Die geschützte Einstellungsseite"></td>
+<td><img src="docs/screenshots/wizard.png" alt="Die geführte Erfassung"></td>
 </tr>
 <tr>
 <td><b>Regeln entscheiden, wann gespeichert werden darf</b> — hier ein Meilenstein in Arbeit ohne
 Verantwortlichen. Dieselbe Regel weist die Zeile beim CSV-Import ab und geht als Bedingung an die KI.</td>
-<td><b>Die Einstellungsseite lässt sich sperren</b>. Die Felder bleiben sichtbar und lesbar; ein
-Wort gibt sie für die Sitzung wieder frei.</td>
+<td><b>Die geführte Erfassung</b> führt den Empfänger durch kurze Schritte. In Schritt zwei bietet
+das Referenzfeld schon den Entwurf aus Schritt eins an — ein Durchlauf legt beides an.</td>
 </tr>
 </table>
 
@@ -125,6 +125,8 @@ Dashboard · CSV-Import · Änderungsprotokoll · Versionsnummern.**
   was neben dem Werkzeug liegt — siehe [Die dunkle Leiste oben](#die-dunkle-leiste-oben).
 - **Prüfregeln über Felder hinweg**, identisch durchgesetzt im Formular, beim CSV-Import und bei
   Vorschlägen der KI — siehe [Ein eigenes Werkzeug bauen](#ein-eigenes-werkzeug-bauen).
+- **Eine geführte Erfassung** und ein Erfassungsmodus, der die Datei direkt darin öffnet — siehe
+  [Geführte Erfassung](#geführte-erfassung).
 
 ## Schnellstart
 
@@ -236,6 +238,47 @@ Zeile ohne Titel wird übersprungen statt halbleer importiert.
 
 Kennungen vergibt immer die Anwendung, nie die Datei — dieselbe Regel wie bei Datensätzen, die die
 KI anlegt.
+
+## Geführte Erfassung
+
+Liste und Formular setzen voraus, dass man das Werkzeug kennt. Wer die Datei bekommt, um *eine*
+Sache zu melden, soll nicht erst eine Tabelle, eine Seitenleiste und siebzehn Felder sortieren
+müssen. Ein `WIZARD`-Export gibt ihm stattdessen kurze Schritte — ohne ihn gibt es die Ansicht
+schlicht nicht.
+
+```js
+export const WIZARD = {
+  title: 'Feststellung melden',
+  steps: [
+    { id: 'was', label: 'Was', fields: ['title', 'area', 'note'] },
+    { id: 'wer', label: 'Wer und wann', fields: ['owner', 'due', 'status'] },
+    { id: 'bulk', label: 'Mehrere auf einmal', type: 'csv',
+      when: (drafts) => Boolean(drafts.records.title) },
+    { id: 'pruefen', label: 'Prüfen', type: 'review' },
+  ],
+  done: { message: 'Danke — das ist erfasst.', allowAnother: true },
+}
+```
+
+Vier Schritttypen, mehr braucht es generisch nicht: `fields` zeigt eine Teilmenge der Schemafelder,
+mit derselben Maschine und denselben Regeln wie das Formular; `csv` ist der vorhandene Import als
+Schritt; `review` ist eine aus dem Schema erzeugte Zusammenfassung; der Abschluss kommt aus `done`.
+Ein `when` blendet einen Schritt aus, der nicht passt.
+
+Zwei Dinge machen daraus mehr als ein Formular:
+
+- **Der CSV-Schritt zahlt in denselben Durchlauf ein.** Die Zeilen werden vorgemerkt und erst am
+  Ende zusammen mit dem Entwurf angelegt — wer mittendrin abbricht, hinterlässt nichts.
+- **Die Entwürfe bekommen ihre Id zu Beginn**, deshalb kann ein Referenzfeld in Schritt zwei bei
+  mehreren Datensatztypen schon auf den Datensatz aus Schritt eins zeigen — ein Durchlauf legt den
+  Lieferanten und sein Zertifikat an.
+
+### Erfassungsmodus
+
+Einstellungen → Anwendung → *Öffnet als* → **Geführte Erfassung** öffnet die Datei direkt im Wizard
+und blendet Liste, Entitätsreiter und den „Neu"-Knopf aus. Dieselbe Datei wird damit zum
+Erfassungsbogen: Empfänger füllt aus, speichert, schickt zurück. `mode: 'intake'` in
+`DEFAULT_SETTINGS` liefert sie gleich so aus.
 
 ## Dashboard
 

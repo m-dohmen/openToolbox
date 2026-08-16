@@ -103,3 +103,31 @@ export const formatDate = (s) => {
   const [y, m, d] = s.split('-')
   return `${m}/${d}/${y}`
 }
+
+/**
+ * Geführte Erfassung über beide Entitäten: erst der Lieferant, dann sein
+ * erstes Zertifikat. Der Entwurf bekommt seine Id zu Beginn des Durchlaufs -
+ * nur deshalb kann das Referenzfeld im zweiten Schritt schon auf den
+ * Lieferanten aus dem ersten zeigen.
+ */
+export const WIZARD = {
+  title: 'Onboard a supplier',
+  intro: 'The supplier first, then its first certificate. Nothing is written until the last step.',
+  steps: [
+    {
+      id: 'supplier',
+      label: 'Supplier',
+      entity: 'suppliers',
+      fields: ['name', 'category', 'contact', 'note'],
+    },
+    {
+      id: 'certificate',
+      label: 'First certificate',
+      entity: 'certificates',
+      fields: ['title', 'supplierId', 'type', 'expiry', 'owner'],
+      when: (drafts) => Boolean(drafts.suppliers?.name),
+    },
+    { id: 'check', label: 'Check', type: 'review' },
+  ],
+  done: { message: 'The supplier is on file.', allowAnother: true },
+}

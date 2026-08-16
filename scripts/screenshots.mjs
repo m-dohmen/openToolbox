@@ -89,6 +89,24 @@ await page.keyboard.press('Escape')
 await page.getByRole('tab', { name: 'Projects' }).click()
 await page.waitForSelector('table tbody tr')
 
+/* Gefuehrte Erfassung: der zweite Schritt, weil dort das Referenzfeld schon
+   den Entwurf aus dem ersten anbietet - der Punkt der ganzen Sache. */
+await page.getByRole('tab', { name: 'Guided entry' }).click()
+await page.waitForSelector('.wizard')
+await page.locator('#f-name').fill('Treasury reporting programme')
+await page.locator('#f-client').fill('Landesbank Sued')
+await page.locator('#f-lead').fill('M. Voss')
+await page.locator('#f-phase').selectOption('Delivery')
+await page.waitForTimeout(150)
+await page.locator('.wizard__foot .btn--primary').click()
+await page.waitForSelector('#f-supplierId, #f-projectId')
+await page.locator('#f-title').fill('Target architecture signed off')
+await page.locator('#f-projectId').selectOption({ label: 'Treasury reporting programme' })
+await page.waitForTimeout(250)
+await shot(page, 'wizard')
+await page.getByRole('tab', { name: 'List' }).click()
+await page.waitForSelector('table tbody tr')
+
 /* Dunkelmodus auf dem Dashboard - dort ist der Unterschied am deutlichsten. */
 await page.getByLabel('Settings').click()
 await page.waitForSelector('.settings')

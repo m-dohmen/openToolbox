@@ -59,13 +59,13 @@ neither end of the range disappears.</td>
 </tr>
 <tr>
 <td><img src="docs/screenshots/validation.png" alt="A validation rule refusing a save"></td>
-<td><img src="docs/screenshots/settings-locked.png" alt="The settings page protected"></td>
+<td><img src="docs/screenshots/wizard.png" alt="The guided entry wizard"></td>
 </tr>
 <tr>
 <td><b>Rules decide when a record may be saved</b> — here a milestone in progress without an owner.
 The same rule rejects the row on CSV import and is handed to the AI as a constraint.</td>
-<td><b>The settings page can be locked</b> against accidental change. Fields stay visible and
-readable; a word re-enables them for the session.</td>
+<td><b>Guided entry</b> walks a recipient through short steps. In step two the reference field
+already offers the record drafted in step one — one run creates both.</td>
 </tr>
 </table>
 
@@ -108,6 +108,8 @@ dashboard · CSV import · change log · version numbers.**
   sits next to the tool — see [The dark bar at the top](#the-dark-bar-at-the-top).
 - **Validation rules across fields**, enforced identically in the form, the CSV import and
   AI-proposed changes — see [Building your own tool](#building-your-own-tool).
+- **A guided entry wizard**, and an intake mode that opens the file straight into it — see
+  [Guided entry](#guided-entry).
 
 ## Quick start
 
@@ -204,6 +206,45 @@ instructions describe every entity and how they connect, and it can name a refer
 or by title text. `examples/suppliers-certificates.domain.js` is a minimal working example, and
 `examples/portfolio.domain.js` — the one behind the [live demo](https://m-dohmen.github.io/openToolbox/demo/)
 — is the full-dress version using every feature at once.
+
+## Guided entry
+
+The list plus the edit form assume you know the tool. Someone who receives the file to report *one*
+thing should not have to sort out a table, a sidebar and seventeen fields first. A `WIZARD` export
+gives them a sequence of short steps instead — without it the view does not exist.
+
+```js
+export const WIZARD = {
+  title: 'Report an action item',
+  steps: [
+    { id: 'what', label: 'What', fields: ['title', 'area', 'note'] },
+    { id: 'who', label: 'Who and when', fields: ['owner', 'due', 'status'] },
+    { id: 'bulk', label: 'Several at once', type: 'csv',
+      when: (drafts) => Boolean(drafts.records.title) },
+    { id: 'check', label: 'Check', type: 'review' },
+  ],
+  done: { message: 'Thank you — that is recorded.', allowAnother: true },
+}
+```
+
+Four step types, which is all it takes generically: `fields` renders a subset of the schema fields
+with the same machinery and the same rules as the edit form; `csv` is the existing import as a step;
+`review` is a summary generated from the schema; the closing screen comes from `done`. A `when`
+hides a step that does not apply.
+
+Two things make it more than a form:
+
+- **The CSV step feeds the same run.** Rows are held and created together with the draft at the end,
+  so abandoning the wizard halfway leaves nothing behind.
+- **Drafts get their ids at the start**, so with several record types a reference field in step two
+  can already point at the record from step one — one run creates a supplier and its certificate.
+
+### Intake mode
+
+Settings → Application → *Opens as* → **Guided entry** opens the file straight into the wizard and
+hides the list, the entity tabs and the "New …" button. The same file becomes a form you send out:
+the recipient fills it in, saves, mails it back. `mode: 'intake'` in `DEFAULT_SETTINGS` ships it
+that way from the start.
 
 ## Dashboard
 
@@ -550,6 +591,8 @@ src/lib/actions.js     validation and application of AI-proposed changes
 src/lib/entities.js    normalizes SCHEMA/ENTITIES, shared field type check, delete-guard helpers
 src/lib/csv.js         CSV writer and reader (separator sniffing, RFC 4180 quoting)
 src/lib/count.js       the usage counter — the only self-initiated network call in the file
+src/wizard.jsx         guided entry: steps, CSV step, review
+src/lib/wizard.js      wizard shape — visible steps, per-step objections, harvest
 src/lib/links.js       header links — URL check (http/https/mailto only)
 src/lib/svg.js         logo and icon sanitiser
 src/lib/color.js       palette derivation and contrast check

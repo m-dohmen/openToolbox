@@ -77,6 +77,8 @@ s'impriment en un PDF propre.
   accompagne l'outil.
 - **Des règles de validation entre champs**, appliquées à l'identique dans le formulaire, à
   l'import CSV et aux changements proposés par l'IA.
+- **Un assistant de saisie guidée** et un mode de collecte qui ouvre le fichier directement dessus,
+  pour ceux qui n'ont qu'une chose à signaler.
 
 ## Démarrage rapide
 

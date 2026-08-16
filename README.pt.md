@@ -73,6 +73,8 @@ larguras em CSS e o anel é um único círculo SVG. As duas visões imprimem com
   que acompanha a ferramenta.
 - **Regras de validação entre campos**, aplicadas igualmente no formulário, na importação CSV e nas
   alterações propostas pela IA.
+- **Um assistente de captura guiada** e um modo de recepção que abre o arquivo direto nele, para
+  quem só precisa relatar uma coisa.
 
 ## Início rápido
 

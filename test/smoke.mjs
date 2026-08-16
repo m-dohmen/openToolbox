@@ -1067,6 +1067,97 @@ if (!ruleOutcome.startsWith('1 record')) fail('Genau eine Zeile haette durchkomm
 await page19.getByRole('button', { name: 'Close' }).click()
 await page19.close()
 
+// Gefuehrte Erfassung: mehrere Schritte, bedingter Schritt, CSV in denselben
+// Durchlauf, geschrieben wird erst am Ende.
+const page20 = await ctx.newPage()
+page20.on('pageerror', (e) => errors.push(String(e)))
+page20.on('console', (m) => m.type() === 'error' && errors.push(m.text()))
+await page20.goto('file://' + dist)
+await page20.waitForSelector('table tbody tr')
+const rowsBeforeWizard = await page20.locator('table tbody tr').count()
+
+await page20.getByRole('tab', { name: 'Guided entry' }).click()
+await page20.waitForSelector('.wizard')
+console.log('58) Schritte vor der Eingabe:', (await page20.locator('.wizard__rail li').allInnerTexts()).join(' / '))
+if ((await page20.locator('.wizard__rail li').count()) !== 3) fail('Bedingter Schritt haette verborgen sein muessen')
+
+// Ohne Titel geht es nicht weiter - dieselbe Pruefung wie im Formular
+await page20.getByRole('button', { name: 'Next' }).click()
+await page20.waitForSelector('.field__objection')
+console.log('59) Regel im Wizard:', await page20.locator('.field__objection').first().innerText())
+if (!/1 of 3/i.test(await page20.locator('.wizard__badge').innerText())) fail('Wizard ist trotz Beanstandung weitergegangen')
+
+// Titel fuellen: der bedingte CSV-Schritt taucht auf
+await page20.locator('#f-title').fill('Close the findings from the June audit')
+await page20.waitForTimeout(150)
+console.log('60) Schritte nach dem Titel:', (await page20.locator('.wizard__rail li').allInnerTexts()).join(' / '))
+if ((await page20.locator('.wizard__rail li').count()) !== 4) fail('Bedingter Schritt ist nicht erschienen')
+
+await page20.getByRole('button', { name: 'Next' }).click()
+await page20.waitForSelector('#f-owner')
+await page20.locator('#f-owner').fill('S. Behrens')
+await page20.locator('#f-status').selectOption('in progress')
+await page20.getByRole('button', { name: 'Next' }).click()
+
+// CSV-Schritt: die Zeilen werden vorgemerkt, nicht geschrieben
+await page20.waitForSelector('.wizard__csv')
+const wizCsv = resolve(tmp, 'wizard.csv')
+writeFileSync(wizCsv, 'Title;Owner;Status\nFrom the file A;M. Voss;open\nFrom the file B;M. Voss;open\n')
+await page20.locator('.wizard__csv input[type=file]').setInputFiles(wizCsv)
+await page20.waitForSelector('.wizard__csv .import__map')
+await page20.getByRole('button', { name: 'Take these rows' }).click()
+await page20.waitForSelector('.note--ok')
+console.log('61) CSV im Wizard:', await page20.locator('.note--ok').innerText())
+
+await page20.getByRole('button', { name: 'Next' }).click()
+await page20.waitForSelector('.wizard__review')
+const reviewText = await page20.locator('.wizard__review').innerText()
+console.log('62) Vorschau:', reviewText.split('\n').slice(0, 2).join(' | '))
+if (!reviewText.includes('3 ×')) fail('Vorschau zaehlt Entwurf und CSV-Zeilen nicht zusammen')
+await page20.screenshot({ path: resolve(tmp, 'wizard-review.png') })
+
+await page20.locator('#wizard-note').fill('Reported through the guided entry')
+await page20.locator('.wizard__foot .btn--primary').click()
+await page20.waitForSelector('.wizard__inner--done')
+console.log('63) Abschluss:', await page20.locator('.wizard__inner--done h2').innerText())
+
+await page20.locator('.wizard__foot .btn--quiet').click()
+await page20.waitForSelector('table tbody tr')
+const rowsAfterWizard = await page20.locator('table tbody tr').count()
+console.log('64) Zeilen', rowsBeforeWizard, '->', rowsAfterWizard)
+if (rowsAfterWizard !== rowsBeforeWizard + 3) fail('Wizard hat nicht alle drei Datensaetze angelegt')
+
+// Abbruch hinterlaesst nichts
+await page20.getByRole('tab', { name: 'Guided entry' }).click()
+await page20.waitForSelector('.wizard')
+await page20.locator('#f-title').fill('Abandoned halfway')
+await page20.locator('.wizard__foot .btn--quiet').last().click()
+await page20.waitForSelector('table tbody tr')
+console.log('65) Nach dem Abbruch — Zeilen:', await page20.locator('table tbody tr').count())
+if ((await page20.locator('table tbody tr').count()) !== rowsAfterWizard) fail('Abgebrochener Durchlauf hat etwas hinterlassen')
+
+// Erfassungsmodus: die Datei oeffnet direkt im Wizard, ohne Liste
+await page20.getByLabel('Settings').click()
+await page20.waitForSelector('.settings')
+await page20.getByRole('button', { name: 'Guided entry', exact: true }).click()
+await page20.waitForTimeout(150)
+const intakeFile = resolve(tmp, 'erfassung.html')
+await page20.getByRole('button', { name: 'Back to the list' }).click()
+await saveTo(page20, intakeFile, 'Als Erfassungsbogen')
+await page20.close()
+
+const page21 = await ctx.newPage()
+page21.on('pageerror', (e) => errors.push(String(e)))
+await page21.goto('file://' + intakeFile)
+await page21.waitForSelector('.wizard')
+console.log('66) Erfassungsmodus — Tabelle vorhanden:', (await page21.locator('table').count()) > 0,
+  '| Reiter:', await page21.locator('.entity-tabs').count(),
+  '| Neu-Knopf:', await page21.getByRole('button', { name: /^New / }).count())
+if ((await page21.locator('table').count()) !== 0) fail('Erfassungsmodus zeigt trotzdem die Liste')
+if ((await page21.getByRole('button', { name: /^New / }).count()) !== 0) fail('Erfassungsmodus zeigt den Neu-Knopf')
+await page21.screenshot({ path: resolve(tmp, 'erfassungsmodus.png') })
+await page21.close()
+
 // Vorschau im hellen Modus
 await page3.getByLabel('Settings').click()
 await page3.waitForSelector('.settings')

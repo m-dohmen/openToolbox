@@ -164,3 +164,37 @@ export const DASHBOARD = {
     { type: 'bar', groupBy: 'area', measure: 'count', label: 'Items by area' },
   ],
 }
+
+/**
+ * Geführte Erfassung. Fehlt dieser Export, gibt es den Wizard schlicht nicht -
+ * genau wie beim Dashboard entscheidet die Domäne, nicht eine Einstellung.
+ *
+ * Vier Schritttypen: `fields` (Teilmenge der Schemafelder), `csv` (der
+ * vorhandene Import als Schritt, zahlt in denselben Durchlauf ein), `review`
+ * (Zusammenfassung, wird aus dem Schema erzeugt) und der Abschluss aus `done`.
+ *
+ * `when(drafts)` blendet einen Schritt aus, wenn er nicht passt - `drafts` ist
+ * ein Objekt je Entität, bei einem einzigen Datensatztyp also `drafts.records`.
+ */
+export const WIZARD = {
+  title: 'Report an action item',
+  intro:
+    'Four short steps. Nothing is written until the last one, so you can go back at any point.',
+  steps: [
+    { id: 'what', label: 'What', fields: ['title', 'area', 'note'] },
+    { id: 'who', label: 'Who and when', fields: ['owner', 'due', 'status', 'effort'] },
+    {
+      id: 'bulk',
+      label: 'Several at once',
+      type: 'csv',
+      // Nur anbieten, wenn der Einzelfall schon erfasst ist - sonst steht der
+      // Massenimport vor der Frage, um die es eigentlich geht.
+      when: (drafts) => Boolean(drafts.records?.title),
+    },
+    { id: 'check', label: 'Check', type: 'review' },
+  ],
+  done: {
+    message: 'Thank you — that is recorded.',
+    allowAnother: true,
+  },
+}

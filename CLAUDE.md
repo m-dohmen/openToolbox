@@ -180,6 +180,53 @@ validation are reference-aware too: it can name the target record by id or by it
 Everything else — CSV/JSON export, encryption, branding, the interface language toggle — already
 understands this shape without any further change.
 
+## Optional: a guided entry wizard
+
+The list plus the edit form assume the recipient knows the tool. Someone who gets the file in order
+to report *one* thing should not have to sort out a table, a sidebar and seventeen fields first. A
+`WIZARD` export gives them a sequence of short steps instead — without it the view does not exist:
+
+```js
+export const WIZARD = {
+  title: 'Report a finding',
+  intro: 'Four short steps. Nothing is written until the last one.',
+  steps: [
+    { id: 'what', label: 'What', fields: ['title', 'area', 'note'] },
+    { id: 'who', label: 'Who and when', fields: ['owner', 'due', 'status'],
+      when: (drafts) => drafts.records.severity !== 'low' },
+    { id: 'bulk', label: 'Several at once', type: 'csv' },
+    { id: 'check', label: 'Check', type: 'review' },
+  ],
+  done: { message: 'Thank you — that is recorded.', allowAnother: true },
+}
+```
+
+Four step types, which is all it takes generically:
+
+- `fields` — a subset of the schema fields, rendered by the same machinery as the edit form, with
+  the same validation rules. A step only reports objections about the fields it actually shows.
+- `csv` — the existing import as a step, for bulk entry. It feeds **the same run**: rows are held
+  and created together with the draft at the end, so abandoning the wizard leaves nothing behind.
+- `review` — a summary generated from the schema. Nothing to configure.
+- the closing screen, built from `done`. `allowAnother: false` ends the run for good.
+
+`when(drafts)` hides a step that does not apply; `drafts` is keyed by entity, so with a single
+record type it is `drafts.records`.
+
+With `ENTITIES`, a step carries `entity: '<key>'` and one run can create a supplier and then its
+certificates. **The drafts get their ids at the start of the run**, which is what lets a reference
+field in step two point at the record from step one — the dropdown there offers the draft alongside
+the saved records.
+
+### Intake mode
+
+`mode: 'intake'` in `DEFAULT_SETTINGS` opens the file straight into the wizard and hides the list,
+the entity tabs and the "New …" button. That turns the same file into a form you send out: the
+recipient fills it in, saves, mails it back. Without a `WIZARD` export the switch does nothing.
+
+Set it when the recipient's job is to report, not to browse. Leave it on `'workbench'` — the
+default — when they also need to see and edit what is already there.
+
 ## Optional: a dashboard
 
 Consultants analyse and then present. If the tool is for anything that gets shown to a steering

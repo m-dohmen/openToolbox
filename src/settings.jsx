@@ -354,6 +354,17 @@ export function SettingsPage({
             />
           </Row>
 
+          <Row label={tr('settings.mode')} hint={tr('settings.modeHint')}>
+            <Segmented
+              value={settings.mode}
+              onChange={set('mode')}
+              options={[
+                ['workbench', tr('settings.modeWorkbench')],
+                ['intake', tr('settings.modeIntake')],
+              ]}
+            />
+          </Row>
+
           <Row label={tr('settings.links')} hint={tr('settings.linksHint', MAX_LINKS)}>
             <LinkEditor
               links={settings.links ?? []}

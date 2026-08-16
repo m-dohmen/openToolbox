@@ -357,6 +357,39 @@ const STRINGS = {
     'settings.securityNote':
       'Encryption protects the data, not access to the application. Roles and views in a file ' +
       'that runs locally would be surface only — whoever holds the file also holds the code.',
+    'view.wizard': 'Guided entry',
+    'wizard.title': 'Guided entry',
+    'wizard.stepOf': (at, total) => `Step ${at} of ${total}`,
+    'wizard.progress': 'Steps',
+    'wizard.type.fields': 'Details',
+    'wizard.type.csv': 'From a file',
+    'wizard.type.review': 'Check',
+    'wizard.back': 'Back',
+    'wizard.next': 'Next',
+    'wizard.finish': 'Save',
+    'wizard.noteLabel': 'Anything to add?',
+    'wizard.notePlaceholder': 'Optional — goes into the change log with this entry.',
+    'wizard.csvLead': (plural) => `Upload a CSV to add several ${plural} at once. Nothing is written until the last step.`,
+    'wizard.csvTake': 'Take these rows',
+    'wizard.csvHeld': (n) => `${n} ${plural(n, 'row', 'rows')} held for the final step.`,
+    'wizard.reviewEmpty': 'Nothing to save yet — go back and fill in at least one step.',
+    'wizard.reviewCount': (n, plural_) => `${n} × ${plural_}`,
+    'wizard.reviewMore': (n) => `…and ${n} more.`,
+    'wizard.doneBadge': 'Done',
+    'wizard.doneDefault': 'Saved.',
+    'wizard.doneCount': (n) =>
+      n === 1 ? '1 record added — remember to save the file.' : `${n} records added — remember to save the file.`,
+    'wizard.another': 'Add another',
+    'wizard.toList': 'Back to the list',
+    'wizard.saved': (n) => `${n} ${plural(n, 'record', 'records')} added — not saved yet.`,
+    'wizard.savedWithNote': (n, note) => `${n} ${plural(n, 'record', 'records')} added — ${note}`,
+    'settings.mode': 'Opens as',
+    'settings.modeHint':
+      'Guided entry opens the file straight into the wizard and hides the list — for recipients who ' +
+      'only report one thing. Needs a WIZARD export in the schema.',
+    'settings.modeWorkbench': 'Full tool',
+    'settings.modeIntake': 'Guided entry',
+
     'validation.required': (label) => `${label} is required.`,
     'validation.blocked': (n) =>
       n === 1 ? '1 objection — the record was not saved.' : `${n} objections — the record was not saved.`,
@@ -840,6 +873,39 @@ const STRINGS = {
     'settings.securityNote':
       'Verschlüsselung schützt die Daten, nicht den Zugriff auf die Anwendung. Rollen und Ansichten ' +
       'in einer lokal laufenden Datei wären nur Oberfläche — wer die Datei hat, hat auch den Code.',
+    'view.wizard': 'Geführte Erfassung',
+    'wizard.title': 'Geführte Erfassung',
+    'wizard.stepOf': (at, total) => `Schritt ${at} von ${total}`,
+    'wizard.progress': 'Schritte',
+    'wizard.type.fields': 'Angaben',
+    'wizard.type.csv': 'Aus einer Datei',
+    'wizard.type.review': 'Prüfen',
+    'wizard.back': 'Zurück',
+    'wizard.next': 'Weiter',
+    'wizard.finish': 'Speichern',
+    'wizard.noteLabel': 'Noch etwas dazu?',
+    'wizard.notePlaceholder': 'Optional — kommt mit diesem Eintrag ins Änderungsprotokoll.',
+    'wizard.csvLead': (plural) => `Eine CSV hochladen, um mehrere ${plural} auf einmal anzulegen. Geschrieben wird erst im letzten Schritt.`,
+    'wizard.csvTake': 'Diese Zeilen übernehmen',
+    'wizard.csvHeld': (n) => `${n} ${plural(n, 'Zeile', 'Zeilen')} für den letzten Schritt vorgemerkt.`,
+    'wizard.reviewEmpty': 'Noch nichts zu speichern — zurückgehen und mindestens einen Schritt ausfüllen.',
+    'wizard.reviewCount': (n, plural_) => `${n} × ${plural_}`,
+    'wizard.reviewMore': (n) => `…und ${n} weitere.`,
+    'wizard.doneBadge': 'Fertig',
+    'wizard.doneDefault': 'Gespeichert.',
+    'wizard.doneCount': (n) =>
+      n === 1 ? '1 Datensatz angelegt — die Datei noch speichern.' : `${n} Datensätze angelegt — die Datei noch speichern.`,
+    'wizard.another': 'Noch einen erfassen',
+    'wizard.toList': 'Zurück zur Liste',
+    'wizard.saved': (n) => `${n} ${plural(n, 'Datensatz', 'Datensätze')} angelegt — noch nicht gespeichert.`,
+    'wizard.savedWithNote': (n, note) => `${n} ${plural(n, 'Datensatz', 'Datensätze')} angelegt — ${note}`,
+    'settings.mode': 'Öffnet als',
+    'settings.modeHint':
+      'Die geführte Erfassung öffnet die Datei direkt im Wizard und blendet die Liste aus — für ' +
+      'Empfänger, die nur eine Sache melden. Braucht einen WIZARD-Export im Schema.',
+    'settings.modeWorkbench': 'Vollständiges Werkzeug',
+    'settings.modeIntake': 'Geführte Erfassung',
+
     'validation.required': (label) => `${label} ist ein Pflichtfeld.`,
     'validation.blocked': (n) =>
       n === 1 ? '1 Beanstandung — der Datensatz wurde nicht gespeichert.' : `${n} Beanstandungen — der Datensatz wurde nicht gespeichert.`,

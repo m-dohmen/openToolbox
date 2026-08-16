@@ -34,6 +34,7 @@ import { paletteVariables } from './lib/color.js'
 import { IconSave, IconSettings, IconLink } from './icons.jsx'
 import { SettingsPage } from './settings.jsx'
 import { DashboardView } from './dashboard.jsx'
+import { WizardView } from './wizard.jsx'
 import { Hint } from './hint.jsx'
 import { ChatDock } from './chat.jsx'
 import { AI_DEFAULTS } from './lib/ai.js'
@@ -54,6 +55,9 @@ const SINGLE = isSingleEntity(ENTITIES)
 
 /** Optional: Kacheln über den Bestand. Fehlt der Export, gibt es die Ansicht nicht. */
 const DASHBOARD = domainModule.DASHBOARD?.tiles?.length ? domainModule.DASHBOARD : null
+/* Ohne WIZARD-Export gibt es die gefuehrte Erfassung schlicht nicht - wie beim
+   Dashboard entscheidet die Domaene, nicht eine Einstellung. */
+const WIZARD = domainModule.WIZARD?.steps?.length ? domainModule.WIZARD : null
 
 /** Legt eine geladene/gefehlte Datensatzmenge auf alle Entitäten um. */
 function normalizeRecordsByEntity(records) {
@@ -136,6 +140,10 @@ const DEFAULT_SETTINGS = {
      Datei zweisprachig, und eine eigene Angabe gewinnt trotzdem. */
   tagline: '',
   links: DEFAULT_LINKS,
+  /* 'workbench' - Liste, Dashboard, alles. 'intake' - die Datei oeffnet direkt
+     im Wizard, fuer Empfaenger, die genau eine Sache melden sollen. Ohne
+     WIZARD-Export im Schema hat der Schalter keine Wirkung. */
+  mode: 'workbench',
   fileStem: 'action-items',
   version: '',
   examplePrompts: true,
@@ -309,7 +317,9 @@ function Workbench({
   const [recordsByEntity, setRecordsByEntity] = useState(initialRecordsByEntity)
   const [activeKey, setActiveKey] = useState(DEFAULT_ENTITY_KEY)
   const [settings, setSettings] = useState(initialSettings)
-  const [view, setView] = useState('list')
+  const [view, setView] = useState(
+    WIZARD && initialSettings.mode === 'intake' ? 'wizard' : 'list',
+  )
   const [dirty, setDirty] = useState(fresh)
   const [lastSaved, setLastSaved] = useState(savedAt)
   const [query, setQuery] = useState('')
@@ -764,7 +774,28 @@ function Workbench({
     setCsvImport((s) => ({ ...s, result: { built: built.length, problems } }))
   }
 
+  /**
+   * Ergebnis eines Wizard-Durchlaufs uebernehmen. Angelegt wird erst hier -
+   * wer mittendrin abbricht, hinterlaesst nichts.
+   */
+  function finishWizard(created, note) {
+    if (!Object.keys(created).length) return
+    let count = 0
+    setRecordsByEntity((prev) => {
+      const next = { ...prev }
+      for (const [key, rows] of Object.entries(created)) {
+        next[key] = [...(prev[key] ?? []), ...rows]
+        count += rows.length
+      }
+      return next
+    })
+    setDirty(true)
+    notify(note ? tr('wizard.savedWithNote', count, note) : tr('wizard.saved', count))
+  }
+
   /* ---------------------------------------------------------- */
+
+  const intake = Boolean(WIZARD) && settings.mode === 'intake'
 
   return (
     <div class="shell">
@@ -806,13 +837,18 @@ function Workbench({
           >
             <IconSettings />
           </button>
-          <button class="btn btn--primary" onClick={() => { setView('list'); setDraft(entity.emptyRecord()) }}>
-            {tr('app.new', schema.singular)}
-          </button>
+          {/* Im Erfassungsmodus ist der Wizard der Einstieg - ein zweiter,
+              der an ihm vorbei ins Formular fuehrt, waere genau die Verwirrung,
+              die der Modus vermeiden soll. */}
+          {!intake && (
+            <button class="btn btn--primary" onClick={() => { setView('list'); setDraft(entity.emptyRecord()) }}>
+              {tr('app.new', schema.singular)}
+            </button>
+          )}
         </div>
       </header>
 
-      {view !== 'settings' && <Hint show={showHints} id="header" tr={tr} />}
+      {view !== 'settings' && view !== 'wizard' && <Hint show={showHints} id="header" tr={tr} />}
 
       {view === 'settings' ? (
         <SettingsPage
@@ -853,7 +889,7 @@ function Workbench({
         />
       ) : (
       <>
-      {(ENTITY_KEYS.length > 1 || DASHBOARD || settings.auditLog) && (
+      {!intake && (ENTITY_KEYS.length > 1 || DASHBOARD || settings.auditLog || WIZARD) && (
         <div class="entity-tabs" role="tablist" aria-label={tr('entities.tabsLabel')}>
           {ENTITY_KEYS.length > 1 &&
             ENTITY_KEYS.map((key) => (
@@ -869,7 +905,7 @@ function Workbench({
                 {ENTITIES[key].schema.plural}
               </button>
             ))}
-          {(DASHBOARD || settings.auditLog) && (
+          {(DASHBOARD || settings.auditLog || WIZARD) && (
             <div class="entity-tabs__views">
               <button
                 role="tab"
@@ -887,6 +923,15 @@ function Workbench({
                   {tr('view.dashboard')}
                 </button>
               )}
+              {WIZARD && (
+                <button
+                  role="tab"
+                  aria-selected={String(view === 'wizard')}
+                  onClick={() => setView('wizard')}
+                >
+                  {tr('view.wizard')}
+                </button>
+              )}
               {settings.auditLog && (
                 <button
                   role="tab"
@@ -900,7 +945,19 @@ function Workbench({
           )}
         </div>
       )}
-      {view === 'log' ? (
+      {intake || (view === 'wizard' && WIZARD) ? (
+        <WizardView
+          wizard={WIZARD}
+          entities={ENTITIES}
+          entityKeys={ENTITY_KEYS}
+          recordsByEntity={recordsByEntity}
+          FieldInput={FieldInput}
+          intake={intake}
+          tr={tr}
+          onFinish={finishWizard}
+          onCancel={() => setView('list')}
+        />
+      ) : view === 'log' ? (
         <LogView
           log={log}
           locale={settings.locale}
@@ -1448,6 +1505,60 @@ const Th = ({ sort, k, onSort, align, children }) => (
   </th>
 )
 
+/**
+ * Ein Eingabefeld nach Schema. Steht hier und nicht im Formular, weil der
+ * Wizard dieselben Felder zeigt - zwei Implementierungen desselben Selects
+ * wuerden garantiert auseinanderlaufen.
+ */
+function FieldInput({ field: f, record: r, entity, entities, recordsByEntity, onChange, inputRef }) {
+  const id = 'f-' + f.key
+  const set = (e) => onChange(f.key, e.currentTarget.value)
+
+  if (f.type === 'computed') {
+    return (
+      <output id={id} class="field__computed">
+        {fieldValue(entity, r, f.key) || '—'}
+      </output>
+    )
+  }
+  if (f.type === 'enum') {
+    return (
+      <select id={id} value={r[f.key]} onChange={set}>
+        {f.values.map((v) => (
+          <option key={v}>{v}</option>
+        ))}
+      </select>
+    )
+  }
+  if (f.type === 'reference') {
+    const target = entities[f.entity]
+    return (
+      <select id={id} value={r[f.key] ?? ''} onChange={set}>
+        <option value=""></option>
+        {(recordsByEntity[f.entity] ?? []).map((opt) => (
+          <option key={opt[target.schema.idField]} value={opt[target.schema.idField]}>
+            {opt[target.schema.titleField]}
+          </option>
+        ))}
+      </select>
+    )
+  }
+  if (f.type === 'number') {
+    return (
+      <input
+        id={id}
+        type="number"
+        step="0.5"
+        value={r[f.key]}
+        onInput={(e) => onChange(f.key, Number(e.currentTarget.value))}
+      />
+    )
+  }
+  if (f.type === 'date') return <input id={id} type="date" value={r[f.key]} onInput={set} />
+  if (f.long) return <textarea id={id} value={r[f.key]} onInput={set} />
+  return <input id={id} ref={inputRef} value={r[f.key]} onInput={set} />
+}
+
 function RecordDrawer({ record, schema, singular, entity, entities, recordsByEntity, isNew, onCancel, onSave, onDelete, showHints, tr }) {
   const [r, setR] = useState(record)
   const [confirm, setConfirm] = useState(false)
@@ -1461,9 +1572,9 @@ function RecordDrawer({ record, schema, singular, entity, entities, recordsByEnt
   // auf den veralteten record-Prop zurück, was schnelle Eingaben verschluckte.
   useEffect(() => first.current?.focus(), [])
 
-  const set = (k) => (e) => {
-    setTouched((s) => ({ ...s, [k]: true }))
-    setR({ ...r, [k]: e.currentTarget.value })
+  const change = (key, value) => {
+    setTouched((s) => ({ ...s, [key]: true }))
+    setR((prev) => ({ ...prev, [key]: value }))
   }
   // Der Startfokus gehoert ins erste beschreibbare Feld - ein berechnetes an
   // erster Stelle im Schema soll ihn nicht ins Leere laufen lassen.
@@ -1491,53 +1602,18 @@ function RecordDrawer({ record, schema, singular, entity, entities, recordsByEnt
 
       <div class="drawer__body">
         <Hint show={showHints} id="form" tr={tr} />
-        {schema.fields.map((f, i) => (
+        {schema.fields.map((f) => (
           <div class="field" key={f.key}>
             <label for={'f-' + f.key}>{f.label}</label>
-
-            {f.type === 'computed' ? (
-              <output id={'f-' + f.key} class="field__computed">
-                {fieldValue(entity, r, f.key) || '—'}
-              </output>
-            ) : f.type === 'enum' ? (
-              <select id={'f-' + f.key} value={r[f.key]} onChange={set(f.key)}>
-                {f.values.map((v) => (
-                  <option key={v}>{v}</option>
-                ))}
-              </select>
-            ) : f.type === 'reference' ? (
-              <select id={'f-' + f.key} value={r[f.key] ?? ''} onChange={set(f.key)}>
-                <option value=""></option>
-                {(recordsByEntity[f.entity] ?? []).map((opt) => (
-                  <option key={opt[entities[f.entity].schema.idField]} value={opt[entities[f.entity].schema.idField]}>
-                    {opt[entities[f.entity].schema.titleField]}
-                  </option>
-                ))}
-              </select>
-            ) : f.type === 'number' ? (
-              <input
-                id={'f-' + f.key}
-                type="number"
-                step="0.5"
-                value={r[f.key]}
-                onInput={(e) => {
-                  setTouched((s) => ({ ...s, [f.key]: true }))
-                  setR({ ...r, [f.key]: Number(e.currentTarget.value) })
-                }}
-              />
-            ) : f.type === 'date' ? (
-              <input id={'f-' + f.key} type="date" value={r[f.key]} onInput={set(f.key)} />
-            ) : f.long ? (
-              <textarea id={'f-' + f.key} value={r[f.key]} onInput={set(f.key)} />
-            ) : (
-              <input
-                id={'f-' + f.key}
-                ref={f.key === firstFocusKey ? first : undefined}
-                value={r[f.key]}
-                onInput={set(f.key)}
-              />
-            )}
-
+            <FieldInput
+              field={f}
+              record={r}
+              entity={entity}
+              entities={entities}
+              recordsByEntity={recordsByEntity}
+              onChange={change}
+              inputRef={f.key === firstFocusKey ? first : undefined}
+            />
             {messagesFor(f.key).map((m) => (
               <p class="field__objection" key={m}>{m}</p>
             ))}
