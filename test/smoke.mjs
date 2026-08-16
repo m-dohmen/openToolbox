@@ -230,6 +230,19 @@ if (!mdJson.includes('<script>alert(1)<\\/script>') && !mdJson.includes('<script
 if (mdJson.includes('"url":"javascript')) fail('javascript:-Adresse landete in einem Verweis')
 if (md.filter((b) => b.type === 'list')[0]?.items.length !== 2) fail('Aufzaehlung falsch geparst')
 
+/* Weich umbrochene Listenpunkte: handgeschriebenes Markdown ist fast immer so,
+   und der Bruch faellt erst im Layout auf - der Fortsetzungstext stand links
+   neben dem Aufzaehlungszeichen statt darunter. */
+const wrapped = parse('- Erster Punkt, der ueber die Zeile\n  hinausgeht und weitergeht.\n- Zweiter Punkt\n\nAbsatz danach,\nauch umbrochen.')
+console.log('0d) Umbrochene Liste:', wrapped.map((b) => b.type).join(' '))
+const list0 = wrapped.find((b) => b.type === 'list')
+if (wrapped.filter((b) => b.type === 'list').length !== 1) fail('Umbrochener Punkt hat die Liste zerrissen')
+if (list0.items.length !== 2) fail('Umbrochener Punkt wurde zu einem eigenen Eintrag')
+if (!String(list0.items[0].join('')).includes('hinausgeht und weitergeht')) {
+  fail('Fortsetzungszeile fehlt im Listeneintrag')
+}
+if (!wrapped.some((b) => b.type === 'paragraph')) fail('Absatz nach der Liste ging verloren')
+
 const browser = await chromium.launch()
 const ctx = await browser.newContext({ acceptDownloads: true, viewport: { width: 1280, height: 850 } })
 // Headless kennt keinen nativen Dateidialog -> Download-Pfad erzwingen.

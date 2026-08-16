@@ -127,7 +127,18 @@ export function parse(source) {
       continue
     }
 
-    flushList()
+    /* Fortsetzungszeile. Ein umbrochener Listenpunkt gehoert an den vorigen
+       Punkt und nicht in einen eigenen Absatz - handgeschriebenes Markdown ist
+       fast immer weich umbrochen, und der Bruch faellt erst im Layout auf, wo
+       der Text dann links neben dem Aufzaehlungszeichen steht. */
+    if (list?.items.length) {
+      const last = list.items.at(-1)
+      const tail = last.at(-1)
+      if (typeof tail === 'string') last[last.length - 1] = `${tail} ${line}`
+      else last.push(' ' + line)
+      continue
+    }
+
     paragraph.push(line)
   }
 
