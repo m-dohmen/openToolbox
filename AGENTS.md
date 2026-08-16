@@ -145,6 +145,12 @@ open the closest and copy its shape:
 
 Copy one over `src/domain.js` and build to see the whole app change.
 
+Each demo also carries a **build prompt** —
+`docs/demos/<slug>/generating_prompt_<lang>.md`, seven languages — which states the same domain as a
+functional specification. If a user hands you one of those, it is complete: follow it and you get
+the demo back. They are generated from the domains by `npm run prompts`, so never edit one by hand;
+change the example and regenerate.
+
 ### Attachments
 
 `type: 'attachment'` stores an uploaded file in the record itself, base64 in the payload, and it

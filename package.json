@@ -1,15 +1,16 @@
 {
   "name": "opentoolbox",
-  "version": "0.7.1",
+  "version": "0.8.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
     "test": "node test/smoke.mjs && node test/multi-entity.mjs && node test/demos.mjs",
-    "build:demo": "node scripts/build-demo.mjs && node scripts/demo-index.mjs",
+    "build:demo": "node scripts/build-demo.mjs && node scripts/demo-index.mjs && node scripts/build-prompts.mjs",
     "screenshots": "node scripts/screenshots.mjs",
     "social": "node scripts/social-preview.mjs",
-    "demos:index": "node scripts/demo-index.mjs"
+    "demos:index": "node scripts/demo-index.mjs",
+    "prompts": "node scripts/build-prompts.mjs"
   },
   "dependencies": {
     "preact": "^10.24.3"

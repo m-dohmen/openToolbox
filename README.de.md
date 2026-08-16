@@ -49,6 +49,16 @@ doppelklicken. Dieselbe Datei, in beiden Fällen ohne Server.
 | [Sanierung](https://m-dohmen.github.io/openToolbox/demos/renovation-quotes/) | Drei Angebote je Gewerk, und wo das Budget wirklich steht | 2 Datenarten, Geld |
 | [Klassenfahrt](https://m-dohmen.github.io/openToolbox/demos/school-trip/) | 28 Zettel raus, 19 zurück, und die Liste darf niemand sehen | Zustände statt Zahlen |
 
+**Zu jeder Demo gehört ein Aufbau-Prompt.** `docs/demos/<slug>/generating_prompt_<lang>.md` ist die
+vollständige fachliche Anforderung dieses Werkzeugs als Markdown — Felder, Typen, Rechenformeln,
+Prüfregeln, Dashboard-Kacheln, Wizard-Schritte, Vorgaben und Startseite. Gibt man ihn zusammen mit
+diesem Repository an einen KI-Agenten, kommt genau diese Anwendung zurück. Je sieben Sprachen; die
+*Anweisung* ist übersetzt, die Feldbeschriftungen und Regelmeldungen nicht — sie sind das, was das
+Werkzeug später tatsächlich anzeigt.
+
+Erzeugt werden sie aus den Domänen selbst (`npm run prompts`), damit ein Prompt nicht von dem
+Beispiel abweichen kann, das er beschreibt.
+
 Die Bilder unten stammen aus dem Projektportfolio.
 
 ![Die Listenansicht](docs/screenshots/list.png)

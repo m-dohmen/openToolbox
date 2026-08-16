@@ -13,6 +13,7 @@ import { writeFileSync, mkdirSync } from 'node:fs'
 import { resolve, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { DEMOS } from './demos.mjs'
+import { LANGS, strings } from './prompts/strings.mjs'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const out = resolve(root, 'docs/demos')
@@ -21,17 +22,29 @@ mkdirSync(out, { recursive: true })
 const escape = (s) =>
   String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
 
-const card = (d) => `      <a class="card" href="./${d.slug}/" style="--card:${d.colors.accent}">
+/* Die Aufbau-Prompts. Sie stehen bewusst auf derselben Kachel wie die Demo:
+   wer sie gerade gesehen hat, ist genau in dem Moment, in dem die Frage
+   aufkommt, wie man so etwas fuer sich selbst bekommt. */
+const promptLinks = (d) =>
+  LANGS.map(
+    (l) =>
+      `<a class="card__lang" href="./${d.slug}/generating_prompt_${l}.md">${strings[l].name}</a>`,
+  ).join('')
+
+const card = (d) => `      <div class="card" style="--card:${d.colors.accent}">
         <span class="card__swatch"></span>
-        <h2>${escape(d.settings.title)}</h2>
-        <p class="card__sub">${escape(d.settings.subtitle)}</p>
-        <p class="card__blurb">${escape(d.blurb)}</p>
-        <dl>
-          <div><dt>Datenform</dt><dd>${escape(d.shape)}</dd></div>
-          <div><dt>Für wen</dt><dd>${escape(d.audience)}</dd></div>
-        </dl>
-        <span class="card__go">Demo öffnen →</span>
-      </a>`
+        <a class="card__main" href="./${d.slug}/">
+          <h2>${escape(d.settings.title)}</h2>
+          <p class="card__sub">${escape(d.settings.subtitle)}</p>
+          <p class="card__blurb">${escape(d.blurb)}</p>
+          <dl>
+            <div><dt>Datenform</dt><dd>${escape(d.shape)}</dd></div>
+            <div><dt>Für wen</dt><dd>${escape(d.audience)}</dd></div>
+          </dl>
+          <span class="card__go">Demo öffnen →</span>
+        </a>
+        <p class="card__prompt">Aufbau-Prompt: ${promptLinks(d)}</p>
+      </div>`
 
 const html = `<!-- SPDX-License-Identifier: Apache-2.0 -->
 <!-- Erzeugt von scripts/demo-index.mjs — nicht von Hand bearbeiten. -->
@@ -76,6 +89,16 @@ const html = `<!-- SPDX-License-Identifier: Apache-2.0 -->
         transition: border-color .15s, transform .15s;
       }
       .card:hover { border-color: var(--card); transform: translateY(-2px); }
+      .card__main { display: block; text-decoration: none; color: inherit; }
+      .card__prompt {
+        margin: 16px -22px -20px; padding: 12px 22px 14px;
+        border-top: 1px solid var(--line); font-size: 12px; color: var(--muted);
+      }
+      .card__lang {
+        display: inline-block; margin-left: 8px; color: var(--card);
+        text-decoration: none; border-bottom: 1px solid transparent;
+      }
+      .card__lang:hover { border-bottom-color: var(--card); }
       .card__swatch { position: absolute; inset: 0 0 auto 0; height: 4px; background: var(--card); }
       .card h2 { margin: 6px 0 4px; font-size: 18px; color: var(--strong); }
       .card__sub { margin: 0 0 12px; font-size: 13px; color: var(--card); }
@@ -105,6 +128,11 @@ const html = `<!-- SPDX-License-Identifier: Apache-2.0 -->
         <p>
           Unterschiedlich sind sie nur in einer Datei: <code>src/domain.js</code>. Verschiedene
           Datenformen, verschiedene Farben, verschiedene Probleme.
+        </p>
+        <p>
+          Zu jeder Demo gibt es einen <strong>Aufbau-Prompt</strong>: die vollständige fachliche
+          Anforderung als Markdown. Gibt man ihn zusammen mit dem Repository an einen KI-Agenten,
+          entsteht genau diese Anwendung.
         </p>
       </header>
 

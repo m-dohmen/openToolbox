@@ -35,6 +35,16 @@ file, no server involved either way.
 | [Sanierung](https://m-dohmen.github.io/openToolbox/demos/renovation-quotes/) | Three quotes per trade, and where the budget actually stands | 2 record types, money |
 | [Klassenfahrt](https://m-dohmen.github.io/openToolbox/demos/school-trip/) | 28 forms out, 19 back, and the sheet nobody may see | states not numbers |
 
+**Every demo ships a build prompt.** `docs/demos/<slug>/generating_prompt_<lang>.md` is the complete
+functional specification of that tool as Markdown — fields, types, calculated formulas, validation
+rules, dashboard tiles, wizard steps, defaults and start page. Hand it to an AI agent together with
+this repository and you get that application back. Seven languages each; the *instructions* are
+translated, the field labels and rule messages are not, because they are what the tool actually
+shows.
+
+They are generated from the domains themselves (`npm run prompts`), so a prompt cannot drift away
+from the example it describes.
+
 The screenshots below are from the project portfolio.
 
 ![The list view](docs/screenshots/list.png)
@@ -668,6 +678,7 @@ docs/demos/            the built demos, committed so they can be linked and down
 scripts/demos.mjs      the demo list: example, colours, start page, blurb
 scripts/build-demo.mjs builds every entry of that list into docs/demos/<slug>/
 scripts/demo-index.mjs builds the overview page docs/demos/index.html
+scripts/build-prompts.mjs generates the build prompts from the domains, 7 languages
 scripts/screenshots.mjs regenerates the images in this README
 src/chat.jsx           AI assistant dock
 src/brand.jsx          wordmark and uploaded logo

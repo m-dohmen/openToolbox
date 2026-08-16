@@ -41,6 +41,16 @@
         transition: border-color .15s, transform .15s;
       }
       .card:hover { border-color: var(--card); transform: translateY(-2px); }
+      .card__main { display: block; text-decoration: none; color: inherit; }
+      .card__prompt {
+        margin: 16px -22px -20px; padding: 12px 22px 14px;
+        border-top: 1px solid var(--line); font-size: 12px; color: var(--muted);
+      }
+      .card__lang {
+        display: inline-block; margin-left: 8px; color: var(--card);
+        text-decoration: none; border-bottom: 1px solid transparent;
+      }
+      .card__lang:hover { border-bottom-color: var(--card); }
       .card__swatch { position: absolute; inset: 0 0 auto 0; height: 4px; background: var(--card); }
       .card h2 { margin: 6px 0 4px; font-size: 18px; color: var(--strong); }
       .card__sub { margin: 0 0 12px; font-size: 13px; color: var(--card); }
@@ -71,6 +81,11 @@
           Unterschiedlich sind sie nur in einer Datei: <code>src/domain.js</code>. Verschiedene
           Datenformen, verschiedene Farben, verschiedene Probleme.
         </p>
+        <p>
+          Zu jeder Demo gibt es einen <strong>Aufbau-Prompt</strong>: die vollständige fachliche
+          Anforderung als Markdown. Gibt man ihn zusammen mit dem Repository an einen KI-Agenten,
+          entsteht genau diese Anwendung.
+        </p>
       </header>
 
       <p class="note">
@@ -79,72 +94,90 @@
       </p>
 
       <div class="grid">
-      <a class="card" href="./portfolio/" style="--card:#0e7c86">
+      <div class="card" style="--card:#0e7c86">
         <span class="card__swatch"></span>
-        <h2>Project portfolio</h2>
-        <p class="card__sub">Engagements, milestones and where the budget stands</p>
-        <p class="card__blurb">Engagements and their milestones, with budget variance calculated rather than typed. The reference case for two record types that point at each other.</p>
-        <dl>
-          <div><dt>Datenform</dt><dd>2 Datenarten · Geld · Referenzen</dd></div>
-          <div><dt>Für wen</dt><dd>Beratung, Projektsteuerung</dd></div>
-        </dl>
-        <span class="card__go">Demo öffnen →</span>
-      </a>
-      <a class="card" href="./ppwr-packaging/" style="--card:#2f6b3a">
+        <a class="card__main" href="./portfolio/">
+          <h2>Project portfolio</h2>
+          <p class="card__sub">Engagements, milestones and where the budget stands</p>
+          <p class="card__blurb">Engagements and their milestones, with budget variance calculated rather than typed. The reference case for two record types that point at each other.</p>
+          <dl>
+            <div><dt>Datenform</dt><dd>2 Datenarten · Geld · Referenzen</dd></div>
+            <div><dt>Für wen</dt><dd>Beratung, Projektsteuerung</dd></div>
+          </dl>
+          <span class="card__go">Demo öffnen →</span>
+        </a>
+        <p class="card__prompt">Aufbau-Prompt: <a class="card__lang" href="./portfolio/generating_prompt_en.md">English</a><a class="card__lang" href="./portfolio/generating_prompt_de.md">Deutsch</a><a class="card__lang" href="./portfolio/generating_prompt_es.md">Español</a><a class="card__lang" href="./portfolio/generating_prompt_fr.md">Français</a><a class="card__lang" href="./portfolio/generating_prompt_pt.md">Português</a><a class="card__lang" href="./portfolio/generating_prompt_zh.md">中文</a><a class="card__lang" href="./portfolio/generating_prompt_ja.md">日本語</a></p>
+      </div>
+      <div class="card" style="--card:#2f6b3a">
         <span class="card__swatch"></span>
-        <h2>Verpackungsregister</h2>
-        <p class="card__sub">Konformität nach PPWR, Bestandteil für Bestandteil</p>
-        <p class="card__blurb">Ab 12.08.2026 braucht jede Verpackung eine Konformitätserklärung. Die Angaben liegen aber bei den Lieferanten — das ist ein Erhebungsproblem, kein Softwareproblem.</p>
-        <dl>
-          <div><dt>Datenform</dt><dd>2 Datenarten · Anhänge · Berechnung über die Grenze</dd></div>
-          <div><dt>Für wen</dt><dd>Kleine Hersteller und Händler in der EU</dd></div>
-        </dl>
-        <span class="card__go">Demo öffnen →</span>
-      </a>
-      <a class="card" href="./gdpr-processing/" style="--card:#3a5a8c">
+        <a class="card__main" href="./ppwr-packaging/">
+          <h2>Verpackungsregister</h2>
+          <p class="card__sub">Konformität nach PPWR, Bestandteil für Bestandteil</p>
+          <p class="card__blurb">Ab 12.08.2026 braucht jede Verpackung eine Konformitätserklärung. Die Angaben liegen aber bei den Lieferanten — das ist ein Erhebungsproblem, kein Softwareproblem.</p>
+          <dl>
+            <div><dt>Datenform</dt><dd>2 Datenarten · Anhänge · Berechnung über die Grenze</dd></div>
+            <div><dt>Für wen</dt><dd>Kleine Hersteller und Händler in der EU</dd></div>
+          </dl>
+          <span class="card__go">Demo öffnen →</span>
+        </a>
+        <p class="card__prompt">Aufbau-Prompt: <a class="card__lang" href="./ppwr-packaging/generating_prompt_en.md">English</a><a class="card__lang" href="./ppwr-packaging/generating_prompt_de.md">Deutsch</a><a class="card__lang" href="./ppwr-packaging/generating_prompt_es.md">Español</a><a class="card__lang" href="./ppwr-packaging/generating_prompt_fr.md">Français</a><a class="card__lang" href="./ppwr-packaging/generating_prompt_pt.md">Português</a><a class="card__lang" href="./ppwr-packaging/generating_prompt_zh.md">中文</a><a class="card__lang" href="./ppwr-packaging/generating_prompt_ja.md">日本語</a></p>
+      </div>
+      <div class="card" style="--card:#3a5a8c">
         <span class="card__swatch"></span>
-        <h2>Verarbeitungsverzeichnis</h2>
-        <p class="card__sub">Art. 30 DSGVO — gemeldet von den Fachbereichen</p>
-        <p class="card__blurb">Die Pflicht kennt jeder, das Verzeichnis führt fast niemand. Der Grund ist die Erhebung: die Angaben liegen bei zwölf Leuten. Diese Demo öffnet deshalb direkt im Meldeformular.</p>
-        <dl>
-          <div><dt>Datenform</dt><dd>1 Datenart · fast nur Aufzählungen · Erfassungsmodus</dd></div>
-          <div><dt>Für wen</dt><dd>Jedes Unternehmen mit Beschäftigten</dd></div>
-        </dl>
-        <span class="card__go">Demo öffnen →</span>
-      </a>
-      <a class="card" href="./equipment-testing/" style="--card:#a8541f">
+        <a class="card__main" href="./gdpr-processing/">
+          <h2>Verarbeitungsverzeichnis</h2>
+          <p class="card__sub">Art. 30 DSGVO — gemeldet von den Fachbereichen</p>
+          <p class="card__blurb">Die Pflicht kennt jeder, das Verzeichnis führt fast niemand. Der Grund ist die Erhebung: die Angaben liegen bei zwölf Leuten. Diese Demo öffnet deshalb direkt im Meldeformular.</p>
+          <dl>
+            <div><dt>Datenform</dt><dd>1 Datenart · fast nur Aufzählungen · Erfassungsmodus</dd></div>
+            <div><dt>Für wen</dt><dd>Jedes Unternehmen mit Beschäftigten</dd></div>
+          </dl>
+          <span class="card__go">Demo öffnen →</span>
+        </a>
+        <p class="card__prompt">Aufbau-Prompt: <a class="card__lang" href="./gdpr-processing/generating_prompt_en.md">English</a><a class="card__lang" href="./gdpr-processing/generating_prompt_de.md">Deutsch</a><a class="card__lang" href="./gdpr-processing/generating_prompt_es.md">Español</a><a class="card__lang" href="./gdpr-processing/generating_prompt_fr.md">Français</a><a class="card__lang" href="./gdpr-processing/generating_prompt_pt.md">Português</a><a class="card__lang" href="./gdpr-processing/generating_prompt_zh.md">中文</a><a class="card__lang" href="./gdpr-processing/generating_prompt_ja.md">日本語</a></p>
+      </div>
+      <div class="card" style="--card:#a8541f">
         <span class="card__swatch"></span>
-        <h2>Prüfbuch Betriebsmittel</h2>
-        <p class="card__sub">Wiederkehrende Prüfungen nach DGUV Vorschrift 3</p>
-        <p class="card__blurb">Die Prüfung dauert Minuten, die Verwaltung den Nachmittag. Nach einem Unfall lautet die Frage: wann wurde genau dieses Gerät zuletzt geprüft?</p>
-        <dl>
-          <div><dt>Datenform</dt><dd>1 Datenart · Fristen und Intervalle · Anhänge</dd></div>
-          <div><dt>Für wen</dt><dd>Handwerk, Werkstatt, Einrichtungen</dd></div>
-        </dl>
-        <span class="card__go">Demo öffnen →</span>
-      </a>
-      <a class="card" href="./renovation-quotes/" style="--card:#6b4a8c">
+        <a class="card__main" href="./equipment-testing/">
+          <h2>Prüfbuch Betriebsmittel</h2>
+          <p class="card__sub">Wiederkehrende Prüfungen nach DGUV Vorschrift 3</p>
+          <p class="card__blurb">Die Prüfung dauert Minuten, die Verwaltung den Nachmittag. Nach einem Unfall lautet die Frage: wann wurde genau dieses Gerät zuletzt geprüft?</p>
+          <dl>
+            <div><dt>Datenform</dt><dd>1 Datenart · Fristen und Intervalle · Anhänge</dd></div>
+            <div><dt>Für wen</dt><dd>Handwerk, Werkstatt, Einrichtungen</dd></div>
+          </dl>
+          <span class="card__go">Demo öffnen →</span>
+        </a>
+        <p class="card__prompt">Aufbau-Prompt: <a class="card__lang" href="./equipment-testing/generating_prompt_en.md">English</a><a class="card__lang" href="./equipment-testing/generating_prompt_de.md">Deutsch</a><a class="card__lang" href="./equipment-testing/generating_prompt_es.md">Español</a><a class="card__lang" href="./equipment-testing/generating_prompt_fr.md">Français</a><a class="card__lang" href="./equipment-testing/generating_prompt_pt.md">Português</a><a class="card__lang" href="./equipment-testing/generating_prompt_zh.md">中文</a><a class="card__lang" href="./equipment-testing/generating_prompt_ja.md">日本語</a></p>
+      </div>
+      <div class="card" style="--card:#6b4a8c">
         <span class="card__swatch"></span>
-        <h2>Sanierung</h2>
-        <p class="card__sub">Gewerke, Angebote und wo das Budget steht</p>
-        <p class="card__blurb">Drei Angebote je Gewerk, eines kommt nie, und nach drei Monaten weiß niemand mehr, warum man sich für den mittleren entschieden hat.</p>
-        <dl>
-          <div><dt>Datenform</dt><dd>2 Datenarten · Geld · Bindefristen</dd></div>
-          <div><dt>Für wen</dt><dd>Bauherren, Hausverwaltung</dd></div>
-        </dl>
-        <span class="card__go">Demo öffnen →</span>
-      </a>
-      <a class="card" href="./school-trip/" style="--card:#a33a63">
+        <a class="card__main" href="./renovation-quotes/">
+          <h2>Sanierung</h2>
+          <p class="card__sub">Gewerke, Angebote und wo das Budget steht</p>
+          <p class="card__blurb">Drei Angebote je Gewerk, eines kommt nie, und nach drei Monaten weiß niemand mehr, warum man sich für den mittleren entschieden hat.</p>
+          <dl>
+            <div><dt>Datenform</dt><dd>2 Datenarten · Geld · Bindefristen</dd></div>
+            <div><dt>Für wen</dt><dd>Bauherren, Hausverwaltung</dd></div>
+          </dl>
+          <span class="card__go">Demo öffnen →</span>
+        </a>
+        <p class="card__prompt">Aufbau-Prompt: <a class="card__lang" href="./renovation-quotes/generating_prompt_en.md">English</a><a class="card__lang" href="./renovation-quotes/generating_prompt_de.md">Deutsch</a><a class="card__lang" href="./renovation-quotes/generating_prompt_es.md">Español</a><a class="card__lang" href="./renovation-quotes/generating_prompt_fr.md">Français</a><a class="card__lang" href="./renovation-quotes/generating_prompt_pt.md">Português</a><a class="card__lang" href="./renovation-quotes/generating_prompt_zh.md">中文</a><a class="card__lang" href="./renovation-quotes/generating_prompt_ja.md">日本語</a></p>
+      </div>
+      <div class="card" style="--card:#a33a63">
         <span class="card__swatch"></span>
-        <h2>Klassenfahrt</h2>
-        <p class="card__sub">Rückläufer, Zahlungen und wer noch fehlt</p>
-        <p class="card__blurb">28 Zettel raus, 19 zurück, drei ohne Unterschrift. Und die Tabelle darf niemand sehen, weil Allergien darin stehen.</p>
-        <dl>
-          <div><dt>Datenform</dt><dd>1 Datenart · Zustände statt Zahlen · verschlüsselt gedacht</dd></div>
-          <div><dt>Für wen</dt><dd>Schule, Verein, Ehrenamt</dd></div>
-        </dl>
-        <span class="card__go">Demo öffnen →</span>
-      </a>
+        <a class="card__main" href="./school-trip/">
+          <h2>Klassenfahrt</h2>
+          <p class="card__sub">Rückläufer, Zahlungen und wer noch fehlt</p>
+          <p class="card__blurb">28 Zettel raus, 19 zurück, drei ohne Unterschrift. Und die Tabelle darf niemand sehen, weil Allergien darin stehen.</p>
+          <dl>
+            <div><dt>Datenform</dt><dd>1 Datenart · Zustände statt Zahlen · verschlüsselt gedacht</dd></div>
+            <div><dt>Für wen</dt><dd>Schule, Verein, Ehrenamt</dd></div>
+          </dl>
+          <span class="card__go">Demo öffnen →</span>
+        </a>
+        <p class="card__prompt">Aufbau-Prompt: <a class="card__lang" href="./school-trip/generating_prompt_en.md">English</a><a class="card__lang" href="./school-trip/generating_prompt_de.md">Deutsch</a><a class="card__lang" href="./school-trip/generating_prompt_es.md">Español</a><a class="card__lang" href="./school-trip/generating_prompt_fr.md">Français</a><a class="card__lang" href="./school-trip/generating_prompt_pt.md">Português</a><a class="card__lang" href="./school-trip/generating_prompt_zh.md">中文</a><a class="card__lang" href="./school-trip/generating_prompt_ja.md">日本語</a></p>
+      </div>
       </div>
 
       <footer>
