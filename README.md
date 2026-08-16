@@ -1,5 +1,5 @@
 <img src="docs/logo.svg" alt="openToolbox logo" width="96" height="96">
-<img src="docs/social-preview.png" alt="openToolbox" width="640" height="96">
+<img src="docs/social-preview.png" alt="openToolbox" width="640">
 
 # openToolbox
 
