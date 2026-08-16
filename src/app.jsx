@@ -51,6 +51,7 @@ import { Hint } from './hint.jsx'
 import { ChatDock } from './chat.jsx'
 import { AI_DEFAULTS } from './lib/ai.js'
 import { countOpen, DEFAULT_COUNT_URL } from './lib/count.js'
+import { relativeAge } from './lib/time.js'
 import { translator, DEFAULT_LOCALE } from './i18n.js'
 
 /**
@@ -1530,11 +1531,21 @@ function CsvImportDialog({ state, schema, showHints, tr, onMap, onMode, onRun, o
   )
 }
 
+const AGE_KEYS = {
+  now: 'filebar.ageJustNow',
+  minutes: 'filebar.ageMinutes',
+  hours: 'filebar.ageHours',
+  days: 'filebar.ageDays',
+  months: 'filebar.ageMonths',
+  years: 'filebar.ageYears',
+}
+
 function FileBar({ name, tagline, links, attachments, aiOn, dirty, saving, sealed, count, size, lastSaved, onSave, locale, tr }) {
   const dateLocale = locale === 'de' ? 'de-DE' : 'en-US'
   const stamp = lastSaved
     ? new Date(lastSaved).toLocaleString(dateLocale, { dateStyle: 'short', timeStyle: 'short' })
     : tr('filebar.savedNever')
+  const age = lastSaved ? relativeAge(lastSaved) : null
   const shown = usableLinks(links)
 
   return (
@@ -1547,6 +1558,7 @@ function FileBar({ name, tagline, links, attachments, aiOn, dirty, saving, seale
         <span>{tr('filebar.records', count)}</span>
         <span>{tr('filebar.dataBlock', kb(size))}</span>
         <span>{tr('filebar.saved', stamp)}</span>
+        {age && <span>{tr(AGE_KEYS[age.unit], age.n)}</span>}
         {aiOn && <span class="filebar__ai">{tr('filebar.aiActive')}</span>}
       </span>
       {attachments && (

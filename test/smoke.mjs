@@ -6,6 +6,7 @@ import { safeUrl } from '../src/lib/links.js'
 import { applyActions } from '../src/lib/actions.js'
 import { parse } from '../src/lib/markdown.js'
 import { translator } from '../src/i18n.js'
+import { relativeAge } from '../src/lib/time.js'
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs'
 import { resolve, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -242,6 +243,40 @@ if (!String(list0.items[0].join('')).includes('hinausgeht und weitergeht')) {
   fail('Fortsetzungszeile fehlt im Listeneintrag')
 }
 if (!wrapped.some((b) => b.type === 'paragraph')) fail('Absatz nach der Liste ging verloren')
+
+/* Relative Alters-Angabe der FileBar: reine Berechnung aus Zeitstempel und
+   "jetzt", ohne Datum-Zufall - beide Enden getestet, Minuten und Tage. */
+const ageNow = Date.parse('2026-08-16T12:00:00Z')
+const ageCases = [
+  ['2026-08-16T11:59:50Z', 'now', 0],
+  ['2026-08-16T11:45:00Z', 'minutes', 15],
+  ['2026-08-16T10:00:00Z', 'hours', 2],
+  ['2026-08-13T12:00:00Z', 'days', 3],
+  ['2026-06-16T12:00:00Z', 'months', 2],
+  ['2024-08-16T12:00:00Z', 'years', 2],
+]
+const trEn = translator('en')
+const trDe = translator('de')
+const ageKeys = {
+  now: 'filebar.ageJustNow',
+  minutes: 'filebar.ageMinutes',
+  hours: 'filebar.ageHours',
+  days: 'filebar.ageDays',
+  months: 'filebar.ageMonths',
+  years: 'filebar.ageYears',
+}
+let ageOk = 0
+for (const [iso, unit, n] of ageCases) {
+  const got = relativeAge(iso, ageNow)
+  if (got.unit === unit && got.n === n) ageOk++
+  else fail(`relativeAge: ${iso} -> ${JSON.stringify(got)}, erwartet {unit: ${unit}, n: ${n}}`)
+}
+console.log(`0e) Relative Alters-Angabe: ${ageOk}/${ageCases.length} Faelle korrekt`)
+console.log('    en/15min:', trEn(ageKeys.minutes, 15), '| de/3d:', trDe(ageKeys.days, 3))
+if (trEn(ageKeys.minutes, 15) !== '15 minutes ago') fail('Englischer Minutentext falsch')
+if (trDe(ageKeys.days, 3) !== 'vor 3 Tagen') fail('Deutscher Tagestext falsch')
+if (trEn(ageKeys.minutes, 1) !== '1 minute ago') fail('Einzahl in Minutentext fehlt')
+if (trDe(ageKeys.days, 1) !== 'vor 1 Tag') fail('Einzahl in Tagestext fehlt')
 
 const browser = await chromium.launch()
 const ctx = await browser.newContext({ acceptDownloads: true, viewport: { width: 1280, height: 850 } })
