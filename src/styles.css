@@ -87,7 +87,23 @@ button, input, select, textarea { font-family: var(--font); font-size: inherit; 
   background: var(--tone-accent-light);
 }
 
+/* Die Verweise sitzen direkt links neben dem Zustand. Liegen welche vor,
+   uebernehmen sie den Rechtsschub, damit dazwischen keine Luecke entsteht. */
+.filebar__links { margin-left: auto; display: flex; align-items: center; gap: 4px; }
+.filebar__links a {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--r);
+  color: var(--tone-accent-light);
+}
+.filebar__links a:hover { background: rgba(255, 255, 255, 0.12); color: var(--tone-white); }
+.filebar__links svg { width: 14px; height: 14px; display: block; }
+
 .filebar__state { margin-left: auto; display: flex; align-items: center; gap: 10px; }
+.filebar__links + .filebar__state { margin-left: 0; }
 
 .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--tone-accent-light); flex: none; }
 .dot--dirty { background: var(--pending); }
@@ -861,6 +877,34 @@ tbody tr[data-selected="true"] td { background: var(--accent-soft); }
 
 .toggle { display: inline-flex; align-items: center; gap: 9px; cursor: pointer; color: var(--muted); }
 .toggle input { width: 16px; height: 16px; accent-color: var(--tone-accent); }
+
+/* Verweis-Editor: eine Zeile je Verweis, auf schmalen Fenstern umbrechend. */
+.links { display: flex; flex-direction: column; gap: 8px; width: 100%; align-items: flex-start; }
+/* Drei Zeilen je Verweis: Ziel, Beschriftung, Knoepfe. Die Steuerspalte der
+   Einstellungen ist schmal; alles nebeneinander macht die Adresse unlesbar. */
+.links__row {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr) auto;
+  gap: 7px;
+  align-items: center;
+  width: 100%;
+  padding-bottom: 4px;
+}
+.links__icon {
+  grid-row: 1 / 4;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  color: var(--muted);
+}
+.links__icon svg { width: 16px; height: 16px; display: block; }
+.links__url,
+.links__label { grid-column: 2 / -1; }
+.links__buttons { grid-column: 2 / -1; display: flex; gap: 7px; }
 
 .suffixed { display: flex; align-items: center; gap: 7px; width: 100%; }
 .suffixed span { color: var(--muted); font-size: 13px; }

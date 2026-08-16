@@ -179,6 +179,29 @@ Default title, subtitle, file name, colours and product name live in `DEFAULT_SE
 `DEFAULT_COLORS` and `DEFAULT_BRAND` at the top of `src/app.jsx`. Set them to match the tool you are
 building — the user can change all of them later in the settings page.
 
+### The dark bar at the top
+
+Two more settings live there, both aimed at a tool that leaves your hands:
+
+- **`tagline`** — the text after the file name. Empty means the translated standard line, which
+  follows the interface language; set it and your text wins in every language. Good place for the
+  client, the department or the classification (`Muster GmbH · internal`).
+- **`links`** — up to five icons on the right of the bar, each `{ icon, url, label }`, opening in a
+  new tab. Ships with one entry pointing at the openToolbox repository. **Replace it when you
+  deliver**, the same way you replace `copyright`: the recipient's repository, their Confluence
+  space, their ticket board — a link back to the template is rarely what they need there.
+
+  ```js
+  links: [
+    { icon: '<svg viewBox="0 0 16 16">…</svg>', url: 'https://intranet.example/qm', label: 'QM handbook' },
+  ]
+  ```
+
+  `icon` is inline SVG and runs through the same sanitiser as the logo — an empty string draws a
+  neutral chain link. `url` accepts `http`, `https` and `mailto`; a missing scheme is completed to
+  `https`, and anything else (`javascript:`, `data:`) is dropped without display. `label` becomes
+  the tooltip and the accessible name, so write one.
+
 ## Getting the user's real data in
 
 You do not have to write an importer, and you should not paste the user's data into `seed()`.

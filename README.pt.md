@@ -64,6 +64,8 @@ larguras em CSS e o anel é um único círculo SVG. As duas visões imprimem com
   lido esta página.
 - **Um bloqueio da página de configurações**, para que uma ferramenta nas mãos de quem apenas
   registra dados não seja reconfigurada por acidente.
+- **Uma linha de cabeçalho editável e até cinco links** na barra escura do topo, apontando para o
+  que acompanha a ferramenta.
 
 ## Início rápido
 

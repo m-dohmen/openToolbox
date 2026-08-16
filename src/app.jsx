@@ -12,6 +12,8 @@ import {
 } from './lib/payload.js'
 import { seal, open as unseal, cryptoAvailable } from './lib/crypto.js'
 import { makeLock, checkLock } from './lib/lock.js'
+import { usableLinks, safeUrl } from './lib/links.js'
+import { sanitizeSvg } from './lib/svg.js'
 import { toCsv, fromCsv } from './lib/csv.js'
 import * as domainModule from './domain.js'
 import {
@@ -28,7 +30,7 @@ import {
 } from './lib/entities.js'
 import { Wordmark } from './brand.jsx'
 import { paletteVariables } from './lib/color.js'
-import { IconSave, IconSettings } from './icons.jsx'
+import { IconSave, IconSettings, IconLink } from './icons.jsx'
 import { SettingsPage } from './settings.jsx'
 import { DashboardView } from './dashboard.jsx'
 import { Hint } from './hint.jsx'
@@ -101,6 +103,25 @@ import { exportConfig, importConfig } from './lib/config.js'
  * `locale` steuert nur die Oberflächensprache (src/i18n.js) - Feldnamen und
  * Daten aus src/domain.js bleiben davon unberührt, siehe README.
  */
+/* Symbol des voreingestellten Verweises. GitHub erlaubt seine Marke
+   ausdruecklich, um auf GitHub-Inhalte zu verlinken - genau das passiert hier.
+   Wer den Verweis in den Einstellungen ersetzt, ersetzt auch das Symbol. */
+const GITHUB_MARK =
+  '<svg viewBox="0 0 16 16" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">' +
+  '<path fill="currentColor" d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 ' +
+  '0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 ' +
+  '1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 ' +
+  '0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 ' +
+  '1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 ' +
+  '1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8Z"/></svg>'
+
+/* Verweise rechts in der Dateizeile. Wer ein eigenes Werkzeug ausliefert,
+   setzt hier das Repository, den Confluence-Bereich oder das Ticketboard des
+   Kunden ein - bis zu fuenf, ueber die Einstellungen aenderbar. */
+const DEFAULT_LINKS = [
+  { icon: GITHUB_MARK, url: 'https://github.com/m-dohmen/openToolbox', label: 'openToolbox on GitHub' },
+]
+
 const DEFAULT_SETTINGS = {
   theme: 'system',
   density: 'normal',
@@ -110,6 +131,10 @@ const DEFAULT_SETTINGS = {
   analyticsUrl: DEFAULT_COUNT_URL,
   title: 'Action items',
   subtitle: 'Open points from audits and steering meetings',
+  /* Leer heisst: der uebersetzte Standardtext. So bleibt eine unveraenderte
+     Datei zweisprachig, und eine eigene Angabe gewinnt trotzdem. */
+  tagline: '',
+  links: DEFAULT_LINKS,
   fileStem: 'action-items',
   version: '',
   examplePrompts: true,
@@ -588,12 +613,41 @@ function Workbench({
       'application/json',
     )
 
+  /**
+   * Eine Konfigurationsdatei kommt von außen und bringt zwei Dinge mit, die
+   * unmittelbar in den DOM geschrieben werden: das Logo und die Symbole der
+   * Verweise. Beide laufen hier durch denselben Reiniger wie beim Hochladen —
+   * ohne das wäre "Konfiguration laden" ein Weg, fremdes Markup einzuschleusen.
+   */
+  function scrubSvg(next, notes) {
+    const clean = (source, where) => {
+      if (!source) return ''
+      try {
+        const { svg, removed } = sanitizeSvg(source)
+        if (removed.length) notes.push(`${where}: removed ${removed.join(', ')}.`)
+        return svg
+      } catch (err) {
+        notes.push(`${where}: ${err.message}`)
+        return ''
+      }
+    }
+    return {
+      ...next,
+      brand: { ...next.brand, logo: clean(next.brand?.logo, 'brand.logo') },
+      links: (next.links ?? []).map((link, i) => ({
+        ...link,
+        url: safeUrl(link.url),
+        icon: clean(link.icon, `links[${i}].icon`),
+      })),
+    }
+  }
+
   async function importConfiguration() {
     const file = await pickFile('.json,application/json')
     if (!file) return
     try {
       const { settings: next, notes } = importConfig(await file.text(), DEFAULT_SETTINGS)
-      setSettings(next)
+      setSettings(scrubSvg(next, notes))
       setDirty(true)
       if (next.ai.enabled && !apiKey) setAskKey(true)
       notify(
@@ -708,6 +762,8 @@ function Workbench({
     <div class="shell">
       <FileBar
         name={stem}
+        tagline={settings.tagline}
+        links={settings.links}
         aiOn={settings.ai.enabled}
         dirty={dirty}
         saving={saving}
@@ -1250,17 +1306,18 @@ function CsvImportDialog({ state, schema, showHints, tr, onMap, onMode, onRun, o
   )
 }
 
-function FileBar({ name, aiOn, dirty, saving, sealed, count, size, lastSaved, onSave, locale, tr }) {
+function FileBar({ name, tagline, links, aiOn, dirty, saving, sealed, count, size, lastSaved, onSave, locale, tr }) {
   const dateLocale = locale === 'de' ? 'de-DE' : 'en-US'
   const stamp = lastSaved
     ? new Date(lastSaved).toLocaleString(dateLocale, { dateStyle: 'short', timeStyle: 'short' })
     : tr('filebar.savedNever')
+  const shown = usableLinks(links)
 
   return (
     <div class="filebar">
       <span class="filebar__name">
         <b>{name}</b>
-        <em> — {tr('filebar.tagline')}</em>
+        <em> — {tagline || tr('filebar.tagline')}</em>
       </span>
       <span class="filebar__meta">
         <span>{tr('filebar.records', count)}</span>
@@ -1268,6 +1325,23 @@ function FileBar({ name, aiOn, dirty, saving, sealed, count, size, lastSaved, on
         <span>{tr('filebar.saved', stamp)}</span>
         {aiOn && <span class="filebar__ai">{tr('filebar.aiActive')}</span>}
       </span>
+      {shown.length > 0 && (
+        <span class="filebar__links">
+          {shown.map((link, i) => (
+            <a
+              key={link.url + i}
+              href={link.url}
+              target="_blank"
+              rel="noopener noreferrer"
+              title={link.label || link.url}
+              aria-label={link.label || link.url}
+            >
+              {/* Das Symbol ist beim Hochladen durch den SVG-Reiniger gelaufen. */}
+              {link.icon ? <span dangerouslySetInnerHTML={{ __html: link.icon }} /> : <IconLink />}
+            </a>
+          ))}
+        </span>
+      )}
       <span class="filebar__state">
         <span class={'dot ' + (dirty ? 'dot--dirty' : sealed ? 'dot--sealed' : '')} />
         {dirty ? tr('filebar.unsaved') : sealed ? tr('filebar.encrypted') : tr('filebar.plain')}

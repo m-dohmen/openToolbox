@@ -94,6 +94,8 @@ dashboard · CSV import · change log · version numbers.**
   reading this README — see [Example prompts](#example-prompts).
 - **A lock on the settings page**, so a tool handed to someone who only enters data can't be
   reconfigured by accident — see [Locking the settings](#locking-the-settings).
+- **An editable header line and up to five links** in the dark bar at the top, pointing at whatever
+  sits next to the tool — see [The dark bar at the top](#the-dark-bar-at-the-top).
 
 ## Quick start
 
@@ -361,6 +363,22 @@ Uploaded SVGs are sanitised first — scripts, `on…` handlers, `foreignObject`
 are stripped, and you are told what was removed. Export the configuration as JSON (without records,
 without the API key) and load it into every other tool you build.
 
+### The dark bar at the top
+
+Two settings shape it. **Header line** replaces the text after the file name — leave it empty and
+you get the translated standard line, which follows the interface language; fill it and your text
+wins everywhere (`Muster GmbH · internal`).
+
+**Links in the header** puts up to five icons on the right, next to the save button, each opening in
+a new tab. It ships with one pointing at this repository; replace it with what sits next to *your*
+tool — the client's Confluence space, a ticket board, the intranet folder. Each entry is an SVG
+icon, a URL and a label that becomes the tooltip.
+
+Both the icon and the URL are checked, because these travel with the file to people who did not
+build it: icons run through the same sanitiser as the logo, and only `http`, `https` and `mailto`
+addresses are rendered. A missing scheme is completed to `https`; a `javascript:` or `data:` URL is
+dropped without display rather than written into an `href`.
+
 ## Interface languages
 
 The interface ships in **English (default) and German**, selectable in Settings → Appearance →
@@ -487,7 +505,8 @@ src/lib/actions.js     validation and application of AI-proposed changes
 src/lib/entities.js    normalizes SCHEMA/ENTITIES, shared field type check, delete-guard helpers
 src/lib/csv.js         CSV writer and reader (separator sniffing, RFC 4180 quoting)
 src/lib/count.js       the usage counter — the only self-initiated network call in the file
-src/lib/svg.js         logo sanitiser
+src/lib/links.js       header links — URL check (http/https/mailto only)
+src/lib/svg.js         logo and icon sanitiser
 src/lib/color.js       palette derivation and contrast check
 test/smoke.mjs         end-to-end test against a real headless browser
 test/multi-entity.mjs  end-to-end test for the ENTITIES/reference-field path

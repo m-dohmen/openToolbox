@@ -2,6 +2,7 @@
 import { chromium } from 'playwright'
 import { createServer } from 'node:http'
 import { buildUrl, parseHeaders } from '../src/lib/ai.js'
+import { safeUrl } from '../src/lib/links.js'
 import { readFileSync, writeFileSync, mkdirSync } from 'node:fs'
 import { resolve, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -131,6 +132,28 @@ console.log(`0) Pfadaufbau: ${urlOk}/${urlCases.length} Faelle korrekt`)
 const hdr = parseHeaders('x-gw: abc\nBroken\n api-version : 2024-10-21 ')
 console.log('   Kopfzeilen:', JSON.stringify(hdr))
 if (hdr['x-gw'] !== 'abc' || hdr['api-version'] !== '2024-10-21') fail('Kopfzeilen falsch geparst')
+
+/* Adressen der Kopfzeilen-Verweise landen in einem href. Alles, was dort einen
+   Klick von einem Skriptaufruf entfernt waere, muss vorher rausfallen. */
+const urlGuard = [
+  ['https://example.com/x', 'https://example.com/x'],
+  ['intranet.firma.de/qm', 'https://intranet.firma.de/qm'],
+  ['mailto:qs@firma.de', 'mailto:qs@firma.de'],
+  ['javascript:alert(1)', ''],
+  ['  JavaScript:alert(1)  ', ''],
+  ['data:text/html,<script>alert(1)</script>', ''],
+  ['vbscript:msgbox(1)', ''],
+  ['file:///etc/passwd', ''],
+  ['', ''],
+  ['   ', ''],
+]
+let guardOk = 0
+for (const [input, expected] of urlGuard) {
+  const got = safeUrl(input)
+  if (got === expected) guardOk++
+  else fail(`safeUrl: ${JSON.stringify(input)} -> ${JSON.stringify(got)}, erwartet ${JSON.stringify(expected)}`)
+}
+console.log(`0a) Adresspruefung der Verweise: ${guardOk}/${urlGuard.length} Faelle korrekt`)
 
 const browser = await chromium.launch()
 const ctx = await browser.newContext({ acceptDownloads: true, viewport: { width: 1280, height: 850 } })
@@ -862,6 +885,77 @@ const reopened = page16.locator('.suffixed input')
 console.log('48) Nach erneutem Oeffnen gesperrt:', await reopened.isDisabled())
 if (!(await reopened.isDisabled())) fail('Erneut geoeffnete Datei ist nicht mehr geschuetzt')
 await page16.close()
+
+// Kopfzeilentext und die Verweise rechts in der Dateizeile.
+const page17 = await ctx.newPage()
+page17.on('pageerror', (e) => errors.push(String(e)))
+page17.on('console', (m) => m.type() === 'error' && errors.push(m.text()))
+await page17.goto('file://' + dist)
+await page17.waitForSelector('table tbody tr')
+
+const barDefault = await page17.locator('.filebar__name').innerText()
+const linkDefault = await page17.locator('.filebar__links a').getAttribute('href')
+const linkTarget = await page17.locator('.filebar__links a').getAttribute('target')
+const linkRel = await page17.locator('.filebar__links a').getAttribute('rel')
+console.log('49) Dateizeile ab Werk:', barDefault, '| Verweis:', linkDefault, linkTarget, linkRel)
+if (!barDefault.includes('application and data in a single file')) fail('Standard-Kopfzeile fehlt')
+if (linkDefault !== 'https://github.com/m-dohmen/openToolbox') fail('Voreingestellter Verweis fehlt')
+if (linkTarget !== '_blank' || !linkRel.includes('noopener')) fail('Verweis oeffnet nicht sicher im neuen Tab')
+
+// Der Verweis sitzt links neben dem Zustandsblock, nicht irgendwo dazwischen.
+const geo = await page17.evaluate(() => {
+  const l = document.querySelector('.filebar__links').getBoundingClientRect()
+  const s = document.querySelector('.filebar__state').getBoundingClientRect()
+  const m = document.querySelector('.filebar__meta').getBoundingClientRect()
+  return { linksRight: l.right, stateLeft: s.left, metaRight: m.right }
+})
+console.log('    Position:', JSON.stringify(geo))
+if (geo.linksRight > geo.stateLeft + 1) fail('Verweise ueberlappen den Zustandsblock')
+if (geo.linksRight - geo.metaRight < 100) fail('Verweise kleben an den Metadaten statt rechts zu sitzen')
+
+// Eigener Kopfzeilentext gewinnt gegen den uebersetzten Standard
+await page17.getByLabel('Settings').click()
+await page17.waitForSelector('.settings')
+await page17.locator('.setting', { hasText: 'Header line' }).locator('input').fill('Muster Consulting · internal')
+await page17.waitForTimeout(150)
+
+// Zweiter Verweis, und eine Adresse, die nicht in ein href gehoert
+await page17.getByRole('button', { name: 'Add link' }).click()
+const urlFields = page17.locator('.links__url')
+await urlFields.nth(1).fill('javascript:alert(1)')
+await page17.waitForTimeout(150)
+console.log('50) Nach javascript:-Adresse angezeigte Verweise:', await page17.locator('.filebar__links a').count())
+if ((await page17.locator('.filebar__links a').count()) !== 1) fail('javascript:-Adresse landete in der Kopfzeile')
+
+// Adresse ohne Schema wird als https ergaenzt und angezeigt
+await urlFields.nth(1).fill('intranet.example.com/qm')
+await page17.locator('.links__label').nth(1).fill('QM handbook')
+await page17.waitForTimeout(150)
+const hrefs = await page17.locator('.filebar__links a').evaluateAll((els) => els.map((e) => e.href))
+console.log('51) Verweise jetzt:', hrefs.join(' '))
+if (hrefs[1] !== 'https://intranet.example.com/qm') fail('Adresse ohne Schema wurde nicht ergaenzt')
+
+await page17.getByRole('button', { name: 'Back to the list' }).click()
+await page17.waitForSelector('table tbody tr')
+const barCustom = await page17.locator('.filebar__name').innerText()
+console.log('52) Eigene Kopfzeile:', barCustom)
+if (!barCustom.includes('Muster Consulting · internal')) fail('Eigener Kopfzeilentext wird nicht angezeigt')
+
+// Beides reist mit der Datei
+const linkFile = resolve(tmp, 'mit-verweisen.html')
+await saveTo(page17, linkFile, 'Kopfzeile und Verweise gesetzt')
+const page18 = await ctx.newPage()
+page18.on('pageerror', (e) => errors.push(String(e)))
+await page18.goto('file://' + linkFile)
+await page18.waitForSelector('table tbody tr')
+const reopenedBar = await page18.locator('.filebar__name').innerText()
+const reopenedLinks = await page18.locator('.filebar__links a').evaluateAll((els) =>
+  els.map((e) => e.getAttribute('title')),
+)
+console.log('53) Nach erneutem Oeffnen:', reopenedBar, '|', reopenedLinks.join(' / '))
+if (!reopenedBar.includes('Muster Consulting')) fail('Kopfzeilentext reist nicht mit der Datei')
+if (reopenedLinks[1] !== 'QM handbook') fail('Verweise reisen nicht mit der Datei')
+await page18.close()
 
 // Vorschau im hellen Modus
 await page3.getByLabel('Settings').click()

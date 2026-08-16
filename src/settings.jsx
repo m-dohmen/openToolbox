@@ -1,10 +1,11 @@
 // SPDX-License-Identifier: Apache-2.0
 import { useRef, useState } from 'preact/hooks'
-import { IconBack, IconLock, IconChat } from './icons.jsx'
+import { IconBack, IconLock, IconChat, IconLink } from './icons.jsx'
 import { Wordmark } from './brand.jsx'
 import { chatCompletion, contextModeOptions, dialectSummary, resolveUrl } from './lib/ai.js'
 import { sanitizeSvg } from './lib/svg.js'
 import { contrastRatio } from './lib/color.js'
+import { MAX_LINKS } from './lib/links.js'
 import { translator, LOCALES, LOCALE_LABELS } from './i18n.js'
 import { Hint } from './hint.jsx'
 
@@ -42,6 +43,83 @@ const Swatch = ({ value, onChange, id }) => (
   </label>
 )
 
+/**
+ * Verweise für die Dateizeile: Symbol, Ziel, Beschriftung.
+ *
+ * Das Symbol läuft durch denselben Reiniger wie das Logo — es wird eingebettet
+ * und wandert mit der Datei weiter. Die Adresse wird erst beim Anzeigen geprüft
+ * (`usableLinks`), nicht schon beim Tippen: sonst verschwände der halb
+ * eingegebene Verweis nach jedem Zeichen aus der Kopfzeile.
+ */
+function LinkEditor({ links, tr, onChange, onNote }) {
+  const pickers = useRef({})
+
+  const patch = (index, change) =>
+    onChange(links.map((link, i) => (i === index ? { ...link, ...change } : link)))
+
+  async function loadIcon(index, file) {
+    if (!file) return
+    try {
+      const { svg, removed } = sanitizeSvg(await file.text())
+      patch(index, { icon: svg })
+      onNote(removed.length ? tr('settings.logoAppliedRemoved', removed.join(', ')) : tr('settings.iconApplied'))
+    } catch (err) {
+      onNote(err.message)
+    }
+  }
+
+  return (
+    <div class="links">
+      {links.map((link, i) => (
+        <div class="links__row" key={i}>
+          <span class="links__icon" aria-hidden="true">
+            {link.icon ? <span dangerouslySetInnerHTML={{ __html: link.icon }} /> : <IconLink />}
+          </span>
+          <input
+            class="links__url"
+            placeholder="https://…"
+            value={link.url ?? ''}
+            onInput={(e) => patch(i, { url: e.currentTarget.value.trim() })}
+          />
+          <input
+            class="links__label"
+            placeholder={tr('settings.linkLabelPlaceholder')}
+            value={link.label ?? ''}
+            onInput={(e) => patch(i, { label: e.currentTarget.value })}
+          />
+          <div class="links__buttons">
+            <input
+              ref={(el) => (pickers.current[i] = el)}
+              type="file"
+              accept=".svg,image/svg+xml"
+              style="display:none"
+              onChange={(e) => {
+                loadIcon(i, e.currentTarget.files?.[0])
+                e.currentTarget.value = ''
+              }}
+            />
+            <button class="btn" onClick={() => pickers.current[i]?.click()}>
+              {link.icon ? tr('settings.linkIconReplace') : tr('settings.linkIcon')}
+            </button>
+            <button
+              class="btn btn--danger"
+              aria-label={tr('settings.linkRemove')}
+              onClick={() => onChange(links.filter((_, k) => k !== i))}
+            >
+              {tr('common.remove')}
+            </button>
+          </div>
+        </div>
+      ))}
+      {links.length < MAX_LINKS && (
+        <button class="btn" onClick={() => onChange([...links, { icon: '', url: '', label: '' }])}>
+          {tr('settings.linkAdd')}
+        </button>
+      )}
+    </div>
+  )
+}
+
 export function SettingsPage({
   settings,
   onChange,
@@ -70,6 +148,7 @@ export function SettingsPage({
   const tr = translator(settings.locale)
   const [probe, setProbe] = useState({ state: 'idle', message: '' })
   const [logoNote, setLogoNote] = useState('')
+  const [linkNote, setLinkNote] = useState('')
   const logoPicker = useRef(null)
 
   async function runProbe() {
@@ -266,6 +345,25 @@ export function SettingsPage({
           <Row label={tr('settings.subtitle')}>
             <input value={settings.subtitle} onInput={(e) => set('subtitle')(e.currentTarget.value)} />
           </Row>
+
+          <Row label={tr('settings.tagline')} hint={tr('settings.taglineHint')}>
+            <input
+              placeholder={tr('filebar.tagline')}
+              value={settings.tagline}
+              onInput={(e) => set('tagline')(e.currentTarget.value)}
+            />
+          </Row>
+
+          <Row label={tr('settings.links')} hint={tr('settings.linksHint', MAX_LINKS)}>
+            <LinkEditor
+              links={settings.links ?? []}
+              tr={tr}
+              onChange={set('links')}
+              onNote={setLinkNote}
+            />
+          </Row>
+
+          {linkNote && <p class="note note--ok">{linkNote}</p>}
 
           <Row label={tr('settings.version')} hint={tr('settings.versionHint')}>
             <input

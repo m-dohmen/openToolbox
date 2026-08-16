@@ -65,6 +65,8 @@ son anchuras CSS y el anillo es un único círculo SVG. Ambas vistas se imprimen
   haber leído esta página.
 - **Un bloqueo de la página de ajustes**, para que una herramienta en manos de quien solo introduce
   datos no se reconfigure por accidente.
+- **Una línea de cabecera editable y hasta cinco enlaces** en la barra oscura superior, apuntando a
+  lo que acompaña a la herramienta.
 
 ## Inicio rápido
 

@@ -68,6 +68,8 @@ s'impriment en un PDF propre.
   avoir lu cette page.
 - **Un verrou sur la page des réglages**, pour qu'un outil confié à quelqu'un qui ne fait que saisir
   des données ne soit pas reconfiguré par mégarde.
+- **Une ligne d'en-tête modifiable et jusqu'à cinq liens** dans la barre sombre du haut, vers ce qui
+  accompagne l'outil.
 
 ## Démarrage rapide
 

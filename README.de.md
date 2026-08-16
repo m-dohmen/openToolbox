@@ -98,6 +98,8 @@ Dashboard · CSV-Import · Änderungsprotokoll · Versionsnummern.**
 - **Eine Sperre für die Einstellungsseite**, damit ein Werkzeug in der Hand eines reinen Anwenders
   nicht versehentlich umkonfiguriert wird — siehe
   [Einstellungen sperren](#einstellungen-sperren).
+- **Eine änderbare Kopfzeile und bis zu fünf Verweise** in der dunklen Leiste ganz oben, auf das,
+  was neben dem Werkzeug liegt — siehe [Die dunkle Leiste oben](#die-dunkle-leiste-oben).
 
 ## Schnellstart
 
@@ -261,6 +263,23 @@ Drei Randbedingungen, die in regulierten und in Konzernumgebungen immer wieder a
 
 Eine einzelne HTML-Datei umgeht alle drei. Und sie ist ehrlich in dem, was sie ist: Der Anwender kann
 den gesamten Quelltext lesen, und es gibt keinen Dienst, der sich unter ihm still verändern könnte.
+
+## Die dunkle Leiste oben
+
+Zwei Einstellungen prägen sie. **Kopfzeile** ersetzt den Text hinter dem Dateinamen — leer bleibt
+der übersetzte Standardtext, der der Oberflächensprache folgt; ausgefüllt gewinnt die eigene Angabe
+in jeder Sprache (`Muster GmbH · intern`).
+
+**Verweise in der Kopfzeile** setzt bis zu fünf Symbole rechts neben den Speichern-Knopf, die in
+einem neuen Tab öffnen. Vorbelegt ist einer auf dieses Repository; ersetze ihn durch das, was neben
+*deinem* Werkzeug liegt — der Confluence-Bereich des Kunden, ein Ticketboard, die Ablage im
+Intranet. Jeder Eintrag besteht aus einem SVG-Symbol, einer Adresse und einer Beschriftung, die zum
+Kurzhinweis wird.
+
+Symbol und Adresse werden geprüft, denn beides reist mit der Datei zu Leuten, die sie nicht gebaut
+haben: Symbole laufen durch denselben Reiniger wie das Logo, und angezeigt werden nur http-, https-
+und mailto-Adressen. Ein fehlendes Schema wird zu `https` ergänzt; ein `javascript:` oder `data:`
+wird verworfen, statt in einem `href` zu landen.
 
 ## Einstellungen sperren
 

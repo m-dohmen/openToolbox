@@ -68,3 +68,12 @@ export const IconPaperclip = (props) => (
     <path d="M19 11.5 12.3 18.2a4.2 4.2 0 0 1-6-6l7.1-7.1a2.8 2.8 0 0 1 4 4l-7.1 7.1a1.4 1.4 0 0 1-2-2l6.4-6.4" />
   </svg>
 )
+
+/* Ersatzsymbol fuer einen Verweis in der Dateizeile, dem keine eigene SVG
+   mitgegeben wurde. */
+export const IconLink = (props) => (
+  <svg {...base} {...props}>
+    <path d="M10.6 13.4a3.6 3.6 0 0 0 5.1 0l2.8-2.8a3.6 3.6 0 0 0-5.1-5.1l-1.2 1.2" />
+    <path d="M13.4 10.6a3.6 3.6 0 0 0-5.1 0l-2.8 2.8a3.6 3.6 0 0 0 5.1 5.1l1.2-1.2" />
+  </svg>
+)

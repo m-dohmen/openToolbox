@@ -356,6 +356,22 @@ const STRINGS = {
     'settings.securityNote':
       'Encryption protects the data, not access to the application. Roles and views in a file ' +
       'that runs locally would be surface only — whoever holds the file also holds the code.',
+    'settings.tagline': 'Header line',
+    'settings.taglineHint':
+      'The text after the file name in the dark bar at the top. Leave empty for the standard line, ' +
+      'which follows the interface language.',
+    'settings.links': 'Links in the header',
+    'settings.linksHint': (max) =>
+      `Up to ${max} icons on the right of the header bar, opening in a new tab — the repository, a ` +
+      'Confluence space, a ticket board. Only http, https and mailto addresses are used; anything ' +
+      'else is ignored. Icons are cleaned the same way as the logo.',
+    'settings.linkIcon': 'Icon…',
+    'settings.linkIconReplace': 'Replace icon…',
+    'settings.linkAdd': 'Add link',
+    'settings.linkRemove': 'Remove link',
+    'settings.linkLabelPlaceholder': 'Tooltip',
+    'settings.iconApplied': 'Icon applied.',
+
     'settings.lock': 'Protect settings',
     'settings.lockHint':
       'Disables the fields on this page so nobody changes them by accident. They stay visible, and ' +
@@ -817,6 +833,22 @@ const STRINGS = {
     'settings.securityNote':
       'Verschlüsselung schützt die Daten, nicht den Zugriff auf die Anwendung. Rollen und Ansichten ' +
       'in einer lokal laufenden Datei wären nur Oberfläche — wer die Datei hat, hat auch den Code.',
+    'settings.tagline': 'Kopfzeile',
+    'settings.taglineHint':
+      'Der Text hinter dem Dateinamen in der dunklen Leiste ganz oben. Leer lassen für den ' +
+      'Standardtext, der der Oberflächensprache folgt.',
+    'settings.links': 'Verweise in der Kopfzeile',
+    'settings.linksHint': (max) =>
+      `Bis zu ${max} Symbole rechts in der Kopfleiste, die in einem neuen Tab öffnen — das ` +
+      'Repository, ein Confluence-Bereich, ein Ticketboard. Verwendet werden nur http-, https- und ' +
+      'mailto-Adressen, alles andere wird übergangen. Symbole werden wie das Logo bereinigt.',
+    'settings.linkIcon': 'Symbol…',
+    'settings.linkIconReplace': 'Symbol ersetzen…',
+    'settings.linkAdd': 'Verweis hinzufügen',
+    'settings.linkRemove': 'Verweis entfernen',
+    'settings.linkLabelPlaceholder': 'Kurzhinweis',
+    'settings.iconApplied': 'Symbol übernommen.',
+
     'settings.lock': 'Einstellungen schützen',
     'settings.lockHint':
       'Sperrt die Felder auf dieser Seite, damit sie niemand versehentlich verstellt. Sichtbar ' +

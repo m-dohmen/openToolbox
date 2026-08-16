@@ -41,7 +41,21 @@ function sanitize(incoming, defaults, notes, path = '') {
       continue
     }
 
-    if (fallback !== null && typeof fallback === 'object' && !Array.isArray(fallback)) {
+    /* Listen (die Verweise in der Kopfzeile) werden nicht Feld für Feld
+       geprüft, aber es muss eine Liste von Objekten sein. Was darin steht,
+       räumt der Aufrufer auf: Adressen über safeUrl, Symbole über den
+       SVG-Reiniger - siehe importConfiguration in app.jsx. */
+    if (Array.isArray(fallback)) {
+      if (!Array.isArray(value) || value.some((e) => !e || typeof e !== 'object')) {
+        notes.push(`${where}: not a list of entries, kept the default.`)
+        out[key] = fallback
+        continue
+      }
+      out[key] = value
+      continue
+    }
+
+    if (fallback !== null && typeof fallback === 'object') {
       out[key] = sanitize(value, fallback, notes, where)
       continue
     }
