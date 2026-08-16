@@ -1,5 +1,4 @@
-<img src="docs/logo.svg" alt="openToolbox logo" width="96" height="96">
-<img src="docs/social-preview.png" alt="openToolbox" width="640">
+<img src="docs/social-preview.png" alt="openToolbox" width="100%">
 
 # openToolbox
 
@@ -502,3 +501,6 @@ nothing at runtime.
 
 The interface ships in US English and German (see [Interface languages](#interface-languages) above)
 and defaults to English; documentation is in US English; source comments are in German.
+
+
+<img src="docs/logo.svg" alt="openToolbox logo" width="96" height="96">
