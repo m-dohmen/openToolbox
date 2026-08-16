@@ -2,7 +2,7 @@
 
 # openToolbox
 
-*[English version](README.md)*
+[English](README.md) · **Deutsch** · [中文](README.zh.md) · [Español](README.es.md) · [Français](README.fr.md) · [日本語](README.ja.md) · [Português](README.pt.md)
 
 **Ein funktionierendes Werkzeug als einzelne HTML-Datei ausliefern. Kein Server, keine Installation,
 kein Netz.**
