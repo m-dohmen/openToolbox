@@ -1,4 +1,4 @@
-<img src="docs/logo.svg" alt="openToolbox Logo" width="96" height="96">
+<img src="docs/social-preview.png" alt="openToolbox" width="100%">
 
 # openToolbox
 
@@ -317,3 +317,6 @@ lädt zur Laufzeit nichts nach.
 Die Oberfläche gibt es auf Englisch und Deutsch und startet auf Englisch; die ausführliche
 Dokumentation im [Wiki](https://github.com/m-dohmen/openToolbox/wiki) ist auf Englisch,
 Quelltextkommentare sind auf Deutsch.
+
+
+<img src="docs/logo.svg" alt="openToolbox Logo" width="96" height="96">

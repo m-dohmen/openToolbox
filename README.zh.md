@@ -1,4 +1,4 @@
-<img src="docs/logo.svg" alt="openToolbox logo" width="96" height="96">
+<img src="docs/social-preview.png" alt="openToolbox" width="100%">
 
 # openToolbox
 
@@ -154,3 +154,6 @@ Apache License 2.0。源文件带有 `SPDX-License-Identifier` 头。
 ---
 
 > **关于本翻译**：[英文 README](README.md) 是权威版本；若有出入，以它为准。完整的参考文档（架构、AI 集成内部机制、安全细节）在 [Wiki](https://github.com/m-dohmen/openToolbox/wiki) 中，仅有英文。
+
+
+<img src="docs/logo.svg" alt="openToolbox logo" width="96" height="96">

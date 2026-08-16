@@ -1,4 +1,4 @@
-<img src="docs/logo.svg" alt="openToolbox logo" width="96" height="96">
+<img src="docs/social-preview.png" alt="openToolbox" width="100%">
 
 # openToolbox
 
@@ -232,3 +232,6 @@ construit ne charge rien à l'exécution.
 > divergence, c'est lui qui prime. La documentation détaillée (architecture, fonctionnement interne
 > de l'intégration IA, sécurité) se trouve dans le [wiki](https://github.com/m-dohmen/openToolbox/wiki),
 > uniquement en anglais.
+
+
+<img src="docs/logo.svg" alt="openToolbox logo" width="96" height="96">

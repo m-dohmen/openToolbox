@@ -1,4 +1,4 @@
-<img src="docs/logo.svg" alt="openToolbox logo" width="96" height="96">
+<img src="docs/social-preview.png" alt="openToolbox" width="100%">
 
 # openToolbox
 
@@ -202,3 +202,6 @@ Apache License 2.0。ソースファイルには `SPDX-License-Identifier` ヘ�
 > **この翻訳について**: 正となるのは[英語版 README](README.md) です。相違がある場合はそちらが優先されます。
 > 詳細なリファレンス（アーキテクチャ、AI 連携の内部動作、セキュリティ）は
 > [Wiki](https://github.com/m-dohmen/openToolbox/wiki) にあり、英語のみです。
+
+
+<img src="docs/logo.svg" alt="openToolbox logo" width="96" height="96">

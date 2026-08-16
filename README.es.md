@@ -1,4 +1,4 @@
-<img src="docs/logo.svg" alt="openToolbox logo" width="96" height="96">
+<img src="docs/social-preview.png" alt="openToolbox" width="100%">
 
 # openToolbox
 
@@ -224,3 +224,6 @@ construido no carga nada en tiempo de ejecución.
 > difiere, prevalece aquél. La documentación detallada (arquitectura, funcionamiento interno de la
 > integración de IA, seguridad) está en la [wiki](https://github.com/m-dohmen/openToolbox/wiki), solo
 > en inglés.
+
+
+<img src="docs/logo.svg" alt="openToolbox logo" width="96" height="96">
