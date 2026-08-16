@@ -98,8 +98,8 @@ dashboard · CSV import · change log · version numbers.**
   [Multiple entities and relationships](#multiple-entities-and-relationships).
 - **Dashboard tiles and a print stylesheet**, because analysis usually ends in a slide or an
   appendix — see [Dashboard](#dashboard).
-- **A change log**, filled on every save with date, version and what changed — see
-  [Version numbers and change log](#version-numbers-and-change-log).
+- **A change log**, filled on every save with date, version, your note and the field-level changes
+  worked out automatically — see [Version numbers and change log](#version-numbers-and-change-log).
 - **Example prompts embedded in the file**, so whoever receives it can have it changed without
   reading this README — see [Example prompts](#example-prompts).
 - **A lock on the settings page**, so a tool handed to someone who only enters data can't be
@@ -289,6 +289,15 @@ without opening it. Empty by default, and then nothing changes.
 
 **The change log** writes one entry per save: timestamp, version, and a note you type in a short
 dialog when saving. The Change log view lists them newest first with the notes still editable.
+
+Each entry also carries **the field changes since the last save**, worked out automatically — which
+record, which field, before and after, plus anything created or deleted. That answers the question
+an audit actually asks, which is never "what did you do on the 14th" but "what exactly happened to
+A-1041 between 1.2 and 1.4". Opening a record shows the same trail filtered to that record.
+
+Deriving it rather than asking for it is deliberate: a log that depends on the writer's discipline
+is incomplete exactly when it matters. A single entry is capped at 200 changes, and the remainder is
+counted rather than silently dropped.
 
 Entries live with the records, not with the settings — so in an encrypted file the log sits
 **inside** the envelope, where notes like "budget corrected after the audit finding" belong. Switch
@@ -617,6 +626,7 @@ src/lib/actions.js     validation and application of AI-proposed changes
 src/lib/entities.js    normalizes SCHEMA/ENTITIES, shared field type check, delete-guard helpers
 src/lib/csv.js         CSV writer and reader (separator sniffing, RFC 4180 quoting)
 src/lib/count.js       the usage counter — the only self-initiated network call in the file
+src/lib/trail.js       field-level change trail, derived on save
 src/merge.jsx          merge dialog: three groups, field-level diff
 src/lib/merge.js       reading another file's payload, diffing, applying picks
 src/wizard.jsx         guided entry: steps, CSV step, review

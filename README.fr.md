@@ -81,6 +81,7 @@ s'impriment en un PDF propre.
   pour ceux qui n'ont qu'une chose à signaler.
 - **Fusionner une copie renvoyée**, enregistrement par enregistrement, avec un comparatif champ par
   champ.
+- **Un journal des modifications au niveau du champ**, déduit automatiquement à chaque enregistrement : quel enregistrement, quel champ, avant et après.
 
 ## Démarrage rapide
 

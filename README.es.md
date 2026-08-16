@@ -77,6 +77,7 @@ son anchuras CSS y el anillo es un único círculo SVG. Ambas vistas se imprimen
 - **Un asistente de captura guiada** y un modo de recepción que abre el archivo directamente en él,
   para quien solo tiene que reportar una cosa.
 - **Fusionar una copia devuelta**, registro por registro y con comparación campo a campo.
+- **Un registro de cambios a nivel de campo**, deducido automáticamente en cada guardado: qué registro, qué campo, antes y después.
 
 ## Inicio rápido
 

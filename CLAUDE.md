@@ -365,6 +365,14 @@ the recipient:
   changes have to be justifiable (audits, regulated processes, anything with a steering committee).
   Switch it off for a scratch tool where the dialog is just friction.
 
+  Since v0.5.0 each entry also carries **the field changes since the last save**, worked out
+  automatically: which record, which field, before and after, plus records created and deleted. The
+  entry answers "what happened to A-1041 between 1.2 and 1.4", which is the question that actually
+  gets asked. Deriving it rather than asking for it is the point — a log that depends on the
+  writer's discipline is incomplete exactly when it is needed. The record form shows the same trail
+  filtered to that one record. Capped at 200 changes per entry, with the remainder counted rather
+  than silently dropped.
+
 `version` is empty by default. Set it in `DEFAULT_SETTINGS` if the tool has a meaningful starting
 version; otherwise leave it and let the user set one at the first save.
 

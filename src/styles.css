@@ -1357,3 +1357,35 @@ tbody tr[data-selected="true"] td { background: var(--accent-soft); }
 .merge__before { color: var(--muted); text-decoration: line-through; }
 .merge__after { color: var(--ink-strong); font-weight: var(--tone-weight-bold); }
 .merge__after::before { content: "→ "; color: var(--muted); font-weight: 400; }
+
+/* ── Änderungen pro Feld ──────────────────────────────────────── */
+
+/* Zugeklappt, weil die Notiz das Wichtige ist und die Feldliste die Antwort
+   auf eine Frage, die man nur manchmal stellt. */
+.trail { margin-top: 8px; }
+.trail summary {
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--accent-text);
+  padding: 3px 0;
+}
+.trail--record { margin-top: 20px; border-top: 1px solid var(--line); padding-top: 10px; }
+
+.trail__list { list-style: none; margin: 6px 0 0; padding: 0; }
+.trail__list li {
+  display: flex;
+  gap: 9px;
+  align-items: baseline;
+  flex-wrap: wrap;
+  padding: 4px 0 4px 9px;
+  border-left: 2px solid var(--line);
+  font-size: 12px;
+}
+.trail__list li[data-op="created"] { border-left-color: var(--ok); }
+.trail__list li[data-op="deleted"] { border-left-color: var(--flag); }
+.trail__list li[data-op="updated"] { border-left-color: var(--accent); }
+.trail__list time { color: var(--muted); font-family: var(--mono); font-size: 11px; }
+.trail__title { color: var(--ink-strong); }
+.trail__op { color: var(--muted); font-style: italic; }
+.trail__change { display: flex; gap: 8px; flex-wrap: wrap; flex: 1; min-width: 0; }
+.trail__change .merge__field { flex: 0 0 auto; }

@@ -218,7 +218,11 @@ await page.locator('.modal__foot .btn--quiet').click()
 
 await page.getByRole('tab', { name: 'Change log' }).click()
 await page.waitForSelector('.logview__inner')
-await page.waitForTimeout(200)
+// Die Feldaenderungen aufklappen - sie sind der Grund, warum das Protokoll
+// mehr ist als eine Liste von Zeitstempeln.
+const trailSummary = page.locator('.trail summary').first()
+if (await trailSummary.count()) await trailSummary.click()
+await page.waitForTimeout(250)
 await shot(page, 'change-log')
 
 /* CSV-Zuordnung. */

@@ -37,6 +37,7 @@ import { DashboardView } from './dashboard.jsx'
 import { WizardView } from './wizard.jsx'
 import { MergeDialog } from './merge.jsx'
 import { extractPayload, diffAll, applyMerge } from './lib/merge.js'
+import { diffTrail, trailFor } from './lib/trail.js'
 import { Hint } from './hint.jsx'
 import { ChatDock } from './chat.jsx'
 import { AI_DEFAULTS } from './lib/ai.js'
@@ -342,6 +343,10 @@ function Workbench({
   const [unlocked, setUnlocked] = useState(false)
   const [lockDialog, setLockDialog] = useState(null)
   const [merge, setMerge] = useState(null)
+  /* Der zuletzt gespeicherte Stand, um beim naechsten Speichern dagegen zu
+     diffen. Liegt bewusst nur im Speicher: in die Datei gehoert das Ergebnis
+     des Vergleichs, nicht noch eine zweite Kopie aller Datensaetze. */
+  const [snapshot, setSnapshot] = useState(initialRecordsByEntity)
 
   const tr = translator(settings.locale)
   const showHints = settings.examplePrompts
@@ -464,8 +469,21 @@ function Workbench({
       // bleiben davon unberührt. Mehrere Entitäten: als Objekt je Schlüssel.
       const recordsForSave = SINGLE ? recordsByEntity[DEFAULT_ENTITY_KEY] : recordsByEntity
       const nextSettings = entry ? { ...settings, version: entry.version } : settings
+      /* Die Feldaenderungen werden abgeleitet, nicht eingetippt. Ein Protokoll,
+         das von der Disziplin des Schreibenden abhaengt, ist genau dann
+         lueckenhaft, wenn es gebraucht wird. */
+      const trail = entry ? diffTrail(ENTITIES, ENTITY_KEYS, snapshot, recordsByEntity) : null
       const nextLog = entry
-        ? [...log, { at: stamp, version: entry.version, note: entry.note }]
+        ? [
+            ...log,
+            {
+              at: stamp,
+              version: entry.version,
+              note: entry.note,
+              ...(trail.changes.length ? { changes: trail.changes } : {}),
+              ...(trail.dropped ? { dropped: trail.dropped } : {}),
+            },
+          ]
         : log
       // Der Schlüssel wandert nur mit, wenn das in den Einstellungen
       // ausdrücklich angehakt ist. Bei verschlüsselter Datei liegt er im
@@ -488,6 +506,7 @@ function Workbench({
         if (entry.version !== settings.version) setSettings(nextSettings)
       }
       setDirty(false)
+      setSnapshot(recordsByEntity)
       setLastSaved(payload.savedAt)
       notify(written === 'handle' ? tr('toast.savedHandle') : tr('toast.savedAs', name))
     } catch (err) {
@@ -1198,6 +1217,8 @@ function Workbench({
             onSave={commit}
             onDelete={remove}
             showHints={showHints}
+            log={log}
+            locale={settings.locale}
             tr={tr}
           />
         </>
@@ -1613,7 +1634,7 @@ function FieldInput({ field: f, record: r, entity, entities, recordsByEntity, on
   return <input id={id} ref={inputRef} value={r[f.key]} onInput={set} />
 }
 
-function RecordDrawer({ record, schema, singular, entity, entities, recordsByEntity, isNew, onCancel, onSave, onDelete, showHints, tr }) {
+function RecordDrawer({ record, schema, singular, entity, entities, recordsByEntity, isNew, onCancel, onSave, onDelete, showHints, log, locale, tr }) {
   const [r, setR] = useState(record)
   const [confirm, setConfirm] = useState(false)
   const [touched, setTouched] = useState({})
@@ -1641,6 +1662,8 @@ function RecordDrawer({ record, schema, singular, entity, entities, recordsByEnt
   const objections = validateRecord(schema, materialize(entity, r), tr)
   const messagesFor = (key) =>
     objections.filter((o) => o.fields.includes(key) && touched[key]).map((o) => o.message)
+
+  const history = isNew ? [] : trailFor(log ?? [], r[schema.idField])
 
   function apply() {
     if (!objections.length) return onSave(r)
@@ -1673,6 +1696,33 @@ function RecordDrawer({ record, schema, singular, entity, entities, recordsByEnt
             ))}
           </div>
         ))}
+
+        {history.length > 0 && (
+          <details class="trail trail--record">
+            <summary>{tr('log.recordHistory', history.length)}</summary>
+            <ul class="trail__list">
+              {history.map((c, k) => (
+                <li key={k} data-op={c.op}>
+                  <time>
+                    {new Date(c.at).toLocaleDateString(locale === 'de' ? 'de-DE' : 'en-US', {
+                      dateStyle: 'medium',
+                    })}
+                  </time>
+                  {c.version && <span class="version version--small">{c.version}</span>}
+                  {c.op === 'updated' ? (
+                    <span class="trail__change">
+                      <span class="merge__field">{c.field}</span>
+                      <span class="merge__before">{c.before || '—'}</span>
+                      <span class="merge__after">{c.after || '—'}</span>
+                    </span>
+                  ) : (
+                    <span class="trail__op">{tr(`log.op.${c.op}`)}</span>
+                  )}
+                </li>
+              ))}
+            </ul>
+          </details>
+        )}
       </div>
 
       {objections.length > 0 && Object.keys(touched).length > 0 && (
@@ -1958,6 +2008,29 @@ function LogView({ log, locale, examplePrompts, onEditNote, onDelete, tr }) {
                     placeholder={tr('log.noNote')}
                     onInput={(e) => onEditNote(entry.index, e.currentTarget.value)}
                   />
+                  {entry.changes?.length > 0 && (
+                    <details class="trail">
+                      <summary>{tr('log.changeCount', entry.changes.length)}</summary>
+                      <ul class="trail__list">
+                        {entry.changes.map((c, k) => (
+                          <li key={k} data-op={c.op}>
+                            <span class="cell-id">{c.id}</span>
+                            <span class="trail__title">{c.title}</span>
+                            {c.op === 'updated' ? (
+                              <span class="trail__change">
+                                <span class="merge__field">{c.field}</span>
+                                <span class="merge__before">{c.before || '—'}</span>
+                                <span class="merge__after">{c.after || '—'}</span>
+                              </span>
+                            ) : (
+                              <span class="trail__op">{tr(`log.op.${c.op}`)}</span>
+                            )}
+                          </li>
+                        ))}
+                      </ul>
+                      {entry.dropped > 0 && <p class="note note--warn">{tr('log.dropped', entry.dropped)}</p>}
+                    </details>
+                  )}
                 </li>
               ))}
             </ol>

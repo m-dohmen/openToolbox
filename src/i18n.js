@@ -91,10 +91,17 @@ const STRINGS = {
     'log.deleteEntry': 'Delete entry',
     'log.entries': (n) => `${n} ${n === 1 ? 'entry' : 'entries'}`,
 
+    'log.changeCount': (n) => `${n} field ${plural(n, 'change', 'changes')} in this save`,
+    'log.recordHistory': (n) => `History of this record — ${n} ${plural(n, 'entry', 'entries')}`,
+    'log.op.created': 'created',
+    'log.op.deleted': 'deleted',
+    'log.op.updated': 'changed',
+    'log.dropped': (n) => `${n} further changes are not listed — the cap per entry is 200.`,
+
     'settings.auditLog': 'Change log',
     'settings.auditLogHint':
-      'Writes one entry per save — date, time, version and your note. Switched off, nothing is ' +
-      'recorded and saving asks nothing.',
+      'Writes one entry per save — date, time, version, your note, and the field changes since the ' +
+      'last save, worked out automatically. Switched off, nothing is recorded and saving asks nothing.',
     'settings.logging': 'recording',
     'settings.notLogging': 'off',
 
@@ -630,6 +637,13 @@ const STRINGS = {
     'log.noNote': 'ohne Notiz',
     'log.deleteEntry': 'Eintrag löschen',
     'log.entries': (n) => `${n} ${n === 1 ? 'Eintrag' : 'Einträge'}`,
+
+    'log.changeCount': (n) => `${n} ${plural(n, 'Feldänderung', 'Feldänderungen')} in diesem Speichervorgang`,
+    'log.recordHistory': (n) => `Historie dieses Datensatzes — ${n} ${plural(n, 'Eintrag', 'Einträge')}`,
+    'log.op.created': 'angelegt',
+    'log.op.deleted': 'gelöscht',
+    'log.op.updated': 'geändert',
+    'log.dropped': (n) => `${n} weitere Änderungen sind nicht aufgeführt — die Grenze je Eintrag liegt bei 200.`,
 
     'settings.auditLog': 'Änderungsprotokoll',
     'settings.auditLogHint':

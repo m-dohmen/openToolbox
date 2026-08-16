@@ -1249,6 +1249,82 @@ if (!/0 new, 0 changed/.test(secondRun)) fail('Nach dem Abgleich bestehen noch U
 await page23.locator('.modal__foot .btn--quiet').click()
 await page23.close()
 
+/* Feldaenderungen: abgeleitet statt eingetippt. Ein Protokoll, das von der
+   Disziplin des Schreibenden abhaengt, ist genau dann lueckenhaft, wenn es
+   gebraucht wird. */
+const page24 = await ctx.newPage()
+page24.on('pageerror', (e) => errors.push(String(e)))
+page24.on('console', (m) => m.type() === 'error' && errors.push(m.text()))
+await page24.goto('file://' + dist)
+await page24.waitForSelector('table tbody tr')
+
+// Ein Feld aendern, einen Datensatz anlegen, einen loeschen
+await page24.locator('table tbody tr').first().locator('.cell-id').click()
+await page24.waitForSelector('.drawer')
+const trailId = await page24.locator('.drawer .cell-id').innerText()
+await page24.locator('#f-owner').fill('P. Neumann')
+await page24.locator('.drawer__foot .btn--primary').click()
+await page24.waitForSelector('.drawer', { state: 'detached' })
+
+await page24.getByRole('button', { name: /^New / }).click()
+await page24.waitForSelector('.drawer')
+await page24.locator('#f-title').fill('Created for the trail')
+await page24.locator('.drawer__foot .btn--primary').click()
+await page24.waitForSelector('.drawer', { state: 'detached' })
+
+await page24.locator('table tbody tr').last().locator('.cell-id').click()
+await page24.waitForSelector('.drawer')
+await page24.locator('.btn--danger').click()
+await page24.locator('.btn--danger').click()
+await page24.waitForSelector('.drawer', { state: 'detached' })
+
+const trailFile = resolve(tmp, 'mit-spur.html')
+await saveTo(page24, trailFile, 'Owner umgehaengt, einer neu, einer raus')
+
+await page24.getByRole('tab', { name: 'Change log' }).click()
+await page24.waitForSelector('.logview__list')
+await page24.locator('.trail summary').first().click()
+const trailItems = await page24.locator('.trail__list li').allInnerTexts()
+console.log('73) Feldaenderungen im Protokoll:', trailItems.length)
+trailItems.slice(0, 3).forEach((line) => console.log('   ', line.replace(/\n/g, ' ')))
+if (trailItems.length < 3) fail('Nicht alle drei Aenderungsarten protokolliert')
+const joined = trailItems.join(' ')
+if (!joined.includes('P. Neumann')) fail('Feldaenderung fehlt')
+if (!joined.includes('created')) fail('Anlegen fehlt')
+if (!joined.includes('deleted')) fail('Loeschen fehlt')
+
+// In der Datei, nicht nur auf dem Bildschirm
+const trailPayload = JSON.parse(
+  readFileSync(trailFile, 'utf8')
+    .match(/<script id="sb-payload"[^>]*>([\s\S]*?)<\/script>/)[1]
+    .replace(/\\u003c/g, '<'),
+)
+const written = trailPayload.data.log.at(-1).changes
+console.log('74) In der Datei abgelegt:', written.length, 'Aenderungen |', JSON.stringify(written[0]))
+if (!written.some((c) => c.op === 'updated' && c.after === 'P. Neumann')) {
+  fail('Feldaenderung steht nicht in der Datei')
+}
+
+// Historie eines einzelnen Datensatzes im Formular
+await page24.getByRole('tab', { name: 'List' }).click()
+await page24.waitForSelector('table tbody tr')
+await page24.locator(`tr:has-text("${trailId}") .cell-id`).click()
+await page24.waitForSelector('.drawer')
+await page24.locator('.trail--record summary').click()
+const recordTrail = await page24.locator('.trail--record .trail__list li').allInnerTexts()
+console.log('75) Historie des Datensatzes:', recordTrail.map((l) => l.replace(/\n/g, ' ')).join(' | '))
+if (!recordTrail.join(' ').includes('P. Neumann')) fail('Datensatz-Historie zeigt die Aenderung nicht')
+await page24.keyboard.press('Escape')
+
+// Zweites Speichern ohne Aenderung schreibt keine Feldliste
+await saveTo(page24, resolve(tmp, 'ohne-aenderung.html'), 'Nichts geaendert')
+await page24.getByRole('tab', { name: 'Change log' }).click()
+await page24.waitForSelector('.logview__list')
+const summaries = await page24.locator('.logview__list > li').first().locator('.trail').count()
+console.log('76) Speichern ohne Aenderung — Feldliste vorhanden:', summaries)
+if (summaries !== 0) fail('Ohne Aenderung darf keine Feldliste entstehen')
+await page24.close()
+
 // Vorschau im hellen Modus
 await page3.getByLabel('Settings').click()
 await page3.waitForSelector('.settings')
