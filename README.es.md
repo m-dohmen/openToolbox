@@ -78,6 +78,7 @@ son anchuras CSS y el anillo es un único círculo SVG. Ambas vistas se imprimen
   para quien solo tiene que reportar una cosa.
 - **Fusionar una copia devuelta**, registro por registro y con comparación campo a campo.
 - **Un registro de cambios a nivel de campo**, deducido automáticamente en cada guardado: qué registro, qué campo, antes y después.
+- **Adjuntos con un presupuesto de tamaño visible**, porque una herramienta que ya no se puede enviar por correo deja de ser esta herramienta.
 
 ## Inicio rápido
 

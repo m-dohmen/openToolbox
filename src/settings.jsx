@@ -651,6 +651,16 @@ export function SettingsPage({
             </div>
           </Row>
 
+          <Row label={tr('settings.attachmentBudget')} hint={tr('settings.attachmentBudgetHint')}>
+            <input
+              type="number"
+              min="1"
+              max="50"
+              value={settings.attachmentBudgetMb}
+              onInput={(e) => set('attachmentBudgetMb')(Number(e.currentTarget.value))}
+            />
+          </Row>
+
           <Row label={tr('settings.merge')} hint={tr('settings.mergeHint')}>
             <div class="setting__buttons">
               <button class="btn" onClick={onMerge}>{tr('sidebar.merge')}</button>

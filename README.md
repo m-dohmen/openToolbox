@@ -100,6 +100,8 @@ dashboard · CSV import · change log · version numbers.**
   appendix — see [Dashboard](#dashboard).
 - **A change log**, filled on every save with date, version, your note and the field-level changes
   worked out automatically — see [Version numbers and change log](#version-numbers-and-change-log).
+- **Attachments with a visible size budget**, because a tool you cannot email is not this tool —
+  see [Attachments](#attachments).
 - **Example prompts embedded in the file**, so whoever receives it can have it changed without
   reading this README — see [Example prompts](#example-prompts).
 - **A lock on the settings page**, so a tool handed to someone who only enters data can't be
@@ -176,6 +178,21 @@ That schema alone produces the table columns, the edit form, the sidebar filters
 the instructions sent to the AI model and the validation of anything the model proposes back.
 `examples/risk-register.domain.js` is a complete working example — copy it over `src/domain.js` and
 rebuild to watch the entire app change.
+
+### Attachments
+
+`type: 'attachment'` puts an uploaded file in the record itself and it travels with the file like
+everything else.
+
+**The budget is part of the feature.** Attachments break the one promise this shape rests on — a
+file you can send by email — so a meter in the dark bar shows used-of-limit and turns amber past
+85 %, and an upload that would exceed the limit is refused when the record is applied, with the
+numbers in the message. Default 5 MB total, 4 MB for any single file, editable in Settings → Data.
+
+Attachments never reach the AI — the model sees the file name only, since one embedded PDF as
+base64 would exceed the entire context window. The CSV export carries the name, not the content.
+The stored MIME type is never used to render anything; downloads always go through a blob with a
+`download` attribute.
 
 ## Multiple entities and relationships
 
@@ -626,6 +643,7 @@ src/lib/actions.js     validation and application of AI-proposed changes
 src/lib/entities.js    normalizes SCHEMA/ENTITIES, shared field type check, delete-guard helpers
 src/lib/csv.js         CSV writer and reader (separator sniffing, RFC 4180 quoting)
 src/lib/count.js       the usage counter — the only self-initiated network call in the file
+src/lib/attach.js      attachments — reading, budget, safe name and type
 src/lib/trail.js       field-level change trail, derived on save
 src/merge.jsx          merge dialog: three groups, field-level diff
 src/lib/merge.js       reading another file's payload, diffing, applying picks

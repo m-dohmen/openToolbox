@@ -388,6 +388,19 @@ const STRINGS = {
     'merge.noRecords': 'That file holds no records.',
     'merge.failed': (msg) => `Could not merge: ${msg}`,
 
+    'attach.add': 'Attach a file…',
+    'attach.replace': 'Replace…',
+    'attach.download': 'Download this file',
+    'attach.budget': (used, limit) => `attachments ${used} of ${limit} MB`,
+    'attach.budgetTitle': (limit) =>
+      `All attachments in this file together. The limit is ${limit} MB — beyond that many mail gateways refuse the file.`,
+    'attach.overBudget': (used, limit) =>
+      `That would put the attachments at ${used} MB, over the ${limit} MB limit. Remove one first, or raise the limit in the settings.`,
+    'settings.attachmentBudget': 'Attachment limit',
+    'settings.attachmentBudgetHint':
+      'All attachments in this file together, in MB. Raise it only if you know the route the file ' +
+      'takes — many mail gateways refuse attachments beyond about 10 MB.',
+
     'view.wizard': 'Guided entry',
     'wizard.title': 'Guided entry',
     'wizard.stepOf': (at, total) => `Step ${at} of ${total}`,
@@ -935,6 +948,19 @@ const STRINGS = {
     'merge.passphrasePrompt': (name) => `${name} ist verschlüsselt. Passphrase für diese Datei:`,
     'merge.noRecords': 'Diese Datei enthält keine Datensätze.',
     'merge.failed': (msg) => `Abgleich nicht möglich: ${msg}`,
+
+    'attach.add': 'Datei anhängen…',
+    'attach.replace': 'Ersetzen…',
+    'attach.download': 'Diese Datei herunterladen',
+    'attach.budget': (used, limit) => `Anhänge ${used} von ${limit} MB`,
+    'attach.budgetTitle': (limit) =>
+      `Alle Anhänge dieser Datei zusammen. Die Grenze liegt bei ${limit} MB — darüber weisen viele Mail-Gateways die Datei ab.`,
+    'attach.overBudget': (used, limit) =>
+      `Damit lägen die Anhänge bei ${used} MB und über der Grenze von ${limit} MB. Erst einen entfernen, oder die Grenze in den Einstellungen anheben.`,
+    'settings.attachmentBudget': 'Grenze für Anhänge',
+    'settings.attachmentBudgetHint':
+      'Alle Anhänge dieser Datei zusammen, in MB. Nur anheben, wenn der Weg der Datei bekannt ist — ' +
+      'viele Mail-Gateways weisen Anhänge ab etwa 10 MB ab.',
 
     'view.wizard': 'Geführte Erfassung',
     'wizard.title': 'Geführte Erfassung',

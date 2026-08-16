@@ -137,7 +137,18 @@ export function buildContext({ mode, entities, recordsByEntity, visible, activeK
   // Berechnete Felder werden mitgeschickt - das Modell soll ueber Punktwerte
   // und Restlaufzeiten reden koennen. Zurueckschreiben darf es sie nicht, das
   // steht in den Anweisungen und wird bei der Pruefung abgelehnt.
-  const withComputed = (key, list) => list.map((r) => materialize(entities[key], r))
+  /* Anhaenge werden auf ihren Dateinamen reduziert. Ein einziges eingebettetes
+     PDF waere als base64 groesser als das gesamte Kontextfenster - und dem
+     Modell nuetzt der Rohinhalt ohnehin nichts. */
+  const stripAttachments = (key, record) => {
+    const fields = entities[key].schema.fields.filter((f) => f.type === 'attachment')
+    if (!fields.length) return record
+    const copy = { ...record }
+    for (const f of fields) copy[f.key] = record[f.key]?.name ?? ''
+    return copy
+  }
+  const withComputed = (key, list) =>
+    list.map((r) => stripAttachments(key, materialize(entities[key], r)))
   const rows =
     mode === 'alle'
       ? single
@@ -187,7 +198,9 @@ const fieldLine = (f) => {
             ? 'number'
             : f.type === 'computed'
               ? 'calculated from the other fields, read-only - never set it'
-              : 'text'
+              : f.type === 'attachment'
+                ? 'an uploaded file, read-only - you see only its name, never set it'
+                : 'text'
   return `  ${f.key} (${f.label}): ${type}${f.required ? ', required' : ''}`
 }
 

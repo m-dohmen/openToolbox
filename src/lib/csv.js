@@ -7,7 +7,13 @@ const quote = (v) => {
 /** Semikolon-getrennt und mit BOM - so öffnet Excel auf deutschen Systemen sauber. */
 export function toCsv(rows, columns) {
   const head = columns.map((c) => quote(c.label)).join(';')
-  const body = rows.map((r) => columns.map((c) => quote(r[c.key])).join(';'))
+  /* Ein Anhang wird auf seinen Dateinamen reduziert. Base64 in einer
+     Tabellenkalkulation nuetzt niemandem und sprengt jede Zelle. */
+  const cell = (row, column) => {
+    const value = row[column.key]
+    return quote(value && typeof value === 'object' && 'data' in value ? value.name : value)
+  }
+  const body = rows.map((r) => columns.map((c) => cell(r, c)).join(';'))
   return '﻿' + [head, ...body].join('\r\n')
 }
 

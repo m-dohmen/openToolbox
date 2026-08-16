@@ -171,6 +171,7 @@ export function WizardView({
                   entities={entities}
                   recordsByEntity={options}
                   onChange={change}
+                  tr={tr}
                 />
                 {shown
                   .filter((o) => o.fields.includes(f.key))

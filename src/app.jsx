@@ -31,13 +31,21 @@ import {
 } from './lib/entities.js'
 import { Wordmark } from './brand.jsx'
 import { paletteVariables } from './lib/color.js'
-import { IconSave, IconSettings, IconLink } from './icons.jsx'
+import { IconSave, IconSettings, IconLink, IconPaperclipSmall } from './icons.jsx'
 import { SettingsPage } from './settings.jsx'
 import { DashboardView } from './dashboard.jsx'
 import { WizardView } from './wizard.jsx'
 import { MergeDialog } from './merge.jsx'
 import { extractPayload, diffAll, applyMerge } from './lib/merge.js'
 import { diffTrail, trailFor } from './lib/trail.js'
+import {
+  readAttachment,
+  usedBytes,
+  hasAttachments,
+  toBlob,
+  DEFAULT_BUDGET_MB,
+  mb,
+} from './lib/attach.js'
 import { Hint } from './hint.jsx'
 import { ChatDock } from './chat.jsx'
 import { AI_DEFAULTS } from './lib/ai.js'
@@ -58,6 +66,9 @@ const SINGLE = isSingleEntity(ENTITIES)
 
 /** Optional: Kacheln über den Bestand. Fehlt der Export, gibt es die Ansicht nicht. */
 const DASHBOARD = domainModule.DASHBOARD?.tiles?.length ? domainModule.DASHBOARD : null
+/* Hat diese Domaene ueberhaupt Anhaenge? Sonst gibt es weder Anzeige noch
+   Budget - ein Werkzeug ohne Dateien soll davon nichts merken. */
+const ATTACHMENTS = hasAttachments(ENTITIES)
 /* Ohne WIZARD-Export gibt es die gefuehrte Erfassung schlicht nicht - wie beim
    Dashboard entscheidet die Domaene, nicht eine Einstellung. */
 const WIZARD = domainModule.WIZARD?.steps?.length ? domainModule.WIZARD : null
@@ -147,6 +158,10 @@ const DEFAULT_SETTINGS = {
      im Wizard, fuer Empfaenger, die genau eine Sache melden sollen. Ohne
      WIZARD-Export im Schema hat der Schalter keine Wirkung. */
   mode: 'workbench',
+  /* Obergrenze fuer alle Anhaenge zusammen, in MB. Siehe lib/attach.js: ohne
+     harte Grenze macht der dritte Scan aus dem Werkzeug einen Mailanhang, den
+     kein Gateway mehr durchlaesst. */
+  attachmentBudgetMb: DEFAULT_BUDGET_MB,
   fileStem: 'action-items',
   version: '',
   examplePrompts: true,
@@ -579,11 +594,20 @@ function Workbench({
 
   const commit = (rec) => {
     const idKey = schema.idField
-    mutate(
-      records.some((r) => r[idKey] === rec[idKey])
-        ? records.map((r) => (r[idKey] === rec[idKey] ? rec : r))
-        : [...records, rec],
-    )
+    const nextRecords = records.some((r) => r[idKey] === rec[idKey])
+      ? records.map((r) => (r[idKey] === rec[idKey] ? rec : r))
+      : [...records, rec]
+
+    /* Das Budget wird beim Uebernehmen geprueft, nicht erst beim Speichern:
+       eine Ablehnung erst nach dem Ausfuellen des Formulars waere die
+       aergerlichere Reihenfolge. */
+    const after = usedBytes(ENTITIES, { ...recordsByEntity, [activeKey]: nextRecords })
+    const limit = (settings.attachmentBudgetMb ?? DEFAULT_BUDGET_MB) * 1024 * 1024
+    if (after > limit) {
+      return notify(tr('attach.overBudget', mb(after).toFixed(1), settings.attachmentBudgetMb), 'error')
+    }
+
+    mutate(nextRecords)
     setDraft(null)
   }
 
@@ -850,6 +874,14 @@ function Workbench({
   return (
     <div class="shell">
       <FileBar
+        attachments={
+          ATTACHMENTS
+            ? {
+                used: usedBytes(ENTITIES, recordsByEntity),
+                limit: (settings.attachmentBudgetMb ?? DEFAULT_BUDGET_MB) * 1024 * 1024,
+              }
+            : null
+        }
         name={stem}
         tagline={settings.tagline}
         links={settings.links}
@@ -1446,7 +1478,7 @@ function CsvImportDialog({ state, schema, showHints, tr, onMap, onMode, onRun, o
   )
 }
 
-function FileBar({ name, tagline, links, aiOn, dirty, saving, sealed, count, size, lastSaved, onSave, locale, tr }) {
+function FileBar({ name, tagline, links, attachments, aiOn, dirty, saving, sealed, count, size, lastSaved, onSave, locale, tr }) {
   const dateLocale = locale === 'de' ? 'de-DE' : 'en-US'
   const stamp = lastSaved
     ? new Date(lastSaved).toLocaleString(dateLocale, { dateStyle: 'short', timeStyle: 'short' })
@@ -1465,6 +1497,18 @@ function FileBar({ name, tagline, links, aiOn, dirty, saving, sealed, count, siz
         <span>{tr('filebar.saved', stamp)}</span>
         {aiOn && <span class="filebar__ai">{tr('filebar.aiActive')}</span>}
       </span>
+      {attachments && (
+        <span
+          class="filebar__budget"
+          title={tr('attach.budgetTitle', mb(attachments.limit))}
+          data-full={String(attachments.used / attachments.limit > 0.85)}
+        >
+          <span class="filebar__meter">
+            <span style={`width:${Math.min(100, (attachments.used / attachments.limit) * 100).toFixed(1)}%`} />
+          </span>
+          {tr('attach.budget', mb(attachments.used).toFixed(1), mb(attachments.limit))}
+        </span>
+      )}
       {shown.length > 0 && (
         <span class="filebar__links">
           {shown.map((link, i) => (
@@ -1556,6 +1600,12 @@ function Cell({ record, field, schema, entities, recordsByEntity, entity, onNavi
 
   if (field.type === 'number') return <td class="cell-num">{value || '—'}</td>
 
+  /* In der Tabelle steht nur der Dateiname - der Inhalt gehoert ins Formular,
+     wo er auch heruntergeladen werden kann. */
+  if (field.type === 'attachment') {
+    return <td class="cell-attach">{value?.name || '—'}</td>
+  }
+
   // Berechnete Felder werden numerisch ausgerichtet, wenn sie eine Zahl
   // liefern - das ist der weit haeufigere Fall (Punktwerte, Restlaufzeiten).
   if (field.type === 'computed') {
@@ -1581,11 +1631,76 @@ const Th = ({ sort, k, onSort, align, children }) => (
 )
 
 /**
+ * Anhang an einem Datensatz. Herunterladen laeuft immer ueber einen Blob mit
+ * `download` - der eingebettete Inhalt wird nie im Dokument gerendert, egal
+ * was fuer ein Typ dransteht.
+ */
+function AttachmentField({ id, value, onChange, tr }) {
+  const picker = useRef(null)
+  const [note, setNote] = useState('')
+
+  async function take(file) {
+    if (!file) return
+    try {
+      onChange(await readAttachment(file))
+      setNote('')
+    } catch (err) {
+      setNote(err.message)
+    }
+  }
+
+  function get() {
+    const url = URL.createObjectURL(toBlob(value))
+    const a = document.createElement('a')
+    a.href = url
+    a.download = value.name
+    document.body.appendChild(a)
+    a.click()
+    a.remove()
+    setTimeout(() => URL.revokeObjectURL(url), 1000)
+  }
+
+  return (
+    <div class="attach">
+      <input
+        ref={picker}
+        type="file"
+        style="display:none"
+        onChange={(e) => {
+          take(e.currentTarget.files?.[0])
+          e.currentTarget.value = ''
+        }}
+      />
+      {value?.data ? (
+        <>
+          <button class="attach__file" id={id} onClick={get} title={tr('attach.download')}>
+            <IconPaperclipSmall />
+            <span>{value.name}</span>
+            <em>{mb(value.size).toFixed(2)} MB</em>
+          </button>
+          <button class="btn btn--quiet" onClick={() => picker.current?.click()}>
+            {tr('attach.replace')}
+          </button>
+          <button class="btn btn--danger" onClick={() => onChange(null)}>
+            {tr('common.remove')}
+          </button>
+        </>
+      ) : (
+        <button class="btn" id={id} onClick={() => picker.current?.click()}>
+          {tr('attach.add')}
+        </button>
+      )}
+      {note && <p class="field__objection">{note}</p>}
+    </div>
+  )
+}
+
+/**
  * Ein Eingabefeld nach Schema. Steht hier und nicht im Formular, weil der
  * Wizard dieselben Felder zeigt - zwei Implementierungen desselben Selects
  * wuerden garantiert auseinanderlaufen.
  */
-function FieldInput({ field: f, record: r, entity, entities, recordsByEntity, onChange, inputRef }) {
+function FieldInput({ field: f, record: r, entity, entities, recordsByEntity, onChange, inputRef, tr, budget }) {
   const id = 'f-' + f.key
   const set = (e) => onChange(f.key, e.currentTarget.value)
 
@@ -1628,6 +1743,9 @@ function FieldInput({ field: f, record: r, entity, entities, recordsByEntity, on
         onInput={(e) => onChange(f.key, Number(e.currentTarget.value))}
       />
     )
+  }
+  if (f.type === 'attachment') {
+    return <AttachmentField id={id} value={r[f.key]} onChange={(v) => onChange(f.key, v)} tr={tr} />
   }
   if (f.type === 'date') return <input id={id} type="date" value={r[f.key]} onInput={set} />
   if (f.long) return <textarea id={id} value={r[f.key]} onInput={set} />
@@ -1690,6 +1808,7 @@ function RecordDrawer({ record, schema, singular, entity, entities, recordsByEnt
               recordsByEntity={recordsByEntity}
               onChange={change}
               inputRef={f.key === firstFocusKey ? first : undefined}
+              tr={tr}
             />
             {messagesFor(f.key).map((m) => (
               <p class="field__objection" key={m}>{m}</p>

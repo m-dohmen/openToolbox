@@ -129,6 +129,33 @@ recreate type checks — `enum`, `date` and `number` are already enforced.
 `examples/risk-register.domain.js` is a complete working example. Copy it over `src/domain.js` and
 build to see the whole app change.
 
+### Attachments
+
+`type: 'attachment'` stores an uploaded file in the record itself, base64 in the payload, and it
+travels with the file like everything else:
+
+```js
+{ key: 'evidence', label: 'Evidence', short: 'File', type: 'attachment' }
+```
+
+**The budget is part of the feature, not an extra.** Attachments break the one promise this shape
+rests on — a file you can send by email. Without a hard limit the third scan turns a 200 KB tool
+into a 30 MB attachment no gateway will pass, and nobody would notice. So:
+
+- A meter sits in the dark bar showing used-of-limit, and turns amber past 85 %.
+- The limit is `attachmentBudgetMb` in `DEFAULT_SETTINGS`, 5 MB by default, editable in
+  Settings → Data. An upload that would exceed it is **refused when the record is applied**, with
+  the numbers in the message — not tolerated and discovered later.
+- One file is capped at 4 MB regardless.
+
+Three things attachments deliberately do not do: they never reach the AI (the model sees only the
+file name — one embedded PDF as base64 would exceed the whole context window), the CSV export
+carries the file name and not the content, and the stored MIME type is never used to render
+anything. Downloads always go through a blob with a `download` attribute.
+
+Use them where the tool is about evidence — audit findings, certificates, invoices. Do not add an
+attachment field "just in case": every one of them is an invitation to make the file unsendable.
+
 ## Multiple entities and relationships
 
 Most tools need only one record type — stick with the single `SCHEMA` export above. Reach for this

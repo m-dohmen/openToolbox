@@ -129,6 +129,8 @@ Dashboard · CSV-Import · Änderungsprotokoll · Versionsnummern.**
   [Geführte Erfassung](#geführte-erfassung).
 - **Rückläufer zusammenführen**, Datensatz für Datensatz und mit Feldvergleich — siehe
   [Rückläufer zusammenführen](#rückläufer-zusammenführen).
+- **Anhänge mit sichtbarem Speicherbudget**, denn ein Werkzeug, das man nicht mehr verschicken kann,
+  ist nicht mehr dieses Werkzeug — siehe [Anhänge](#anhänge).
 
 ## Schnellstart
 
@@ -191,6 +193,22 @@ numerische `0` zählt als gefüllt, denn null ist meistens eine echte Angabe.
 
 Dieses Schema allein erzeugt die Tabellenspalten, das Formular, die Filter in der Seitenleiste, den
 CSV-Export, die Anweisungen an das KI-Modell und die Prüfung dessen, was das Modell zurückschlägt.
+
+### Anhänge
+
+`type: 'attachment'` legt eine hochgeladene Datei im Datensatz selbst ab; sie reist wie alles andere
+mit.
+
+**Das Budget gehört zum Feature.** Anhänge sprengen genau das Versprechen, auf dem diese Bauform
+steht — eine Datei, die man per Mail verschickt. Deshalb zeigt ein Balken in der dunklen Leiste
+Belegung und Grenze und wird ab 85 % bernsteinfarben, und ein Upload, der die Grenze reißen würde,
+wird beim Übernehmen abgelehnt, mit den Zahlen in der Meldung. Voreinstellung 5 MB insgesamt, 4 MB
+für eine einzelne Datei, änderbar unter Einstellungen → Daten.
+
+Anhänge erreichen die KI nie — das Modell sieht nur den Dateinamen, denn ein einziges eingebettetes
+PDF wäre als base64 größer als das gesamte Kontextfenster. Der CSV-Export trägt den Namen, nicht den
+Inhalt. Der abgelegte MIME-Typ wird nie zum Rendern benutzt; heruntergeladen wird immer über einen
+Blob mit `download`.
 
 ## Mehrere Entitäten und Beziehungen
 

@@ -20,7 +20,7 @@ export const SCHEMA = {
   /** Shown as a second line under the title, keeps the table narrow. */
   subField: 'area',
   /** Which fields appear as table columns, in order. */
-  list: ['title', 'owner', 'due', 'daysLeft', 'status', 'effort'],
+  list: ['title', 'owner', 'due', 'daysLeft', 'status', 'effort', 'evidence'],
   /** Enum fields listed here become filter groups in the sidebar. */
   facets: ['status', 'area'],
   /** Fields searched by the free text box. */
@@ -35,6 +35,12 @@ export const SCHEMA = {
     { key: 'status', label: 'Status', type: 'enum', values: STATUS },
     { key: 'effort', label: 'Effort in days', short: 'D', type: 'number' },
     { key: 'note', label: 'Note', type: 'text', long: true },
+    /**
+     * Anhang: die Datei liegt als base64 im Datensatz und reist mit. Das
+     * Gesamtbudget steht in den Einstellungen und wird beim Uebernehmen
+     * geprueft - siehe lib/attach.js, warum die Grenze zum Feature gehoert.
+     */
+    { key: 'evidence', label: 'Evidence', short: 'File', type: 'attachment' },
     /**
      * Berechnetes Feld: steht nie im Datensatz, wird bei jeder Anzeige neu
      * gerechnet. Sortieren und Suchen funktionieren trotzdem darauf, Setzen
@@ -90,6 +96,7 @@ export const emptyRecord = () => ({
   status: 'open',
   effort: 0,
   note: '',
+  evidence: null,
 })
 
 const iso = (offsetDays) => {
@@ -120,6 +127,7 @@ export const seed = () =>
     status,
     effort,
     note: '',
+    evidence: null,
   }))
 
 /** A record that no longer counts towards open effort. */

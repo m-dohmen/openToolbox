@@ -1389,3 +1389,41 @@ tbody tr[data-selected="true"] td { background: var(--accent-soft); }
 .trail__op { color: var(--muted); font-style: italic; }
 .trail__change { display: flex; gap: 8px; flex-wrap: wrap; flex: 1; min-width: 0; }
 .trail__change .merge__field { flex: 0 0 auto; }
+
+/* ── Anhänge ──────────────────────────────────────────────────── */
+
+.attach { display: flex; gap: 7px; align-items: center; flex-wrap: wrap; }
+.attach__file {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  background: var(--line-soft);
+  padding: 5px 10px;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--ink-strong);
+  max-width: 100%;
+}
+.attach__file:hover { border-color: var(--accent); }
+.attach__file span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.attach__file em { font-style: normal; color: var(--muted); font-size: 11.5px; flex: none; }
+
+/* Der Balken in der Dateizeile. Er ist der eigentliche Schutz des Features:
+   ohne sichtbare Fuellung merkt niemand, dass die Datei gerade unversendbar
+   wird. */
+.filebar__budget { display: flex; align-items: center; gap: 8px; }
+.filebar__meter {
+  display: inline-block;
+  width: 46px;
+  height: 5px;
+  border-radius: 3px;
+  background: rgba(255, 255, 255, 0.2);
+  overflow: hidden;
+}
+.filebar__meter > span { display: block; height: 100%; background: var(--tone-accent-light); }
+.filebar__budget[data-full="true"] { color: var(--pending); }
+.filebar__budget[data-full="true"] .filebar__meter > span { background: var(--pending); }
+
+.cell-attach { color: var(--muted); font-size: 12.5px; }

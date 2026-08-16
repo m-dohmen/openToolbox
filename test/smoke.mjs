@@ -1325,6 +1325,92 @@ console.log('76) Speichern ohne Aenderung — Feldliste vorhanden:', summaries)
 if (summaries !== 0) fail('Ohne Aenderung darf keine Feldliste entstehen')
 await page24.close()
 
+/* Anhaenge. Das Budget gehoert zum Feature: ohne harte Grenze macht der dritte
+   Scan aus dem Werkzeug einen Mailanhang, den kein Gateway mehr durchlaesst. */
+const page25 = await ctx.newPage()
+page25.on('pageerror', (e) => errors.push(String(e)))
+page25.on('console', (m) => m.type() === 'error' && errors.push(m.text()))
+await page25.goto('file://' + dist)
+await page25.waitForSelector('table tbody tr')
+
+const budgetBefore = await page25.locator('.filebar__budget').innerText()
+console.log('77) Budgetanzeige ab Werk:', budgetBefore)
+if (!budgetBefore.includes('0.0 of 5 MB')) fail('Budgetanzeige fehlt oder startet nicht bei null')
+
+const evidence = resolve(tmp, 'nachweis.txt')
+writeFileSync(evidence, 'X'.repeat(300 * 1024))
+await page25.locator('table tbody tr').first().locator('.cell-id').click()
+await page25.waitForSelector('.drawer')
+await page25.locator('.attach input[type=file]').setInputFiles(evidence)
+await page25.waitForSelector('.attach__file')
+console.log('78) Angehaengt:', await page25.locator('.attach__file').innerText())
+await page25.locator('.drawer__foot .btn--primary').click()
+await page25.waitForSelector('.drawer', { state: 'detached' })
+
+const budgetAfter = await page25.locator('.filebar__budget').innerText()
+console.log('79) Budget danach:', budgetAfter, '| in der Tabelle:',
+  await page25.locator('.cell-attach').first().innerText())
+if (budgetAfter.includes('0.0 of')) fail('Budgetanzeige zaehlt den Anhang nicht mit')
+if ((await page25.locator('.cell-attach:has-text("nachweis.txt")').count()) !== 1) {
+  fail('Der Dateiname steht nicht in der Tabelle')
+}
+
+// Ueber der Grenze wird abgelehnt statt geduldet
+await page25.getByLabel('Settings').click()
+await page25.waitForSelector('.settings')
+await page25.locator('.setting', { hasText: 'Attachment limit' }).locator('input').fill('1')
+await page25.getByRole('button', { name: 'Back to the list' }).click()
+await page25.waitForSelector('table tbody tr')
+const big = resolve(tmp, 'zu-gross.bin')
+writeFileSync(big, Buffer.alloc(1200 * 1024, 65))
+await page25.locator('table tbody tr').nth(1).locator('.cell-id').click()
+await page25.waitForSelector('.drawer')
+await page25.locator('.attach input[type=file]').setInputFiles(big)
+await page25.waitForSelector('.attach__file')
+await page25.locator('.drawer__foot .btn--primary').click()
+await page25.waitForSelector('.toast--error')
+console.log('80) Ueber der Grenze:', await page25.locator('.toast--error').innerText())
+if ((await page25.locator('.drawer').count()) !== 1) fail('Das Formular haette offen bleiben muessen')
+await page25.keyboard.press('Escape')
+
+// CSV traegt den Dateinamen, nicht das base64
+const [csvDownload] = await Promise.all([
+  page25.waitForEvent('download', { timeout: 15000 }),
+  page25.getByText('CSV for Excel', { exact: true }).click(),
+])
+const csvOut = resolve(tmp, 'mit-anhang.csv')
+await csvDownload.saveAs(csvOut)
+const csvText = readFileSync(csvOut, 'utf8')
+console.log('81) CSV enthaelt den Dateinamen:', csvText.includes('nachweis.txt'),
+  '| base64 darin:', /[A-Za-z0-9+/]{200,}/.test(csvText))
+if (!csvText.includes('nachweis.txt')) fail('Dateiname fehlt im CSV')
+if (/[A-Za-z0-9+/]{200,}/.test(csvText)) fail('Der Anhangsinhalt landet im CSV')
+
+// Und in der Datei liegt er wirklich drin
+const attachFile = resolve(tmp, 'mit-anhang.html')
+await saveTo(page25, attachFile, 'Mit Nachweis')
+const attachSource = readFileSync(attachFile, 'utf8')
+console.log('82) Datei mit Anhang:', (attachSource.length / 1024).toFixed(0), 'KB')
+if (!attachSource.includes('nachweis.txt')) fail('Der Anhang wurde nicht mitgespeichert')
+
+const page26 = await ctx.newPage()
+page26.on('pageerror', (e) => errors.push(String(e)))
+await page26.goto('file://' + attachFile)
+await page26.waitForSelector('table tbody tr')
+await page26.locator('.cell-attach:has-text("nachweis.txt")').click()
+await page26.waitForSelector('.drawer')
+const [attachDownload] = await Promise.all([
+  page26.waitForEvent('download', { timeout: 15000 }),
+  page26.locator('.attach__file').click(),
+])
+const back = resolve(tmp, 'zurueck.txt')
+await attachDownload.saveAs(back)
+console.log('83) Wieder heruntergeladen:', attachDownload.suggestedFilename(),
+  '| Bytes identisch:', readFileSync(back).length === readFileSync(evidence).length)
+if (readFileSync(back).length !== readFileSync(evidence).length) fail('Der Anhang kam nicht unveraendert zurueck')
+await page26.close()
+await page25.close()
+
 // Vorschau im hellen Modus
 await page3.getByLabel('Settings').click()
 await page3.waitForSelector('.settings')

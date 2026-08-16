@@ -117,7 +117,12 @@ export function coerceField(schema, key, raw, { entities, recordsByEntity } = {}
   // Berechnete Felder ergeben sich aus den anderen; sie zu setzen hiesse, die
   // Formel zu umgehen und einen Wert zu hinterlegen, der beim naechsten Rendern
   // wieder verschwindet.
-  if (field.type === 'computed') return { ok: false, code: 'readOnly', params: [field.label] }
+  /* Berechnete Felder und Anhaenge sind fuer das Modell und den CSV-Import
+     gleichermassen tabu: das eine wird gerechnet, das andere ist eine Datei,
+     die nur ueber den Dateidialog hereinkommt. */
+  if (field.type === 'computed' || field.type === 'attachment') {
+    return { ok: false, code: 'readOnly', params: [field.label] }
+  }
 
   if (field.type === 'enum') {
     const hit = matchEnum(field.values, raw)
