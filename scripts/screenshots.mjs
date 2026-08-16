@@ -169,6 +169,53 @@ const [download] = await Promise.all([
 ])
 await download.saveAs(resolve(root, 'test/.out/shot-demo.html'))
 
+/* Abgleich. Damit das Bild die richtige Richtung zeigt, ist die eingelesene
+   Datei der *Ruecklauf*: erst hier aendern und als Kopie speichern, dann die
+   Demo frisch laden und den Ruecklauf dagegen halten. */
+await page.locator('table tbody tr').first().locator('.cell-id').click()
+await page.waitForSelector('.drawer')
+await page.locator('#f-lead').fill('S. Behrens')
+await page.locator('#f-risk').selectOption('high')
+await page.locator('.drawer__foot .btn--primary').click()
+await page.waitForSelector('.drawer', { state: 'detached' })
+await page.getByRole('button', { name: /^New / }).click()
+await page.waitForSelector('.drawer')
+await page.locator('#f-name').fill('Branch network review')
+await page.locator('#f-client').fill('Stadtwerke Rheinbach')
+await page.locator('#f-lead').fill('S. Behrens')
+await page.locator('.drawer__foot .btn--primary').click()
+await page.waitForSelector('.drawer', { state: 'detached' })
+
+const returned = resolve(root, 'test/.out/shot-return.html')
+const [returnDownload] = await Promise.all([
+  page.waitForEvent('download', { timeout: 15000 }),
+  (async () => {
+    await page.locator('.filebar__save').click()
+    await page.waitForSelector('#log-note')
+    await page.locator('#log-note').fill('Reviewed and completed by the client')
+    await page.locator('.modal__foot .btn--primary').click()
+  })(),
+])
+await returnDownload.saveAs(returned)
+
+await openDemo()
+await setPrompts(false)
+await page.evaluate(() => {
+  const original = HTMLInputElement.prototype.click
+  HTMLInputElement.prototype.click = function () {
+    if (this.type === 'file') { window.__mergePicker = this; return }
+    return original.call(this)
+  }
+})
+await page.getByText('Merge a file', { exact: true }).click()
+await page.waitForFunction(() => window.__mergePicker)
+const mergeHandle = await page.evaluateHandle(() => window.__mergePicker)
+await mergeHandle.asElement().setInputFiles(returned)
+await page.waitForSelector('.merge')
+await page.waitForTimeout(250)
+await shot(page, 'merge')
+await page.locator('.modal__foot .btn--quiet').click()
+
 await page.getByRole('tab', { name: 'Change log' }).click()
 await page.waitForSelector('.logview__inner')
 await page.waitForTimeout(200)

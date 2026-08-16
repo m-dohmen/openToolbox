@@ -290,6 +290,27 @@ Two more settings live there, both aimed at a tool that leaves your hands:
   `https`, and anything else (`javascript:`, `data:`) is dropped without display. `label` becomes
   the tooltip and the accessible name, so write one.
 
+## Merging a copy that came back
+
+The one thing this shape does not solve on its own: send the file to five departments, get five
+files back. Since v0.4.0 the tool reads a second copy of itself and compares record by record —
+**Merge a file** in the sidebar, or Settings → Data.
+
+Nothing about it needs configuring; it works off the schema and the identifiers. What you should
+tell the user:
+
+- It is for **two copies of the same tool**, not two arbitrary files. Same schema, same ids. A
+  record type the reading file does not know is named and skipped.
+- Three groups, each with checkboxes: records only in the other file, records with different values
+  (shown field by field, before and after), and records missing there.
+- **Deletions are not preselected.** The other copy being older looks exactly like a record having
+  been deleted, and only one of those two readings destroys data. Everything else is preselected,
+  because taking the changes is why anyone opens this dialog.
+- An encrypted counterpart asks for *its* passphrase. Two files, two secrets.
+
+Nothing is written to disk by merging — it changes the working set, and the file still has to be
+saved afterwards.
+
 ## Getting the user's real data in
 
 You do not have to write an importer, and you should not paste the user's data into `seed()`.

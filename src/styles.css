@@ -1310,3 +1310,50 @@ tbody tr[data-selected="true"] td { background: var(--accent-soft); }
 @media print {
   .wizard { display: none; }
 }
+
+/* ── Abgleich zweier Dateien ──────────────────────────────────── */
+
+.merge__body { max-height: 52vh; overflow: auto; margin: 4px 0 0; }
+.merge__group { margin-top: 16px; }
+.merge__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  padding-bottom: 5px;
+  border-bottom: 1px solid var(--line);
+  font-size: 12.5px;
+  font-weight: var(--tone-weight-bold);
+  color: var(--ink-strong);
+}
+.merge__group--added .merge__head { border-bottom-color: var(--ok); }
+.merge__group--changed .merge__head { border-bottom-color: var(--accent); }
+.merge__group--removed .merge__head { border-bottom-color: var(--flag); }
+
+.merge__list { list-style: none; margin: 0; padding: 0; }
+.merge__list li { border-bottom: 1px solid var(--line-soft); }
+.merge__list label {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+  padding: 8px 2px;
+  cursor: pointer;
+}
+.merge__list input { margin: 0; accent-color: var(--tone-accent); flex: none; }
+.merge__what { flex: 1; min-width: 0; font-size: 13px; }
+
+/* Vorher/Nachher nebeneinander, damit die Entscheidung ohne Nachdenken
+   moeglich ist: durchgestrichen ist, was verschwaende. */
+.merge__diff { list-style: none; margin: 5px 0 0; padding: 0; }
+.merge__diff li {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 12px;
+  padding: 1px 0;
+  border: none;
+}
+.merge__field { flex: 0 0 30%; color: var(--muted); }
+.merge__before { color: var(--muted); text-decoration: line-through; }
+.merge__after { color: var(--ink-strong); font-weight: var(--tone-weight-bold); }
+.merge__after::before { content: "→ "; color: var(--muted); font-weight: 400; }

@@ -110,6 +110,8 @@ dashboard · CSV import · change log · version numbers.**
   AI-proposed changes — see [Building your own tool](#building-your-own-tool).
 - **A guided entry wizard**, and an intake mode that opens the file straight into it — see
   [Guided entry](#guided-entry).
+- **Merging a copy that came back**, record by record, with a field-level diff — see
+  [Merging a copy that came back](#merging-a-copy-that-came-back).
 
 ## Quick start
 
@@ -529,6 +531,28 @@ is safe to ship and finish later.
   regardless of the interface language, and the user never reads that text directly — only the
   model does.
 
+## Merging a copy that came back
+
+The structural weakness of a file-as-database: send it to five departments and five files come back.
+Until now that meant retyping.
+
+**Merge a file** (sidebar, or Settings → Data) reads a second copy of the same tool and compares it
+record by record. Three groups, each with checkboxes: records only in the other file, records with
+different values — shown field by field, before and after — and records missing there.
+
+![Merging a returned copy](docs/screenshots/merge.png)
+
+Nothing needs configuring; it works off the schema and the identifiers, so it is for two copies of
+**the same tool**, not two arbitrary files. A record type the reading file does not know is named
+and skipped, and an encrypted counterpart asks for its own passphrase.
+
+One default is deliberate: **deletions are not preselected.** A record missing from the other copy
+looks identical whether it was deleted there or the copy is simply older — and only one of those two
+readings destroys data. Everything else is ticked, because taking the changes is the reason you
+opened the dialog.
+
+Merging changes the working set; the file still has to be saved afterwards.
+
 ## Getting data in
 
 Three ways, all in the sidebar and in Settings → Data:
@@ -559,8 +583,10 @@ Three ways, all in the sidebar and in Settings → Data:
 
 - **Not saved means lost.** There is no autosave — without a target file there cannot be one. The
   amber dot and the tab-close prompt are the only safety net. Ctrl/Cmd+S saves.
-- **One machine, one file.** No multi-user mode. Two people editing the same file produce two
-  truths.
+- **One machine, one file.** No multi-user mode — two people editing the same file produce two
+  truths. What there *is* since v0.4.0 is a way to reconcile them afterwards, record by record; see
+  [Merging a copy that came back](#merging-a-copy-that-came-back). Live collaboration is still out
+  of scope and always will be.
 - **Mail gateways strip `.html` attachments** more often than not. Zip it or use a file transfer,
   and test the route once with a dummy before it matters.
 - **Encryption protects the data, not access to the app.** Roles and views in a locally running file
@@ -591,6 +617,8 @@ src/lib/actions.js     validation and application of AI-proposed changes
 src/lib/entities.js    normalizes SCHEMA/ENTITIES, shared field type check, delete-guard helpers
 src/lib/csv.js         CSV writer and reader (separator sniffing, RFC 4180 quoting)
 src/lib/count.js       the usage counter — the only self-initiated network call in the file
+src/merge.jsx          merge dialog: three groups, field-level diff
+src/lib/merge.js       reading another file's payload, diffing, applying picks
 src/wizard.jsx         guided entry: steps, CSV step, review
 src/lib/wizard.js      wizard shape — visible steps, per-step objections, harvest
 src/lib/links.js       header links — URL check (http/https/mailto only)

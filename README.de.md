@@ -127,6 +127,8 @@ Dashboard · CSV-Import · Änderungsprotokoll · Versionsnummern.**
   Vorschlägen der KI — siehe [Ein eigenes Werkzeug bauen](#ein-eigenes-werkzeug-bauen).
 - **Eine geführte Erfassung** und ein Erfassungsmodus, der die Datei direkt darin öffnet — siehe
   [Geführte Erfassung](#geführte-erfassung).
+- **Rückläufer zusammenführen**, Datensatz für Datensatz und mit Feldvergleich — siehe
+  [Rückläufer zusammenführen](#rückläufer-zusammenführen).
 
 ## Schnellstart
 
@@ -221,6 +223,30 @@ per Titeltext benennen.
 `examples/suppliers-certificates.domain.js` ist ein knappes Beispiel,
 `examples/portfolio.domain.js` — die Grundlage der
 [Live-Demo](https://m-dohmen.github.io/openToolbox/demo/) — nutzt alles auf einmal.
+
+## Rückläufer zusammenführen
+
+Die strukturelle Schwäche der Datei-als-Datenbank: einmal an fünf Abteilungen verschickt, kommen
+fünf Dateien zurück. Bis hierher hieß das abtippen.
+
+**Datei abgleichen** (Seitenleiste, oder Einstellungen → Daten) liest eine zweite Kopie desselben
+Werkzeugs und vergleicht sie Datensatz für Datensatz. Drei Gruppen mit Auswahlkästchen: Datensätze
+nur in der anderen Datei, Datensätze mit abweichenden Werten — Feld für Feld, vorher und nachher —
+und Datensätze, die dort fehlen.
+
+![Rücklauf abgleichen](docs/screenshots/merge.png)
+
+Zu konfigurieren gibt es nichts; gearbeitet wird mit dem Schema und den Identifikatoren. Es ist
+damit für zwei Kopien **desselben** Werkzeugs gedacht, nicht für zwei beliebige Dateien. Einen
+unbekannten Datensatztyp benennt der Dialog und übergeht ihn, und ein verschlüsseltes Gegenstück
+fragt nach seiner eigenen Passphrase.
+
+Eine Vorgabe ist bewusst gesetzt: **Löschungen sind nicht vorausgewählt.** Ein Datensatz, der in der
+anderen Kopie fehlt, sieht genauso aus, ob er dort gelöscht wurde oder die Kopie schlicht älter ist
+— und nur eine der beiden Lesarten vernichtet Daten. Alles andere ist angehakt, denn die Änderungen
+zu übernehmen ist der Grund, aus dem man den Dialog öffnet.
+
+Der Abgleich ändert den Arbeitsstand; gespeichert werden muss die Datei danach noch.
 
 ## Daten hineinbekommen
 

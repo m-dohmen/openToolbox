@@ -357,6 +357,30 @@ const STRINGS = {
     'settings.securityNote':
       'Encryption protects the data, not access to the application. Roles and views in a file ' +
       'that runs locally would be surface only — whoever holds the file also holds the code.',
+    'sidebar.merge': 'Merge a file',
+    'settings.merge': 'Merge another copy',
+    'settings.mergeHint':
+      'Read a second copy of this tool and decide record by record what to take over. For files ' +
+      'you sent out and got back — same schema, same identifiers.',
+    'merge.title': 'Merge another copy',
+    'merge.summary': (name, added, changed, removed, same) =>
+      `${name}: ${added} new, ${changed} changed, ${removed} missing here, ${same} identical.`,
+    'merge.identical': 'Nothing differs — the two files hold the same records.',
+    'merge.unknownEntities': (keys) => `Ignored, this tool has no such record type: ${keys}.`,
+    'merge.group.added': (n) => `${n} ${plural(n, 'record', 'records')} not in this file`,
+    'merge.group.changed': (n) => `${n} ${plural(n, 'record', 'records')} with different values`,
+    'merge.group.removed': (n) => `${n} ${plural(n, 'record', 'records')} missing in the other file`,
+    'merge.removedNote':
+      'Not preselected on purpose: the other copy may simply be older. Ticking these deletes them here.',
+    'merge.all': 'Select all',
+    'merge.none': 'Select none',
+    'merge.apply': (n) => (n === 1 ? 'Take 1 change' : `Take ${n} changes`),
+    'merge.done': (added, changed, removed) =>
+      `${added} added, ${changed} updated, ${removed} deleted — not saved yet.`,
+    'merge.passphrasePrompt': (name) => `${name} is encrypted. Passphrase for that file:`,
+    'merge.noRecords': 'That file holds no records.',
+    'merge.failed': (msg) => `Could not merge: ${msg}`,
+
     'view.wizard': 'Guided entry',
     'wizard.title': 'Guided entry',
     'wizard.stepOf': (at, total) => `Step ${at} of ${total}`,
@@ -873,6 +897,31 @@ const STRINGS = {
     'settings.securityNote':
       'Verschlüsselung schützt die Daten, nicht den Zugriff auf die Anwendung. Rollen und Ansichten ' +
       'in einer lokal laufenden Datei wären nur Oberfläche — wer die Datei hat, hat auch den Code.',
+    'sidebar.merge': 'Datei abgleichen',
+    'settings.merge': 'Zweite Kopie abgleichen',
+    'settings.mergeHint':
+      'Eine zweite Kopie dieses Werkzeugs einlesen und Datensatz für Datensatz entscheiden, was ' +
+      'übernommen wird. Für Dateien, die man verschickt und zurückbekommen hat — gleiches Schema, ' +
+      'gleiche Identifikatoren.',
+    'merge.title': 'Zweite Kopie abgleichen',
+    'merge.summary': (name, added, changed, removed, same) =>
+      `${name}: ${added} neu, ${changed} geändert, ${removed} hier nicht vorhanden, ${same} identisch.`,
+    'merge.identical': 'Kein Unterschied — beide Dateien enthalten dieselben Datensätze.',
+    'merge.unknownEntities': (keys) => `Übergangen, dieses Werkzeug kennt den Datensatztyp nicht: ${keys}.`,
+    'merge.group.added': (n) => `${n} ${plural(n, 'Datensatz', 'Datensätze')} nicht in dieser Datei`,
+    'merge.group.changed': (n) => `${n} ${plural(n, 'Datensatz', 'Datensätze')} mit abweichenden Werten`,
+    'merge.group.removed': (n) => `${n} ${plural(n, 'Datensatz', 'Datensätze')} in der anderen Datei nicht vorhanden`,
+    'merge.removedNote':
+      'Bewusst nicht vorausgewählt: die andere Kopie kann schlicht älter sein. Angehakt werden sie hier gelöscht.',
+    'merge.all': 'Alle auswählen',
+    'merge.none': 'Keine auswählen',
+    'merge.apply': (n) => (n === 1 ? '1 Änderung übernehmen' : `${n} Änderungen übernehmen`),
+    'merge.done': (added, changed, removed) =>
+      `${added} ergänzt, ${changed} aktualisiert, ${removed} gelöscht — noch nicht gespeichert.`,
+    'merge.passphrasePrompt': (name) => `${name} ist verschlüsselt. Passphrase für diese Datei:`,
+    'merge.noRecords': 'Diese Datei enthält keine Datensätze.',
+    'merge.failed': (msg) => `Abgleich nicht möglich: ${msg}`,
+
     'view.wizard': 'Geführte Erfassung',
     'wizard.title': 'Geführte Erfassung',
     'wizard.stepOf': (at, total) => `Schritt ${at} von ${total}`,

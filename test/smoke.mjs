@@ -1158,6 +1158,97 @@ if ((await page21.getByRole('button', { name: /^New / }).count()) !== 0) fail('E
 await page21.screenshot({ path: resolve(tmp, 'erfassungsmodus.png') })
 await page21.close()
 
+/* Abgleich zweier Kopien - der Fall, fuer den es diese Bauform sonst nicht
+   gibt: Datei rausgeschickt, veraendert zurueckbekommen. */
+const page22 = await ctx.newPage()
+page22.on('pageerror', (e) => errors.push(String(e)))
+page22.on('console', (m) => m.type() === 'error' && errors.push(m.text()))
+await page22.goto('file://' + dist)
+await page22.waitForSelector('table tbody tr')
+
+// Die "zurueckgeschickte" Kopie: ein Datensatz geaendert, einer neu.
+await page22.locator('table tbody tr').first().locator('.cell-id').click()
+await page22.waitForSelector('.drawer')
+const editedId = await page22.locator('.drawer .cell-id').innerText()
+await page22.locator('#f-owner').fill('Returned by the department')
+await page22.locator('.drawer__foot .btn--primary').click()
+await page22.waitForSelector('.drawer', { state: 'detached' })
+await page22.getByRole('button', { name: /^New / }).click()
+await page22.waitForSelector('.drawer')
+await page22.locator('#f-title').fill('Added by the department')
+await page22.locator('.drawer__foot .btn--primary').click()
+await page22.waitForSelector('.drawer', { state: 'detached' })
+const theirCopy = resolve(tmp, 'rueecklauf.html')
+await saveTo(page22, theirCopy, 'Rueecklauf aus der Fachabteilung')
+await page22.close()
+
+// Der eigene Stand: unveraendert, plus ein Datensatz, den es dort nicht gibt.
+const page23 = await ctx.newPage()
+page23.on('pageerror', (e) => errors.push(String(e)))
+page23.on('console', (m) => m.type() === 'error' && errors.push(m.text()))
+await page23.goto('file://' + dist)
+await page23.waitForSelector('table tbody tr')
+await page23.getByRole('button', { name: /^New / }).click()
+await page23.waitForSelector('.drawer')
+await page23.locator('#f-title').fill('Only in my copy')
+await page23.locator('.drawer__foot .btn--primary').click()
+await page23.waitForSelector('.drawer', { state: 'detached' })
+const mineBefore = await page23.locator('table tbody tr').count()
+
+await page23.evaluate(() => {
+  const original = HTMLInputElement.prototype.click
+  HTMLInputElement.prototype.click = function () {
+    if (this.type === 'file') { window.__mergePicker = this; return }
+    return original.call(this)
+  }
+})
+await page23.getByText('Merge a file', { exact: true }).click()
+await page23.waitForFunction(() => window.__mergePicker)
+const mergeHandle = await page23.evaluateHandle(() => window.__mergePicker)
+await mergeHandle.asElement().setInputFiles(theirCopy)
+await page23.waitForSelector('.merge')
+
+console.log('67) Abgleich:', await page23.locator('.merge .note').first().innerText())
+const groups = await page23.locator('.merge__head span').allInnerTexts()
+console.log('    Gruppen:', groups.join(' | '))
+if (!groups.some((g) => g.includes('not in this file'))) fail('Neue Datensaetze nicht erkannt')
+if (!groups.some((g) => g.includes('different values'))) fail('Geaenderte Datensaetze nicht erkannt')
+if (!groups.some((g) => g.includes('missing in the other file'))) fail('Fehlende Datensaetze nicht erkannt')
+
+const diffLine = await page23.locator('.merge__diff li').first().innerText()
+console.log('68) Feldunterschied:', diffLine.replace(/\n/g, ' '))
+if (!diffLine.includes('Returned by the department')) fail('Feldvergleich zeigt den neuen Wert nicht')
+
+// Geloeschtes ist bewusst nicht vorausgewaehlt
+const removedChecked = await page23
+  .locator('.merge__group--removed input:checked')
+  .count()
+console.log('69) Vorausgewaehlt in "fehlt hier nicht":', removedChecked)
+if (removedChecked !== 0) fail('Loeschungen duerfen nicht vorausgewaehlt sein')
+
+await page23.locator('.modal__foot .btn--primary').click()
+await page23.waitForSelector('.merge', { state: 'detached' })
+const mineAfter = await page23.locator('table tbody tr').count()
+console.log('70) Zeilen', mineBefore, '->', mineAfter)
+if (mineAfter !== mineBefore + 1) fail('Der neue Datensatz aus der anderen Datei fehlt')
+if ((await page23.locator('tr:has-text("Only in my copy")').count()) !== 1) {
+  fail('Der eigene Datensatz wurde beim Abgleich geloescht')
+}
+const mergedOwner = await page23.locator(`tr:has-text("${editedId}")`).innerText()
+console.log('71) Uebernommener Wert vorhanden:', mergedOwner.includes('Returned by the department'))
+if (!mergedOwner.includes('Returned by the department')) fail('Geaenderter Wert wurde nicht uebernommen')
+
+// Derselbe Abgleich noch einmal: jetzt darf es keinen Unterschied mehr geben
+await page23.getByText('Merge a file', { exact: true }).click()
+await page23.waitForFunction(() => window.__mergePicker)
+await (await page23.evaluateHandle(() => window.__mergePicker)).asElement().setInputFiles(theirCopy)
+await page23.waitForSelector('.merge')
+const secondRun = await page23.locator('.merge .note').first().innerText()
+console.log('72) Zweiter Durchlauf:', secondRun)
+if (!/0 new, 0 changed/.test(secondRun)) fail('Nach dem Abgleich bestehen noch Unterschiede')
+await page23.locator('.modal__foot .btn--quiet').click()
+await page23.close()
+
 // Vorschau im hellen Modus
 await page3.getByLabel('Settings').click()
 await page3.waitForSelector('.settings')

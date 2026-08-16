@@ -79,6 +79,8 @@ s'impriment en un PDF propre.
   l'import CSV et aux changements proposés par l'IA.
 - **Un assistant de saisie guidée** et un mode de collecte qui ouvre le fichier directement dessus,
   pour ceux qui n'ont qu'une chose à signaler.
+- **Fusionner une copie renvoyée**, enregistrement par enregistrement, avec un comparatif champ par
+  champ.
 
 ## Démarrage rapide
 

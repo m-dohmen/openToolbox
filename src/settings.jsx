@@ -134,6 +134,7 @@ export function SettingsPage({
   onExportJson,
   onImportJson,
   onImportCsv,
+  onMerge,
   onExportConfig,
   onImportConfig,
   onResetColors,
@@ -647,6 +648,12 @@ export function SettingsPage({
               <button class="btn" onClick={onExportJson}>{tr('settings.json')}</button>
               <button class="btn" onClick={onImportJson}>{tr('sidebar.importJson')}</button>
               <button class="btn" onClick={onImportCsv}>{tr('sidebar.importCsv')}</button>
+            </div>
+          </Row>
+
+          <Row label={tr('settings.merge')} hint={tr('settings.mergeHint')}>
+            <div class="setting__buttons">
+              <button class="btn" onClick={onMerge}>{tr('sidebar.merge')}</button>
             </div>
           </Row>
         </section>

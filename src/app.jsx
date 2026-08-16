@@ -35,6 +35,8 @@ import { IconSave, IconSettings, IconLink } from './icons.jsx'
 import { SettingsPage } from './settings.jsx'
 import { DashboardView } from './dashboard.jsx'
 import { WizardView } from './wizard.jsx'
+import { MergeDialog } from './merge.jsx'
+import { extractPayload, diffAll, applyMerge } from './lib/merge.js'
 import { Hint } from './hint.jsx'
 import { ChatDock } from './chat.jsx'
 import { AI_DEFAULTS } from './lib/ai.js'
@@ -339,6 +341,7 @@ function Workbench({
   // dem ersten Speichern des Erstellers still verschwunden.
   const [unlocked, setUnlocked] = useState(false)
   const [lockDialog, setLockDialog] = useState(null)
+  const [merge, setMerge] = useState(null)
 
   const tr = translator(settings.locale)
   const showHints = settings.examplePrompts
@@ -775,6 +778,34 @@ function Workbench({
   }
 
   /**
+   * Eine zweite Kopie derselben Datei einlesen und Datensatz fuer Datensatz
+   * abgleichen. Verschluesselte Gegenstuecke fragen nach ihrer Passphrase -
+   * die des eigenen Standes hilft dort nicht weiter, es sind zwei Dateien.
+   */
+  async function mergeFile() {
+    const file = await pickFile('.html,text/html,.json,application/json')
+    if (!file) return
+    try {
+      const text = await file.text()
+      const payload = file.name.endsWith('.json') ? JSON.parse(text) : extractPayload(text)
+
+      let data = payload.data
+      if (payload.enc) {
+        const word = window.prompt(tr('merge.passphrasePrompt', file.name))
+        if (!word) return
+        data = JSON.parse(await unseal(payload.enc, word))
+      }
+      if (!data?.records) throw new Error(tr('merge.noRecords'))
+
+      const theirs = normalizeRecordsByEntity(data.records)
+      const diff = diffAll(ENTITIES, ENTITY_KEYS, recordsByEntity, theirs)
+      setMerge({ diff, fileName: file.name })
+    } catch (err) {
+      notify(tr('merge.failed', err.message), 'error')
+    }
+  }
+
+  /**
    * Ergebnis eines Wizard-Durchlaufs uebernehmen. Angelegt wird erst hier -
    * wer mittendrin abbricht, hinterlaesst nichts.
    */
@@ -873,6 +904,7 @@ function Workbench({
           onExportJson={exportJson}
           onImportJson={importJson}
           onImportCsv={importCsv}
+          onMerge={mergeFile}
           onExportConfig={exportConfiguration}
           onImportConfig={importConfiguration}
           onResetColors={() => changeSettings({ colors: DEFAULT_COLORS })}
@@ -1042,6 +1074,7 @@ function Workbench({
               <button onClick={exportJson}>{tr('sidebar.exportJson')}</button>
               <button onClick={importJson}>{tr('sidebar.importJson')}</button>
               <button onClick={importCsv}>{tr('sidebar.importCsv')}</button>
+              <button onClick={mergeFile}>{tr('sidebar.merge')}</button>
             </div>
           </section>
         </aside>
@@ -1202,6 +1235,27 @@ function Workbench({
               setDirty(true)
               setShowKey(false)
               notify(pass ? tr('toast.passphraseSet') : tr('toast.encryptionRemovedShort'))
+            }}
+          />
+        </>
+      )}
+
+      {merge && (
+        <>
+          <div class="scrim" onClick={() => setMerge(null)} />
+          <MergeDialog
+            diff={merge.diff}
+            entities={ENTITIES}
+            entityKeys={ENTITY_KEYS}
+            fileName={merge.fileName}
+            tr={tr}
+            onCancel={() => setMerge(null)}
+            onApply={(picks) => {
+              const { next, counts } = applyMerge(ENTITIES, ENTITY_KEYS, recordsByEntity, merge.diff, picks)
+              setRecordsByEntity(next)
+              setDirty(true)
+              setMerge(null)
+              notify(tr('merge.done', counts.added, counts.changed, counts.removed))
             }}
           />
         </>
