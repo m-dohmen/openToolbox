@@ -1,87 +1,109 @@
 // SPDX-License-Identifier: Apache-2.0
 /**
- * Baut die Schaudemo nach docs/demo/index.html.
+ * Baut die Schaudemos nach docs/demos/<slug>/index.html.
  *
  * Ein echtes Werkzeug entsteht, indem man src/domain.js austauscht *und* die
- * Vorgaben in DEFAULT_SETTINGS anpasst (siehe AGENTS.md). Genau das macht
- * dieses Skript vorübergehend, damit die Demo nicht "Action items" heißt,
- * während sie Projekte zeigt - und schreibt beide Dateien danach zurück,
- * unabhängig davon, ob der Build durchlief.
+ * Vorgaben in DEFAULT_SETTINGS, DEFAULT_COLORS und DEFAULT_HOME anpasst (siehe
+ * AGENTS.md). Genau das macht dieses Skript vorübergehend für jede Demo - und
+ * schreibt die Quelldateien danach zurück, unabhängig davon, ob ein Build
+ * durchlief.
  *
- *   npm run build:demo
+ *   npm run build:demo            # alle Demos
+ *   npm run build:demo portfolio  # nur eine, beim Entwickeln
  */
 import { execFileSync } from 'node:child_process'
-import { readFileSync, writeFileSync } from 'node:fs'
+import { readFileSync, writeFileSync, cpSync, rmSync } from 'node:fs'
 import { resolve, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { DEMOS } from './demos.mjs'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const domainPath = resolve(root, 'src/domain.js')
 const appPath = resolve(root, 'src/app.jsx')
 const indexPath = resolve(root, 'index.html')
-const examplePath = resolve(root, 'examples/portfolio.domain.js')
 
-const DEMO = {
-  title: 'Project portfolio',
-  subtitle: 'Engagements, milestones and where the budget stands',
-  fileStem: 'project-portfolio',
-  version: '2.1',
+const wanted = process.argv.slice(2)
+const todo = wanted.length ? DEMOS.filter((d) => wanted.includes(d.slug)) : DEMOS
+if (!todo.length) {
+  console.error(`Unknown demo. Known: ${DEMOS.map((d) => d.slug).join(', ')}`)
+  process.exit(1)
 }
-
-/* Die Startseite der Demo. Sie ist der erste Eindruck fuer jeden, der die
-   Demo oeffnet - eine Vorlagen-Standardseite waere dort verschenkt. */
-const DEMO_HOME = `# Project portfolio
-
-A worked example built with **openToolbox**: engagements, their milestones, and where the budget
-stands. Everything you see comes out of one file, \`src/domain.js\`.
-
-## What to try
-
-- **List** — two record types that reference each other, calculated columns, filters that count
-- **Dashboard** — the same data as tiles, drawn without a charting library
-- **Guided entry** — a short wizard that creates an engagement and its first milestone in one run
-- **Merge a file** — reconcile a copy that came back from someone else
-
-> This page is editable in the app itself. In a tool you deliver, put here what the recipients
-> need: what it is for, who maintains it, and where to ask.`
 
 const originalDomain = readFileSync(domainPath, 'utf8')
 const originalApp = readFileSync(appPath, 'utf8')
 const originalIndex = readFileSync(indexPath, 'utf8')
 
+/* Der Startseitentext enthaelt selbst Backticks (Inline-Code) und landet in
+   einem Template-Literal - beide muessen escaped werden, sonst endet das
+   Literal mitten im Satz. */
+const forTemplate = (text) =>
+  text.replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\$\{/g, '\\${')
+
 try {
-  writeFileSync(domainPath, readFileSync(examplePath, 'utf8'))
+  for (const demo of todo) {
+    console.log(`\n── ${demo.slug} ─────────────────────────────`)
+    writeFileSync(domainPath, readFileSync(resolve(root, 'examples', demo.example), 'utf8'))
 
-  let app = originalApp
-  for (const [key, value] of Object.entries(DEMO)) {
-    const pattern = new RegExp(`(\\n  ${key}: )'[^']*'`)
-    if (!pattern.test(app)) throw new Error(`DEFAULT_SETTINGS.${key} not found in src/app.jsx`)
-    app = app.replace(pattern, `$1'${value}'`)
+    let app = originalApp
+
+    /* Die Oberflaechensprache steht als Konstante, nicht als Zeichenkette -
+       eine deutsche Domaene mit englischen Knoepfen sieht nach Vorlage aus. */
+    if (demo.locale) {
+      const localePattern = /(\n  locale: )[^,\n]+/
+      if (!localePattern.test(app)) throw new Error('DEFAULT_SETTINGS.locale not found in src/app.jsx')
+      app = app.replace(localePattern, `$1'${demo.locale}'`)
+    }
+
+    for (const [key, value] of Object.entries(demo.settings)) {
+      const pattern = new RegExp(`(\\n  ${key}: )'[^']*'`)
+      if (!pattern.test(app)) throw new Error(`DEFAULT_SETTINGS.${key} not found in src/app.jsx`)
+      app = app.replace(pattern, `$1'${value}'`)
+    }
+
+    /* Jede Demo hat ihren eigenen Farbraum. Ein Werkzeug, das sich vom
+       naechsten nur durch die Ueberschrift unterscheidet, wirkt wie eine
+       Vorlage - und genau das soll es nicht. */
+    for (const [key, value] of Object.entries(demo.colors ?? {})) {
+      const pattern = new RegExp(`(\\n  ${key}: )'#[0-9a-f]{6}'`)
+      if (!pattern.test(app)) throw new Error(`DEFAULT_COLORS.${key} not found in src/app.jsx`)
+      app = app.replace(pattern, `$1'${value}'`)
+    }
+
+    const homePattern = /const DEFAULT_HOME = `[\s\S]*?`\n/
+    if (!homePattern.test(app)) throw new Error('DEFAULT_HOME not found in src/app.jsx')
+    app = app.replace(homePattern, () => 'const DEFAULT_HOME = `' + forTemplate(demo.home) + '`\n')
+
+    writeFileSync(appPath, app)
+
+    // Der Fenstertitel steht statisch in index.html und wuerde sonst weiter
+    // "Action items" sagen, waehrend die Demo etwas anderes zeigt.
+    const index = originalIndex.replace(
+      /<title>[^<]*<\/title>/,
+      `<title>${demo.settings.title} — openToolbox</title>`,
+    )
+    if (index === originalIndex) throw new Error('<title> not found in index.html')
+    writeFileSync(indexPath, index)
+
+    const outDir = `docs/demos/${demo.slug}`
+    execFileSync('npx', ['vite', 'build', '--outDir', outDir, '--emptyOutDir'], {
+      cwd: root,
+      stdio: 'inherit',
+    })
+
+    /* Die Portfolio-Demo lag frueher unter docs/demo/. Dorthin zeigen Verweise
+       in READMEs, Wiki und aelteren Releases - die sollen nicht ins Leere
+       laufen, nur weil eine zweite Demo dazugekommen ist. */
+    if (demo.legacy) {
+      rmSync(resolve(root, 'docs/demo'), { recursive: true, force: true })
+      cpSync(resolve(root, outDir), resolve(root, 'docs/demo'), { recursive: true })
+    }
   }
-  /* Der Text enthaelt selbst Backticks (Inline-Code) und landet in einem
-     Template-Literal - beide muessen escaped werden, sonst endet das Literal
-     mitten im Satz. Ersetzung als Funktion, damit $ in der Vorlage nichts
-     bedeutet. */
-  const homePattern = /const DEFAULT_HOME = `[\s\S]*?`\n/
-  if (!homePattern.test(app)) throw new Error('DEFAULT_HOME not found in src/app.jsx')
-  const escaped = DEMO_HOME.replace(/\\/g, '\\\\').replace(/`/g, '\\`').replace(/\$\{/g, '\\${')
-  app = app.replace(homePattern, () => 'const DEFAULT_HOME = `' + escaped + '`\n')
-  writeFileSync(appPath, app)
-
-  // Der Fenstertitel steht statisch in index.html und wuerde sonst weiter
-  // "Action items" sagen, waehrend die Demo Projekte zeigt.
-  const index = originalIndex.replace(
-    /<title>[^<]*<\/title>/,
-    `<title>${DEMO.title} — openToolbox</title>`,
-  )
-  if (index === originalIndex) throw new Error('<title> not found in index.html')
-  writeFileSync(indexPath, index)
-
-  execFileSync('npx', ['vite', 'build', '--outDir', 'docs/demo'], { cwd: root, stdio: 'inherit' })
 } finally {
   writeFileSync(domainPath, originalDomain)
   writeFileSync(appPath, originalApp)
   writeFileSync(indexPath, originalIndex)
 }
 
-console.log('\nDemo written to docs/demo/index.html — domain.js, app.jsx and index.html restored.')
+console.log(
+  `\n${todo.length} demo(s) written to docs/demos/ — domain.js, app.jsx and index.html restored.`,
+)

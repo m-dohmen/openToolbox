@@ -36,9 +36,20 @@ ohne ihn.
 
 ## Ansehen
 
-[**Live-Demo öffnen**](https://m-dohmen.github.io/openToolbox/demo/) — ein Projektportfolio mit zwei
-verknüpften Datensatztypen, oder [`docs/demo/index.html` herunterladen](docs/demo/index.html) und
+[**Sechs Live-Demos**](https://m-dohmen.github.io/openToolbox/demos/) — dasselbe Gerüst als sechs
+verschiedene Werkzeuge. Oder eine davon aus [`docs/demos/`](docs/demos/) herunterladen und
 doppelklicken. Dieselbe Datei, in beiden Fällen ohne Server.
+
+| Demo | Das Problem dahinter | Datenform |
+| --- | --- | --- |
+| [Project portfolio](https://m-dohmen.github.io/openToolbox/demos/portfolio/) | Projekte, Meilensteine, Budgetabweichung | 2 Datenarten, Geld |
+| [Verpackungsregister](https://m-dohmen.github.io/openToolbox/demos/ppwr-packaging/) | PPWR: die Angaben liegen bei den Lieferanten, nicht bei einem selbst | 2 Datenarten, Anhänge |
+| [Verarbeitungsverzeichnis](https://m-dohmen.github.io/openToolbox/demos/gdpr-processing/) | Art. 30 DSGVO — die Antworten liegen bei zwölf Leuten | Erfassungsmodus, Aufzählungen |
+| [Prüfbuch Betriebsmittel](https://m-dohmen.github.io/openToolbox/demos/equipment-testing/) | Wiederkehrende Prüfungen und das Datum, das hinterher keiner findet | Fristen und Intervalle |
+| [Sanierung](https://m-dohmen.github.io/openToolbox/demos/renovation-quotes/) | Drei Angebote je Gewerk, und wo das Budget wirklich steht | 2 Datenarten, Geld |
+| [Klassenfahrt](https://m-dohmen.github.io/openToolbox/demos/school-trip/) | 28 Zettel raus, 19 zurück, und die Liste darf niemand sehen | Zustände statt Zahlen |
+
+Die Bilder unten stammen aus dem Projektportfolio.
 
 ![Die Listenansicht](docs/screenshots/list.png)
 

@@ -22,9 +22,20 @@ Point an AI assistant at this repository and it has everything it needs — the 
 
 ## See it
 
-[**Open the live demo**](https://m-dohmen.github.io/openToolbox/demo/) — a project portfolio with
-two linked record types, or [download `docs/demo/index.html`](docs/demo/index.html) and
-double-click it. Same file, no server involved either way.
+[**Six live demos**](https://m-dohmen.github.io/openToolbox/demos/) — the same framework as six
+different tools. Or download any of them from [`docs/demos/`](docs/demos/) and double-click; same
+file, no server involved either way.
+
+| Demo | The problem it takes on | Shape |
+| --- | --- | --- |
+| [Project portfolio](https://m-dohmen.github.io/openToolbox/demos/portfolio/) | Engagements, milestones, budget variance | 2 record types, money |
+| [Verpackungsregister](https://m-dohmen.github.io/openToolbox/demos/ppwr-packaging/) | EU packaging regulation: the data sits with your suppliers, not with you | 2 record types, attachments |
+| [Verarbeitungsverzeichnis](https://m-dohmen.github.io/openToolbox/demos/gdpr-processing/) | GDPR Art. 30 — twelve people hold the answers | intake mode, enum-heavy |
+| [Prüfbuch Betriebsmittel](https://m-dohmen.github.io/openToolbox/demos/equipment-testing/) | Recurring equipment tests and the date nobody can find afterwards | dates and intervals |
+| [Sanierung](https://m-dohmen.github.io/openToolbox/demos/renovation-quotes/) | Three quotes per trade, and where the budget actually stands | 2 record types, money |
+| [Klassenfahrt](https://m-dohmen.github.io/openToolbox/demos/school-trip/) | 28 forms out, 19 back, and the sheet nobody may see | states not numbers |
+
+The screenshots below are from the project portfolio.
 
 ![The list view](docs/screenshots/list.png)
 
@@ -178,8 +189,10 @@ zero is usually a real answer.
 
 That schema alone produces the table columns, the edit form, the sidebar filters, the CSV export,
 the instructions sent to the AI model and the validation of anything the model proposes back.
-`examples/risk-register.domain.js` is a complete working example — copy it over `src/domain.js` and
-rebuild to watch the entire app change.
+`examples/` holds **seven complete domains**, each published as a
+[live demo](https://m-dohmen.github.io/openToolbox/demos/). Copy the closest one over
+`src/domain.js` and rebuild to watch the entire app change — that is usually faster than writing a
+schema from a blank file. `risk-register.domain.js` is the plainest starting point.
 
 ### Attachments
 
@@ -649,8 +662,12 @@ src/app.jsx            shell, list, form, save logic
 src/settings.jsx       settings page
 src/dashboard.jsx      dashboard tiles (stat, bar, donut) — no charting library
 src/hint.jsx           the example-prompt boxes
-scripts/build-demo.mjs builds examples/portfolio.domain.js into docs/demo/
 plugin/                installable skill for Claude Code and Codex (see plugin/README.md)
+examples/              seven complete domains, ready to copy over src/domain.js
+docs/demos/            the built demos, committed so they can be linked and downloaded
+scripts/demos.mjs      the demo list: example, colours, start page, blurb
+scripts/build-demo.mjs builds every entry of that list into docs/demos/<slug>/
+scripts/demo-index.mjs builds the overview page docs/demos/index.html
 scripts/screenshots.mjs regenerates the images in this README
 src/chat.jsx           AI assistant dock
 src/brand.jsx          wordmark and uploaded logo
@@ -678,6 +695,7 @@ src/lib/svg.js         logo and icon sanitiser
 src/lib/color.js       palette derivation and contrast check
 test/smoke.mjs         end-to-end test against a real headless browser
 test/multi-entity.mjs  end-to-end test for the ENTITIES/reference-field path
+test/demos.mjs         opens every built demo once — the examples rot silently otherwise
 ```
 
 ## Testing

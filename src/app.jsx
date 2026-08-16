@@ -360,10 +360,14 @@ function Workbench({
   const [activeKey, setActiveKey] = useState(DEFAULT_ENTITY_KEY)
   const [settings, setSettings] = useState(initialSettings)
   const [view, setView] = useState(() => {
+    /* Die Startseite ist genau dann der Einstieg, wenn jemand einen Text
+       hinterlegt hat - auch im Erfassungsmodus. Gerade dort ist sie wichtig:
+       wer eine Datei zugeschickt bekommt, um etwas zu melden, will zuerst
+       wissen, warum. Von dort geht es dann in den Wizard statt in die Liste.
+       Ein leerer Willkommensschirm waere dagegen nur ein Klick. */
+    if (String(initialSettings.home ?? '').trim()) return 'home'
     if (WIZARD && initialSettings.mode === 'intake') return 'wizard'
-    // Die Startseite ist genau dann der Einstieg, wenn jemand einen Text
-    // hinterlegt hat. Ein leerer Willkommensschirm waere nur ein Klick.
-    return String(initialSettings.home ?? '').trim() ? 'home' : 'list'
+    return 'list'
   })
   const [dirty, setDirty] = useState(fresh)
   const [lastSaved, setLastSaved] = useState(savedAt)
@@ -1067,13 +1071,13 @@ function Workbench({
           )}
         </div>
       )}
-      {view === 'home' && !intake ? (
+      {view === 'home' ? (
         <HomeView
           text={settings.home ?? ''}
           locked={settingsLocked}
           onChange={(next) => changeSettings({ home: next })}
-          onStart={() => setView('list')}
-          startLabel={tr('home.start', schema.plural)}
+          onStart={() => setView(intake ? 'wizard' : 'list')}
+          startLabel={intake ? tr('home.startIntake') : tr('home.start', schema.plural)}
           tr={tr}
         />
       ) : intake || (view === 'wizard' && WIZARD) ? (

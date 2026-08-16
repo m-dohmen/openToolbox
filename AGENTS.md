@@ -126,8 +126,24 @@ Write rules for the things a reviewer would otherwise catch by eye: an item in p
 owner, a closing date before the start date, a mandatory justification on a rejection. Do not
 recreate type checks — `enum`, `date` and `number` are already enforced.
 
-`examples/risk-register.domain.js` is a complete working example. Copy it over `src/domain.js` and
-build to see the whole app change.
+### The examples are the fastest way in
+
+`examples/` holds seven complete domains, each built and published under
+[`docs/demos/`](https://m-dohmen.github.io/openToolbox/demos/). Before writing one from scratch,
+open the closest and copy its shape:
+
+| File | Shape worth stealing |
+| --- | --- |
+| `risk-register.domain.js` | The plainest single-entity domain. |
+| `portfolio.domain.js` | Two record types, a reference, money, a dashboard. |
+| `suppliers-certificates.domain.js` | Two record types, minimal — the reference mechanics alone. |
+| `ppwr-packaging.domain.js` | Computed fields that aggregate a *child* entity; rules that force a source for every estimate. |
+| `gdpr-processing.domain.js` | Almost no numbers — enums and free text; built for `mode: 'intake'`. |
+| `equipment-testing.domain.js` | Everything derived from dates: due date from interval, days left, the red flag. |
+| `renovation-quotes.domain.js` | Money across two entities; the awarded sum is read from the accepted quote, never typed. |
+| `school-trip.domain.js` | States rather than numbers, and a domain that argues for encryption. |
+
+Copy one over `src/domain.js` and build to see the whole app change.
 
 ### Attachments
 

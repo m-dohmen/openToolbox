@@ -58,10 +58,11 @@ jobs:
           '
 
       - run: npm run build:demo
-      - name: Check the committed demo is current
+      - name: Check the committed demos are current
         run: |
-          if ! git diff --quiet -- docs/demo; then
-            echo "docs/demo/index.html is out of date — run 'npm run build:demo' and commit the result."
+          if ! git diff --quiet -- docs/demo docs/demos; then
+            echo "The built demos are out of date — run 'npm run build:demo' and commit the result."
+            git --no-pager diff --stat -- docs/demo docs/demos
             exit 1
           fi
       - run: npx playwright install --with-deps chromium

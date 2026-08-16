@@ -1,0 +1,133 @@
+// SPDX-License-Identifier: Apache-2.0
+/**
+ * Erzeugt docs/demos/index.html - die Übersicht über alle Schaudemos.
+ *
+ * Bewusst eine statische Seite ohne Abhängigkeiten, in der Farbwelt der
+ * Vorlage. Sie ist die Landeseite für „zeig mir, was man damit macht", und
+ * jede Kachel nennt die Datenform und die Zielgruppe, weil genau daran der
+ * Übertrag auf das eigene Problem gelingt.
+ *
+ *   npm run build:demo && npm run demos:index
+ */
+import { writeFileSync, mkdirSync } from 'node:fs'
+import { resolve, dirname } from 'node:path'
+import { fileURLToPath } from 'node:url'
+import { DEMOS } from './demos.mjs'
+
+const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
+const out = resolve(root, 'docs/demos')
+mkdirSync(out, { recursive: true })
+
+const escape = (s) =>
+  String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;')
+
+const card = (d) => `      <a class="card" href="./${d.slug}/" style="--card:${d.colors.accent}">
+        <span class="card__swatch"></span>
+        <h2>${escape(d.settings.title)}</h2>
+        <p class="card__sub">${escape(d.settings.subtitle)}</p>
+        <p class="card__blurb">${escape(d.blurb)}</p>
+        <dl>
+          <div><dt>Datenform</dt><dd>${escape(d.shape)}</dd></div>
+          <div><dt>Für wen</dt><dd>${escape(d.audience)}</dd></div>
+        </dl>
+        <span class="card__go">Demo öffnen →</span>
+      </a>`
+
+const html = `<!-- SPDX-License-Identifier: Apache-2.0 -->
+<!-- Erzeugt von scripts/demo-index.mjs — nicht von Hand bearbeiten. -->
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Beispiele — openToolbox</title>
+    <link rel="icon" type="image/svg+xml" href="../logo.svg" />
+    <style>
+      :root {
+        --ink: #33404d; --strong: #16202b; --muted: #6b7885; --line: #dfe4e9;
+        --bg: #f6f8f9; --panel: #ffffff; --accent: #0e7c86;
+        color-scheme: light dark;
+      }
+      @media (prefers-color-scheme: dark) {
+        :root {
+          --ink: #c4ced8; --strong: #eef3f6; --muted: #8d99a5; --line: #2b3742;
+          --bg: #131b22; --panel: #1a242d; --accent: #2bb3bf;
+        }
+      }
+      * { box-sizing: border-box; }
+      body {
+        margin: 0; padding: 48px 20px 72px; background: var(--bg); color: var(--ink);
+        font: 15px/1.6 -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+      .wrap { max-width: 1080px; margin: 0 auto; }
+      header { margin-bottom: 40px; max-width: 680px; }
+      .mark { display: flex; align-items: center; gap: 12px; margin-bottom: 22px; }
+      .mark img { width: 34px; height: 34px; }
+      .mark span { font-size: 17px; color: var(--accent); }
+      .mark b { font-weight: 700; }
+      h1 { margin: 0 0 12px; font-size: 30px; line-height: 1.2; color: var(--strong); letter-spacing: -0.02em; }
+      header p { margin: 0 0 10px; color: var(--muted); }
+      .grid { display: grid; gap: 18px; grid-template-columns: repeat(auto-fill, minmax(310px, 1fr)); }
+      .card {
+        display: block; position: relative; overflow: hidden;
+        background: var(--panel); border: 1px solid var(--line); border-radius: 6px;
+        padding: 22px 22px 20px; text-decoration: none; color: inherit;
+        transition: border-color .15s, transform .15s;
+      }
+      .card:hover { border-color: var(--card); transform: translateY(-2px); }
+      .card__swatch { position: absolute; inset: 0 0 auto 0; height: 4px; background: var(--card); }
+      .card h2 { margin: 6px 0 4px; font-size: 18px; color: var(--strong); }
+      .card__sub { margin: 0 0 12px; font-size: 13px; color: var(--card); }
+      .card__blurb { margin: 0 0 16px; font-size: 14px; }
+      .card dl { margin: 0 0 16px; font-size: 12.5px; }
+      .card dl > div { display: flex; gap: 8px; padding: 2px 0; }
+      .card dt { flex: 0 0 78px; color: var(--muted); }
+      .card dd { margin: 0; }
+      .card__go { font-size: 13px; font-weight: 600; color: var(--card); }
+      footer { margin-top: 44px; font-size: 13px; color: var(--muted); }
+      footer a { color: inherit; }
+      .note {
+        margin: 0 0 34px; padding: 12px 16px; border-left: 3px solid var(--accent);
+        background: var(--panel); font-size: 13.5px; max-width: 680px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="wrap">
+      <header>
+        <p class="mark"><img src="../logo.svg" alt="" /><span>open<b>Toolbox</b></span></p>
+        <h1>Sechs Werkzeuge, ein Gerüst</h1>
+        <p>
+          Jede dieser Demos ist <strong>eine einzige HTML-Datei</strong> — Anwendung und Datenbank
+          zugleich. Kein Server, keine Installation. Herunterladen, doppelklicken, läuft.
+        </p>
+        <p>
+          Unterschiedlich sind sie nur in einer Datei: <code>src/domain.js</code>. Verschiedene
+          Datenformen, verschiedene Farben, verschiedene Probleme.
+        </p>
+      </header>
+
+      <p class="note">
+        Alle Daten sind erfunden. Die Beispiele veranschaulichen die Struktur solcher Werkzeuge —
+        sie sind keine Rechtsberatung und kein Nachweis irgendeiner Konformität.
+      </p>
+
+      <div class="grid">
+${DEMOS.map(card).join('\n')}
+      </div>
+
+      <footer>
+        <p>
+          Gebaut mit <a href="https://github.com/m-dohmen/openToolbox">openToolbox</a> ·
+          Apache License 2.0 · Die Quelltexte der Beispiele liegen unter
+          <code>examples/</code> im Repository.
+        </p>
+      </footer>
+    </div>
+  </body>
+</html>
+`
+
+writeFileSync(resolve(out, 'index.html'), html)
+console.log(`docs/demos/index.html written — ${DEMOS.length} demos listed.`)

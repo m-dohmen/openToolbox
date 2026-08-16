@@ -1163,6 +1163,11 @@ await page20.close()
 const page21 = await ctx.newPage()
 page21.on('pageerror', (e) => errors.push(String(e)))
 await page21.goto('file://' + intakeFile)
+/* Auch im Erfassungsmodus kommt zuerst die Startseite: wer eine Datei
+   zugeschickt bekommt, um etwas zu melden, will zuerst wissen, warum. Von dort
+   fuehrt der Knopf in den Wizard und nicht in die Liste. */
+await page21.waitForSelector('.home')
+await page21.locator('.home__foot .btn--primary').click()
 await page21.waitForSelector('.wizard')
 console.log('66) Erfassungsmodus — Tabelle vorhanden:', (await page21.locator('table').count()) > 0,
   '| Reiter:', await page21.locator('.entity-tabs').count(),
@@ -1310,11 +1315,17 @@ const trailPayload = JSON.parse(
     .match(/<script id="sb-payload"[^>]*>([\s\S]*?)<\/script>/)[1]
     .replace(/\\u003c/g, '<'),
 )
-const written = trailPayload.data.log.at(-1).changes
-console.log('74) In der Datei abgelegt:', written.length, 'Aenderungen |', JSON.stringify(written[0]))
-if (!written.some((c) => c.op === 'updated' && c.after === 'P. Neumann')) {
-  fail('Feldaenderung steht nicht in der Datei')
+/* Ueber alle Eintraege statt nur den letzten, und gegen die vorher gemerkte Id
+   statt gegen eine Tabellenposition - die Pruefung soll aussagen, dass genau
+   dieser Datensatz seine Aenderung mitbekommen hat. */
+const written = trailPayload.data.log.flatMap((e) => e.changes ?? [])
+const forRecord = written.filter((c) => c.id === trailId)
+console.log('74) In der Datei abgelegt:', written.length, 'Aenderungen |', JSON.stringify(forRecord[0]))
+if (!forRecord.some((c) => c.op === 'updated' && c.field === 'Owner' && c.after === 'P. Neumann')) {
+  fail(`Feldaenderung an ${trailId} steht nicht in der Datei: ${JSON.stringify(written)}`)
 }
+if (!written.some((c) => c.op === 'created')) fail('Anlegen fehlt in der Datei')
+if (!written.some((c) => c.op === 'deleted')) fail('Loeschen fehlt in der Datei')
 
 // Historie eines einzelnen Datensatzes im Formular
 await page24.getByRole('tab', { name: 'List' }).click()

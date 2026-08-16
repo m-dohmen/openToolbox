@@ -403,6 +403,7 @@ const STRINGS = {
 
     'view.home': 'Start',
     'home.start': (plural) => `Open the ${plural}`,
+    'home.startIntake': 'Start',
     'home.edit': 'Edit this page',
     'home.editing': 'Editing the start page',
     'home.editorLabel': 'Text of the start page',
@@ -983,6 +984,7 @@ const STRINGS = {
 
     'view.home': 'Start',
     'home.start': (plural) => `Zu den ${plural}`,
+    'home.startIntake': 'Loslegen',
     'home.edit': 'Diese Seite bearbeiten',
     'home.editing': 'Startseite bearbeiten',
     'home.editorLabel': 'Text der Startseite',
