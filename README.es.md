@@ -63,6 +63,8 @@ son anchuras CSS y el anillo es un único círculo SVG. Ambas vistas se imprimen
 - **Un registro de cambios**, rellenado en cada guardado con fecha, versión y qué cambió.
 - **Prompts de ejemplo incrustados**, para que quien reciba el archivo pueda hacerlo modificar sin
   haber leído esta página.
+- **Un bloqueo de la página de ajustes**, para que una herramienta en manos de quien solo introduce
+  datos no se reconfigure por accidente.
 
 ## Inicio rápido
 
@@ -177,6 +179,23 @@ Tres restricciones que aparecen una y otra vez en entornos regulados y corporati
 
 Un único archivo HTML esquiva las tres. Y es honesto sobre lo que es: el usuario puede leer todo el
 código fuente, y no hay ningún servicio que pueda cambiar a sus espaldas.
+
+## Bloquear los ajustes
+
+Ajustes → Seguridad → *Proteger los ajustes* pide una palabra y desactiva todos los controles de esa
+página. Los campos siguen **visibles y sus valores legibles**: el mensaje es «ahora no», no «no es
+asunto tuyo». La misma palabra los reactiva durante la sesión actual; al reabrir el archivo vuelven
+a estar bloqueados, para que la protección no desaparezca en silencio tras el primer guardado del
+autor.
+
+**Es una protección contra descuidos, no una frontera de seguridad.** Quien tiene el archivo tiene
+el código, y la entrada del bloqueo se puede borrar del bloque de datos con un editor de texto. Es
+una tapa sobre un interruptor. Para lo que de verdad nadie debe leer está el cifrado, que sí es
+real.
+
+La palabra tampoco es una contraseña. Se guarda como un resumen SHA-256 con sal para que no quede en
+texto plano dentro del archivo, pero el campo la muestra abiertamente a propósito: para una tapa
+nadie debería reutilizar una contraseña de verdad, y «123» sirve. No hay regla de complejidad.
 
 ## El contador de aperturas
 

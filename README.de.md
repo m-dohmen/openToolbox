@@ -95,6 +95,9 @@ Dashboard · CSV-Import · Änderungsprotokoll · Versionsnummern.**
   geändert hat — siehe [Versionen und Änderungsprotokoll](#versionen-und-änderungsprotokoll).
 - **Beispiel-Prompts in der Datei**, damit der Empfänger sie ändern lassen kann, ohne diese Datei
   hier gelesen zu haben — siehe [Beispiel-Prompts](#beispiel-prompts).
+- **Eine Sperre für die Einstellungsseite**, damit ein Werkzeug in der Hand eines reinen Anwenders
+  nicht versehentlich umkonfiguriert wird — siehe
+  [Einstellungen sperren](#einstellungen-sperren).
 
 ## Schnellstart
 
@@ -259,6 +262,27 @@ Drei Randbedingungen, die in regulierten und in Konzernumgebungen immer wieder a
 Eine einzelne HTML-Datei umgeht alle drei. Und sie ist ehrlich in dem, was sie ist: Der Anwender kann
 den gesamten Quelltext lesen, und es gibt keinen Dienst, der sich unter ihm still verändern könnte.
 
+## Einstellungen sperren
+
+Eine Datei, die an jemanden geht, der nur Daten pflegt, hat trotzdem eine vollständige
+Einstellungsseite: Farben, Endpunkte, den Dateinamen, die KI-Konfiguration. Nichts davon muss
+angefasst werden, und ein versehentlicher Klick darauf wandert mit jedem folgenden Speichern weiter.
+
+Einstellungen → Sicherheit → *Einstellungen schützen* fragt nach einem Wort und sperrt jedes
+Bedienelement auf der Seite. Die Felder bleiben **sichtbar und ihre Werte lesbar** — die Aussage ist
+„nicht jetzt", nicht „geht dich nichts an". Dasselbe Wort öffnet sie für die laufende Sitzung
+wieder; beim erneuten Öffnen der Datei ist wieder gesperrt, damit der Schutz nicht still
+verschwindet, sobald der Ersteller einmal gespeichert hat.
+
+**Das ist ein Schutz vor Versehen, keine Sicherheitsgrenze.** Wer die Datei hat, hat den Code, und
+der Sperreintrag lässt sich mit einem Texteditor aus dem Datenblock löschen. Es ist ein Deckel über
+einem Schalter. Für alles, was wirklich niemand lesen soll, ist die Verschlüsselung da — die ist
+echt.
+
+Das Wort ist auch kein Passwort. Es wird als gesalzener SHA-256-Abdruck abgelegt, damit es nicht im
+Klartext in der Datei steht, aber das Eingabefeld zeigt es bewusst offen: für einen Deckel nimmt
+niemand ein echtes Passwort, und „123" genügt. Es gibt keine Komplexitätsregel.
+
 ## Der Aufrufzähler
 
 Das Einzige in einer gebauten Datei, das von sich aus ins Netz geht. Beim Öffnen sendet sie ein
@@ -290,7 +314,9 @@ Netzwerk-Tab, und von der Testsuite zugesichert.
 - **Mail-Gateways filtern `.html`-Anhänge** öfter als nicht. Gezippt versenden oder einen
   Dateitransfer nutzen, und den Weg einmal mit einer Attrappe testen, bevor es darauf ankommt.
 - **Verschlüsselung schützt die Daten, nicht den Zugriff auf die Anwendung.** Rollen und Ansichten in
-  einer lokal laufenden Datei wären nur Oberfläche — wer die Datei hat, hat auch den Code.
+  einer lokal laufenden Datei wären nur Oberfläche — wer die Datei hat, hat auch den Code. Die
+  [Sperre der Einstellungen](#einstellungen-sperren) ist genau solche Oberfläche und sagt das dort,
+  wo sie sitzt.
 
 ## Testen
 

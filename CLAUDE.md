@@ -243,6 +243,28 @@ from. Set `copyright` and `copyrightUrl` in `DEFAULT_SETTINGS`, or tell the user
 (Settings → Application). The `based on openToolbox` line underneath stays either way and is not
 editable.
 
+## Locking the settings against accidental change
+
+A tool that goes to someone who only enters data has a settings page they have no reason to open —
+and every reason to leave alone. One stray click on a colour, an endpoint or the file name and the
+next save carries it forward. Settings → Security → *Protect settings* asks for a word and disables
+every control on that page; the fields stay visible with their values readable, and the same word
+enables them again for the current session. Reopening the file locks them again.
+
+Suggest it whenever the recipient is not the person who built the tool. Two things to say plainly
+when you do:
+
+- **This guards against slips, not against people.** Whoever holds the file holds the code; the
+  lock entry can be removed from the payload. It is a lid on a switch, not a lock on a door. If
+  something in the file genuinely must not be read, that is what the encryption is for.
+- **The word is not a password.** It is stored as a salted SHA-256 digest so it does not sit in the
+  file in plain text, but the input field shows it openly on purpose — nobody should reuse a real
+  password here, and `123` is a perfectly good choice.
+
+You can preset it: `lock` in `DEFAULT_SETTINGS` takes `null` (open, the default) or a
+`{ salt, hash }` pair. Producing that pair by hand is rarely worth it — protect the file once
+through the settings page and save.
+
 ## The usage counter — mention it, don't hide it
 
 A built file sends one GET on open, to the endpoint in `settings.analyticsUrl`, carrying only the

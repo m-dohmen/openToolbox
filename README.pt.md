@@ -62,6 +62,8 @@ larguras em CSS e o anel é um único círculo SVG. As duas visões imprimem com
 - **Um registro de alterações**, preenchido a cada gravação com data, versão e o que mudou.
 - **Prompts de exemplo embutidos**, para que quem receber o arquivo consiga mandar alterá-lo sem ter
   lido esta página.
+- **Um bloqueio da página de configurações**, para que uma ferramenta nas mãos de quem apenas
+  registra dados não seja reconfigurada por acidente.
 
 ## Início rápido
 
@@ -176,6 +178,23 @@ Três restrições que aparecem repetidamente em ambientes regulados e corporati
 
 Um único arquivo HTML contorna as três. E ele é honesto sobre o que é: o usuário consegue ler todo o
 código-fonte, e não existe serviço algum que possa mudar por trás dele.
+
+## Bloquear as configurações
+
+Configurações → Segurança → *Proteger as configurações* pede uma palavra e desabilita todos os
+controles da página. Os campos continuam **visíveis e com os valores legíveis**: a mensagem é «agora
+não», não «não é da sua conta». A mesma palavra os libera para a sessão atual; ao reabrir o arquivo
+eles voltam a ficar bloqueados, para que a proteção não desapareça em silêncio depois do primeiro
+salvamento do autor.
+
+**É uma proteção contra descuidos, não uma fronteira de segurança.** Quem tem o arquivo tem o
+código, e a entrada do bloqueio pode ser apagada do bloco de dados com um editor de texto. É uma
+tampa sobre um interruptor. Para aquilo que realmente ninguém pode ler existe a criptografia — essa
+é real.
+
+A palavra também não é uma senha. Ela é guardada como um resumo SHA-256 com sal, para não ficar em
+texto puro dentro do arquivo, mas o campo a mostra abertamente de propósito: para uma tampa ninguém
+deveria reaproveitar uma senha de verdade, e «123» resolve. Não há regra de complexidade.
 
 ## O contador de aberturas
 

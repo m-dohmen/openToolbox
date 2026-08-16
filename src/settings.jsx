@@ -61,6 +61,11 @@ export function SettingsPage({
   onResetColors,
   recordCount,
   showHints,
+  locked,
+  lockActive,
+  onProtect,
+  onUnlock,
+  onRemoveProtection,
 }) {
   const tr = translator(settings.locale)
   const [probe, setProbe] = useState({ state: 'idle', message: '' })
@@ -113,6 +118,19 @@ export function SettingsPage({
         <h2 class="settings__title">{tr('settings.title')}</h2>
         <p class="settings__lead">{tr('settings.lead')}</p>
         <Hint show={showHints} id="settings" tr={tr} />
+
+        {locked && (
+          <div class="settings__locked" role="status">
+            <p>{tr('settings.lockedBanner')}</p>
+            <button class="btn" onClick={onUnlock}>
+              <IconLock /> {tr('settings.unlock')}
+            </button>
+          </div>
+        )}
+
+        {/* Ein <fieldset disabled> sperrt jedes Bedienelement darin, ohne dass
+            jede einzelne Zeile davon wissen muss - und lässt sie sichtbar. */}
+        <fieldset class="settings__fields" disabled={locked}>
 
         <section>
           <p class="label">{tr('settings.appearance')}</p>
@@ -313,6 +331,22 @@ export function SettingsPage({
           </Row>
 
           <p class="note">{tr('settings.securityNote')}</p>
+
+          <Row label={tr('settings.lock')} hint={tr('settings.lockHint')}>
+            <div class="setting__buttons">
+              <span class="lock-state">
+                {lockActive ? tr('settings.lockActive') : tr('settings.lockInactive')}
+              </span>
+              <button class="btn" onClick={onProtect}>
+                {lockActive ? tr('settings.lockChange') : tr('settings.lockProtect')}
+              </button>
+              {lockActive && (
+                <button class="btn btn--danger" onClick={onRemoveProtection}>
+                  {tr('settings.lockRemove')}
+                </button>
+              )}
+            </div>
+          </Row>
 
           <Row label={tr('settings.analytics')} hint={tr('settings.analyticsHint')}>
             <Toggle
@@ -520,6 +554,8 @@ export function SettingsPage({
 
           <p class="note">{tr('settings.configNote')}</p>
         </section>
+
+        </fieldset>
 
         <footer class="settings__foot">
           <Wordmark brand={settings.brand} class="settings__logo" />

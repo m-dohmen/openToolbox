@@ -66,6 +66,8 @@ s'impriment en un PDF propre.
   changé.
 - **Des exemples de prompts intégrés**, pour que le destinataire puisse faire modifier l'outil sans
   avoir lu cette page.
+- **Un verrou sur la page des réglages**, pour qu'un outil confié à quelqu'un qui ne fait que saisir
+  des données ne soit pas reconfiguré par mégarde.
 
 ## Démarrage rapide
 
@@ -183,6 +185,24 @@ Trois contraintes qui reviennent sans cesse en environnement réglementé et en 
 
 Un fichier HTML unique contourne les trois. Et il est honnête sur ce qu'il est : l'utilisateur peut
 lire l'intégralité du code source, et aucun service ne peut changer dans son dos.
+
+## Verrouiller les réglages
+
+Réglages → Sécurité → *Protéger les réglages* demande un mot et désactive toutes les commandes de la
+page. Les champs restent **visibles et leurs valeurs lisibles** : le message est « pas maintenant »,
+pas « cela ne vous regarde pas ». Le même mot les réactive pour la session en cours ; à la
+réouverture du fichier ils sont de nouveau verrouillés, afin que la protection ne disparaisse pas
+silencieusement après le premier enregistrement de l'auteur.
+
+**C'est une protection contre les fausses manœuvres, pas une frontière de sécurité.** Qui détient le
+fichier détient le code, et l'entrée du verrou peut être supprimée du bloc de données avec un
+éditeur de texte. C'est un capot sur un interrupteur. Pour ce que personne ne doit vraiment lire, il
+y a le chiffrement — lui est réel.
+
+Le mot n'est pas non plus un mot de passe. Il est stocké sous forme d'empreinte SHA-256 salée pour
+ne pas figurer en clair dans le fichier, mais le champ l'affiche ouvertement à dessein : pour un
+capot, personne ne devrait réutiliser un vrai mot de passe, et « 123 » suffit. Aucune règle de
+complexité.
 
 ## Le compteur d'ouvertures
 

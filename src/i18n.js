@@ -356,6 +356,33 @@ const STRINGS = {
     'settings.securityNote':
       'Encryption protects the data, not access to the application. Roles and views in a file ' +
       'that runs locally would be surface only — whoever holds the file also holds the code.',
+    'settings.lock': 'Protect settings',
+    'settings.lockHint':
+      'Disables the fields on this page so nobody changes them by accident. They stay visible, and ' +
+      'entering the word unlocks them again. This guards against slips, not against anyone who ' +
+      'wants in — whoever holds the file holds the code.',
+    'settings.lockProtect': 'Protect…',
+    'settings.lockChange': 'Change word…',
+    'settings.lockRemove': 'Remove protection',
+    'settings.lockedBanner':
+      'The settings on this page are protected against accidental changes. Unlock them to edit.',
+    'settings.unlock': 'Unlock',
+    'settings.lockActive': 'protected',
+    'settings.lockInactive': 'open',
+
+    'lockDialog.protectTitle': 'Protect the settings',
+    'lockDialog.protectBody':
+      'Pick a word. It is shown in plain text on purpose: this only guards against accidental ' +
+      'changes, so do not reuse a real password. Anything goes — "123" is fine.',
+    'lockDialog.unlockTitle': 'Unlock the settings',
+    'lockDialog.unlockBody': 'Enter the word that was set when this file was protected.',
+    'lockDialog.label': 'Word',
+    'lockDialog.wrong': 'That does not match. The settings stay protected.',
+
+    'toast.locked': 'Settings protected — not saved yet.',
+    'toast.unlocked': 'Settings unlocked for this session.',
+    'toast.lockRemoved': 'Protection removed — not saved yet.',
+
     'settings.analytics': 'Usage counter',
     'settings.analyticsHint':
       'Reports one page view to the endpoint below when this file is opened, together with the ' +
@@ -790,6 +817,34 @@ const STRINGS = {
     'settings.securityNote':
       'Verschlüsselung schützt die Daten, nicht den Zugriff auf die Anwendung. Rollen und Ansichten ' +
       'in einer lokal laufenden Datei wären nur Oberfläche — wer die Datei hat, hat auch den Code.',
+    'settings.lock': 'Einstellungen schützen',
+    'settings.lockHint':
+      'Sperrt die Felder auf dieser Seite, damit sie niemand versehentlich verstellt. Sichtbar ' +
+      'bleiben sie, und mit dem Wort lassen sie sich wieder öffnen. Das schützt vor Versehen, ' +
+      'nicht vor Absicht — wer die Datei hat, hat auch den Code.',
+    'settings.lockProtect': 'Schützen…',
+    'settings.lockChange': 'Wort ändern…',
+    'settings.lockRemove': 'Schutz aufheben',
+    'settings.lockedBanner':
+      'Die Einstellungen auf dieser Seite sind gegen versehentliche Änderung geschützt. Zum ' +
+      'Bearbeiten entsperren.',
+    'settings.unlock': 'Entsperren',
+    'settings.lockActive': 'geschützt',
+    'settings.lockInactive': 'offen',
+
+    'lockDialog.protectTitle': 'Einstellungen schützen',
+    'lockDialog.protectBody':
+      'Wähle ein Wort. Es steht bewusst im Klartext da: der Schutz richtet sich nur gegen ' +
+      'Versehen, nimm hier also kein echtes Passwort. Alles ist erlaubt — „123" genügt.',
+    'lockDialog.unlockTitle': 'Einstellungen entsperren',
+    'lockDialog.unlockBody': 'Gib das Wort ein, das beim Schützen dieser Datei gesetzt wurde.',
+    'lockDialog.label': 'Wort',
+    'lockDialog.wrong': 'Das passt nicht. Die Einstellungen bleiben geschützt.',
+
+    'toast.locked': 'Einstellungen geschützt — noch nicht gespeichert.',
+    'toast.unlocked': 'Einstellungen für diese Sitzung entsperrt.',
+    'toast.lockRemoved': 'Schutz aufgehoben — noch nicht gespeichert.',
+
     'settings.analytics': 'Aufrufzähler',
     'settings.analyticsHint':
       'Meldet beim Öffnen dieser Datei einen Seitenaufruf an den unten eingetragenen Endpunkt, ' +

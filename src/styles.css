@@ -873,6 +873,37 @@ tbody tr[data-selected="true"] td { background: var(--accent-soft); }
   font-size: 12.5px;
 }
 
+/* Das <fieldset> traegt nur die Sperre, kein eigenes Aussehen - der Browser
+   gibt ihm sonst Rand und Innenabstand, und die Seite verspringt beim
+   Entsperren. */
+.settings__fields { margin: 0; padding: 0; border: 0; min-width: 0; }
+
+/* Gesperrte Felder bleiben lesbar: gedaempft genug, um als "nicht jetzt" zu
+   lesen, hell genug, um die eingestellten Werte noch abzulesen. Genau darum
+   werden sie ausgegraut und nicht ausgeblendet. */
+.settings__fields:disabled .setting__control { opacity: 0.55; }
+.settings__fields:disabled input,
+.settings__fields:disabled textarea,
+.settings__fields:disabled select,
+.settings__fields:disabled .btn,
+.settings__fields:disabled .toggle,
+.settings__fields:disabled .swatch { cursor: not-allowed; }
+
+.settings__locked {
+  display: flex;
+  gap: 14px;
+  align-items: center;
+  justify-content: space-between;
+  margin: 0 0 22px;
+  padding: 12px 14px;
+  border: 1px solid var(--tone-flag);
+  border-left-width: 3px;
+  border-radius: 7px;
+  background: color-mix(in srgb, var(--tone-flag) 8%, transparent);
+}
+.settings__locked p { margin: 0; font-size: 13px; color: var(--ink); }
+.settings__locked .btn { flex: none; }
+
 .settings__foot { display: flex; gap: 18px; align-items: flex-start; padding: 4px 2px; }
 .settings__logo { flex: none; font-size: 14px; }
 .settings__foot p { margin: 0 0 3px; color: var(--muted); font-size: 12.5px; }
@@ -1029,6 +1060,7 @@ tbody tr[data-selected="true"] td { background: var(--accent-soft); }
 .filebar__ai { color: var(--tone-pending); }
 .filebar__ai::before { background: var(--tone-pending) !important; }
 
+.lock-state,
 .dialect {
   align-self: center;
   color: var(--muted);

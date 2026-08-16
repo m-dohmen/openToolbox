@@ -11,6 +11,7 @@ import {
   pickFile,
 } from './lib/payload.js'
 import { seal, open as unseal, cryptoAvailable } from './lib/crypto.js'
+import { makeLock, checkLock } from './lib/lock.js'
 import { toCsv, fromCsv } from './lib/csv.js'
 import * as domainModule from './domain.js'
 import {
@@ -118,6 +119,9 @@ const DEFAULT_SETTINGS = {
      versehentlich ein fremder Name stehen bleibt; siehe settings.jsx. */
   copyright: '© openToolbox',
   copyrightUrl: 'https://m-dohmen.github.io/openToolbox/',
+  /* Fehlbedienungsschutz für die Einstellungsseite: null oder { salt, hash }.
+     Keine Zugriffskontrolle - siehe lib/lock.js. */
+  lock: null,
   colors: DEFAULT_COLORS,
   brand: DEFAULT_BRAND,
   ai: AI_DEFAULTS,
@@ -294,9 +298,15 @@ function Workbench({
   const [dark, setDark] = useState(false)
   const [log, setLog] = useState(initialLog ?? [])
   const [saveDialog, setSaveDialog] = useState(null)
+  // Entsperren gilt nur für die laufende Sitzung. Wer die Datei erneut öffnet,
+  // findet die Einstellungen wieder gesperrt vor - sonst wäre der Schutz nach
+  // dem ersten Speichern des Erstellers still verschwunden.
+  const [unlocked, setUnlocked] = useState(false)
+  const [lockDialog, setLockDialog] = useState(null)
 
   const tr = translator(settings.locale)
   const showHints = settings.examplePrompts
+  const settingsLocked = Boolean(settings.lock) && !unlocked
   const entity = ENTITIES[activeKey]
   const schema = entity.schema
   const records = recordsByEntity[activeKey]
@@ -767,6 +777,15 @@ function Workbench({
           onImportConfig={importConfiguration}
           onResetColors={() => changeSettings({ colors: DEFAULT_COLORS })}
           recordCount={records.length}
+          locked={settingsLocked}
+          lockActive={Boolean(settings.lock)}
+          onProtect={() => setLockDialog({ mode: 'protect' })}
+          onUnlock={() => setLockDialog({ mode: 'unlock' })}
+          onRemoveProtection={() => {
+            changeSettings({ lock: null })
+            setUnlocked(false)
+            notify(tr('toast.lockRemoved'))
+          }}
         />
       ) : (
       <>
@@ -1062,6 +1081,30 @@ function Workbench({
               setDirty(true)
               setShowKey(false)
               notify(pass ? tr('toast.passphraseSet') : tr('toast.encryptionRemovedShort'))
+            }}
+          />
+        </>
+      )}
+
+      {lockDialog && (
+        <>
+          <div class="scrim" onClick={() => setLockDialog(null)} />
+          <LockDialog
+            mode={lockDialog.mode}
+            tr={tr}
+            onClose={() => setLockDialog(null)}
+            onProtect={async (word) => {
+              changeSettings({ lock: await makeLock(word) })
+              setUnlocked(false)
+              setLockDialog(null)
+              notify(tr('toast.locked'))
+            }}
+            onUnlock={async (word) => {
+              if (!(await checkLock(settings.lock, word))) return false
+              setUnlocked(true)
+              setLockDialog(null)
+              notify(tr('toast.unlocked'))
+              return true
             }}
           />
         </>
@@ -1534,6 +1577,53 @@ function KeyDialog({ active, onClose, onApply, tr }) {
             {tr('keyDialog.remove')}
           </button>
         )}
+        <button class="btn btn--quiet" onClick={onClose}>{tr('common.cancel')}</button>
+        <button class="btn btn--primary" onClick={apply}>{tr('common.apply')}</button>
+      </div>
+    </div>
+  )
+}
+
+/**
+ * Wort setzen oder eingeben, das die Einstellungsseite sperrt.
+ *
+ * Das Feld ist bewusst ein Klartextfeld: bei einem Schutz gegen Versehen ist
+ * ein Tippfehler der wahrscheinlichere Schaden als ein Mitleser, und ein
+ * sichtbares Feld sagt nebenbei, dass hier kein echtes Passwort hingehört.
+ */
+function LockDialog({ mode, tr, onClose, onProtect, onUnlock }) {
+  const [word, setWord] = useState('')
+  const [error, setError] = useState('')
+  const protect = mode === 'protect'
+
+  const apply = async () => {
+    if (!word) return setError(tr('lockDialog.wrong'))
+    if (protect) return onProtect(word)
+    if (!(await onUnlock(word))) setError(tr('lockDialog.wrong'))
+  }
+
+  return (
+    <div class="modal" role="dialog" aria-label={tr(protect ? 'lockDialog.protectTitle' : 'lockDialog.unlockTitle')}>
+      <h2>{tr(protect ? 'lockDialog.protectTitle' : 'lockDialog.unlockTitle')}</h2>
+      <p>{tr(protect ? 'lockDialog.protectBody' : 'lockDialog.unlockBody')}</p>
+
+      <div class="field">
+        <label for="lock-word">{tr('lockDialog.label')}</label>
+        <input
+          id="lock-word"
+          type="text"
+          autocomplete="off"
+          value={word}
+          onInput={(e) => {
+            setWord(e.currentTarget.value)
+            setError('')
+          }}
+          onKeyDown={(e) => e.key === 'Enter' && apply()}
+        />
+      </div>
+      {error && <p class="error">{error}</p>}
+
+      <div class="modal__foot">
         <button class="btn btn--quiet" onClick={onClose}>{tr('common.cancel')}</button>
         <button class="btn btn--primary" onClick={apply}>{tr('common.apply')}</button>
       </div>

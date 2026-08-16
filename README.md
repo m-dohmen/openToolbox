@@ -92,6 +92,8 @@ dashboard · CSV import · change log · version numbers.**
   [Version numbers and change log](#version-numbers-and-change-log).
 - **Example prompts embedded in the file**, so whoever receives it can have it changed without
   reading this README — see [Example prompts](#example-prompts).
+- **A lock on the settings page**, so a tool handed to someone who only enters data can't be
+  reconfigured by accident — see [Locking the settings](#locking-the-settings).
 
 ## Quick start
 
@@ -287,6 +289,26 @@ There is deliberately **no browser storage**. `IndexedDB` and `localStorage` are
 `file://` — Chrome refuses `IndexedDB` when third-party cookies are blocked, and `localStorage` is
 shared across all local files in some browsers. The embedded payload works everywhere.
 
+## Locking the settings
+
+A file that goes to someone who only enters data still has a full settings page in it — colours,
+endpoints, the file name, the AI configuration. Nothing there needs to be touched, and a stray
+click on any of it travels forward into every following save.
+
+Settings → Security → *Protect settings* asks for a word and disables every control on the page.
+The fields stay **visible with their values readable** — the point is "not now", not "not your
+business". The same word enables them again for the current session; reopening the file locks them
+again, so the protection does not quietly disappear after the author's first save.
+
+**This is a guard against slips, not a security boundary.** Whoever has the file has the code, and
+the lock entry can be deleted from the payload with a text editor. It is a lid over a switch. For
+anything that genuinely must not be read, use the [encryption](#what-you-get) instead — that one is
+real.
+
+The word is not a password either. It is stored as a salted SHA-256 digest so it does not sit in
+the file as plain text, but the input shows it openly on purpose: nobody should reuse a real
+password for a lid, and `123` does the job. There is no complexity rule.
+
 ## The usage counter
 
 The one thing in a built file that reaches the network on its own. On open it sends a single GET
@@ -439,7 +461,8 @@ Three ways, all in the sidebar and in Settings → Data:
 - **Mail gateways strip `.html` attachments** more often than not. Zip it or use a file transfer,
   and test the route once with a dummy before it matters.
 - **Encryption protects the data, not access to the app.** Roles and views in a locally running file
-  would be surface only — whoever holds the file holds the code.
+  would be surface only — whoever holds the file holds the code. The
+  [settings lock](#locking-the-settings) is exactly that kind of surface, and says so where it sits.
 
 ## Project layout
 
@@ -458,6 +481,7 @@ src/tokens.css         colour and type primitives
 src/styles.css         semantic roles and components
 src/lib/payload.js     read and write the embedded data block
 src/lib/crypto.js      PBKDF2 + AES-GCM
+src/lib/lock.js        settings lock — a guard against slips, not a security boundary
 src/lib/ai.js          endpoint client, dialect negotiation, context building
 src/lib/actions.js     validation and application of AI-proposed changes
 src/lib/entities.js    normalizes SCHEMA/ENTITIES, shared field type check, delete-guard helpers

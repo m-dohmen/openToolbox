@@ -807,8 +807,61 @@ console.log('43) Ohne Link Verweise im Hinweis:', await page15.locator('.setting
 if ((await page15.locator('.settings__copyright a').count()) !== 0) {
   fail('Leerer Link erzeugt trotzdem einen Verweis')
 }
+// Fehlbedienungsschutz: Einstellungen sperren, sichtbar lassen, mit dem Wort
+// wieder oeffnen. Kein Sicherheitsversprechen - nur eine Huerde.
+const lockRow = page15.locator('.setting', { hasText: 'Protect settings' })
+await lockRow.getByRole('button').first().click()
+await page15.waitForSelector('#lock-word')
+await page15.locator('#lock-word').fill('123')
+await page15.locator('.modal__foot .btn--primary').click()
+await page15.waitForSelector('.settings__locked')
+
+const titleField = page15.locator('.suffixed input')  // Dateiname-Feld, eindeutig
+console.log('44) Nach dem Schuetzen — Titelfeld gesperrt:', await titleField.isDisabled())
+if (!(await titleField.isDisabled())) fail('Gesperrte Einstellungen bleiben bedienbar')
+if (!(await titleField.isVisible())) fail('Gesperrte Felder duerfen nicht verschwinden')
+await page15.screenshot({ path: resolve(tmp, 'einstellungen-gesperrt.png'), fullPage: true })
+
+// Falsches Wort laesst die Sperre stehen
+await page15.locator('.settings__locked .btn').click()
+await page15.waitForSelector('#lock-word')
+await page15.locator('#lock-word').fill('falsch')
+await page15.locator('.modal__foot .btn--primary').click()
+await page15.waitForSelector('.modal .error')
+console.log('45) Falsches Wort:', await page15.locator('.modal .error').innerText())
+if (!(await titleField.isDisabled())) fail('Falsches Wort hat die Einstellungen geoeffnet')
+
+// Richtiges Wort oeffnet sie
+await page15.locator('#lock-word').fill('123')
+await page15.locator('.modal__foot .btn--primary').click()
+await page15.waitForSelector('.settings__locked', { state: 'detached' })
+console.log('46) Nach dem Entsperren — Titelfeld gesperrt:', await titleField.isDisabled())
+if (await titleField.isDisabled()) fail('Richtiges Wort hat die Einstellungen nicht geoeffnet')
+
+// Entsperrt gilt nur fuer die Sitzung: die gespeicherte Datei ist wieder zu,
+// und das Wort steht nicht im Klartext darin.
+const lockedFile = resolve(tmp, 'gesperrt.html')
 await page15.getByRole('button', { name: 'Back to the list' }).click()
 await page15.waitForSelector('table tbody tr')
+await saveTo(page15, lockedFile, 'Einstellungen geschuetzt')
+const lockedSource = readFileSync(lockedFile, 'utf8')
+const lockedPayload = JSON.parse(
+  lockedSource.match(/<script id="sb-payload"[^>]*>([\s\S]*?)<\/script>/)[1].replace(/\\u003c/g, '<'),
+)
+console.log('47) Sperreintrag in der Datei:', JSON.stringify(lockedPayload.settings.lock))
+if (!lockedPayload.settings.lock?.hash) fail('Sperre wurde nicht mitgespeichert')
+if (/"lock":\s*\{[^}]*"123"/.test(lockedSource)) fail('Wort steht im Klartext in der Datei')
+
+const page16 = await ctx.newPage()
+page16.on('pageerror', (e) => errors.push(String(e)))
+await page16.goto('file://' + lockedFile)
+await page16.waitForSelector('table tbody tr')
+await page16.getByLabel('Settings').click()
+await page16.waitForSelector('.settings__locked')
+const reopened = page16.locator('.suffixed input')
+console.log('48) Nach erneutem Oeffnen gesperrt:', await reopened.isDisabled())
+if (!(await reopened.isDisabled())) fail('Erneut geoeffnete Datei ist nicht mehr geschuetzt')
+await page16.close()
 
 // Vorschau im hellen Modus
 await page3.getByLabel('Settings').click()
