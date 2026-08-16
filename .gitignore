@@ -3,3 +3,4 @@ dist/
 dist-multi-entity/
 test/.out/
 .DS_Store
+docs/.social-preview.html

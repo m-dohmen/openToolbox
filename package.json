@@ -7,7 +7,8 @@
     "build": "vite build",
     "test": "node test/smoke.mjs && node test/multi-entity.mjs",
     "build:demo": "node scripts/build-demo.mjs",
-    "screenshots": "node scripts/screenshots.mjs"
+    "screenshots": "node scripts/screenshots.mjs",
+    "social": "node scripts/social-preview.mjs"
   },
   "dependencies": {
     "preact": "^10.24.3"
