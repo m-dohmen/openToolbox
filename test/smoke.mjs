@@ -460,13 +460,35 @@ if (!restoredOwner.includes('QA')) fail('Wiederhergestellter Datensatz hat seine
 if (await page.locator('.filebar__history-btn').nth(1).isDisabled()) {
   fail('Redo sollte nach dem letzten Rueckgaengig verfuegbar sein')
 }
-await page.locator('table tbody tr').first().locator('.cell-id').click()
+
+/*
+ * Editieren rueckgaengig machen: der alte Feldwert muss zurueckkommen, nicht
+ * nur die Knopfzustaende sich aendern - dasselbe Muster wie beim Loeschen
+ * (2d/2e). Zugriff ueber den Titel "Smoke test entry", nicht ueber "erste
+ * Zeile": die Sortierung kann sich zwischen den Schritten aendern, ein
+ * Bezeichner nicht.
+ */
+await page.locator('tr:has-text("Smoke test entry")').locator('.cell-id').click()
 await page.waitForSelector('.drawer')
 await page.locator('#f-owner').fill('New owner after undo')
 await page.getByRole('button', { name: 'Apply' }).click()
+const editedRow = await page.locator('tr:has-text("Smoke test entry")').innerText()
+console.log('2f) Editiert — Zeile:', editedRow.replace(/\s+/g, ' '))
+if (!editedRow.includes('New owner after undo')) fail('Editieren hat nicht gegriffen')
 if (!(await page.locator('.filebar__history-btn').nth(1).isDisabled())) {
   fail('Eine neue Aenderung haette den Redo-Verlauf leeren muessen')
 }
+
+await page.locator('.filebar__history-btn').first().click()
+const revertedRow = await page.locator('tr:has-text("Smoke test entry")').innerText()
+console.log('2g) Editieren rueckgaengig — Zeile:', revertedRow.replace(/\s+/g, ' '))
+if (!revertedRow.includes('QA')) fail('Rueckgaengig hat den alten Feldwert nicht wiederhergestellt')
+if (revertedRow.includes('New owner after undo')) fail('Rueckgaengig hat den neuen Feldwert nicht entfernt')
+
+await page.locator('.filebar__history-btn').nth(1).click()
+const redoneRow = await page.locator('tr:has-text("Smoke test entry")').innerText()
+console.log('    Editieren wiederholt — Zeile:', redoneRow.replace(/\s+/g, ' '))
+if (!redoneRow.includes('New owner after undo')) fail('Wiederholen hat den neuen Feldwert nicht zurueckgebracht')
 
 // Speichern (ohne File System Access API -> Download-Pfad)
 const saved = resolve(tmp, 'runde1.html')
