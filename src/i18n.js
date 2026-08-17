@@ -80,6 +80,11 @@ const STRINGS = {
     'view.dashboard': 'Dashboard',
     'view.log': 'Change log',
 
+    'dashboard.dueDate.title': 'Due dates',
+    'dashboard.dueDate.overdue': 'Overdue',
+    'dashboard.dueDate.thisWeek': 'This week',
+    'dashboard.dueDate.upcoming': 'Next 30 days',
+
     'log.title': 'Change log',
     'log.lead':
       'One entry per save. Kept inside the file, and inside the encrypted part of it when the file ' +
@@ -665,6 +670,11 @@ const STRINGS = {
     'view.list': 'Liste',
     'view.dashboard': 'Dashboard',
     'view.log': 'Änderungsprotokoll',
+
+    'dashboard.dueDate.title': 'Fälligkeiten',
+    'dashboard.dueDate.overdue': 'Überfällig',
+    'dashboard.dueDate.thisWeek': 'Diese Woche',
+    'dashboard.dueDate.upcoming': 'Nächste 30 Tage',
 
     'log.title': 'Änderungsprotokoll',
     'log.lead':

@@ -382,6 +382,55 @@ button, input, select, textarea { font-family: var(--font); font-size: inherit; 
   font-variant-numeric: tabular-nums;
 }
 
+/* ── Fälligkeiten-Widget ──────────────────────────────────────── */
+
+.due-widget { grid-column: 1 / -1; }
+.due-widget__groups {
+  display: grid;
+  gap: 16px;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+}
+.due-widget__group-label {
+  margin: 0 0 6px;
+  font-size: 12.5px;
+  font-weight: var(--tone-weight-semi);
+  color: var(--ink);
+}
+.due-widget__count { color: var(--muted); font-weight: normal; }
+.due-widget__group--overdue .due-widget__group-label { color: var(--flag); }
+
+.due-widget__list { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.due-widget__item {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  width: 100%;
+  border: none;
+  background: transparent;
+  padding: 5px 6px;
+  border-radius: var(--r);
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+.due-widget__item:hover { background: var(--line-soft); }
+.due-widget__group--overdue .due-widget__item { color: var(--flag); }
+.due-widget__title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 13px;
+}
+.due-widget__date {
+  flex: none;
+  font-family: var(--mono);
+  font-size: 11.5px;
+  color: var(--muted);
+}
+.due-widget__group--overdue .due-widget__date { color: inherit; }
+
 /* ── Druck ────────────────────────────────────────────────────── */
 
 /*

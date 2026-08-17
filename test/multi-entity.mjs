@@ -212,6 +212,68 @@ const wizChip = await page.locator('tr:has-text("ISO 9001 certificate") .ref-chi
 console.log('    Aufgeloester Supplier:', wizChip)
 if (wizChip !== 'Suedwind Logistik GmbH') fail('Referenz auf den im selben Durchlauf angelegten Datensatz fehlt')
 
+/*
+ * Faelligkeiten-Widget ueber Entitaetsgrenzen: eigener Build mit
+ * test/fixtures/due-date-multi.domain.js. "projects" hat ein Datumsfeld, das
+ * aber nicht als dueDate deklariert ist - das darf im Widget nirgends
+ * auftauchen, auch wenn es in der Vergangenheit liegt. "milestones" deklariert
+ * dueDate und traegt alle drei Gruppen; ein Klick aus dem Dashboard heraus
+ * muss zur richtigen Entitaet umschalten, genau wie der Reference-Chip oben.
+ */
+const dueOutDir = resolve(root, 'dist-due-date-multi')
+const dueDist = resolve(dueOutDir, 'index.html')
+const dueMultiFixture = resolve(root, 'test/fixtures/due-date-multi.domain.js')
+const originalDomainForDue = readFileSync(domainPath, 'utf8')
+writeFileSync(domainPath, readFileSync(dueMultiFixture, 'utf8'))
+try {
+  execFileSync('npx', ['vite', 'build', '--outDir', 'dist-due-date-multi'], { cwd: root, stdio: 'pipe' })
+} finally {
+  writeFileSync(domainPath, originalDomainForDue)
+}
+console.log('14) Faelligkeiten-Multi-Entity-Build erzeugt:', dueDist)
+
+// Eigener Browser-Context statt der gemeinsamen `ctx`: clock.install() friert
+// die Uhr fuer den ganzen Context ein, nicht nur die eine Seite.
+const dueCtx = await browser.newContext({ viewport: { width: 1280, height: 850 } })
+const duePage = await dueCtx.newPage()
+duePage.on('pageerror', (e) => errors.push(String(e)))
+await duePage.clock.install({ time: new Date(2026, 7, 17, 9) })
+await duePage.goto('file://' + dueDist)
+await duePage.waitForSelector('.home, table tbody tr')
+if (await duePage.locator('.home').count()) await duePage.locator('.home__foot .btn--primary').click()
+await duePage.waitForSelector('table tbody tr')
+await duePage.getByRole('tab', { name: 'Dashboard' }).click()
+await duePage.waitForSelector('.dashboard')
+
+const dueGroupLabels = await duePage.locator('.due-widget__group-label').allInnerTexts()
+console.log('15) Faelligkeiten-Gruppen ueber beide Entitaeten:', dueGroupLabels)
+if (dueGroupLabels.length !== 3) fail('Erwartet alle 3 Gruppen (overdue/thisWeek/upcoming) bei der Milestones-Entitaet')
+
+const dueItems = await duePage.locator('.due-widget__item').allInnerTexts()
+console.log('    Eintraege:', dueItems)
+if (dueItems.length !== 3) fail('Erwartet 3 sichtbare Eintraege - der erledigte Milestone bleibt aussen vor')
+if (dueItems.some((t) => t.includes('Done milestone'))) fail('Erledigter Milestone erscheint trotzdem im Widget')
+if (dueItems.some((t) => /2026-01-01/.test(t))) {
+  fail('Das undeklarierte Datumsfeld von "projects" wurde trotzdem in das Widget aufgenommen')
+}
+
+// Klick aus dem Dashboard heraus muss die Entitaet wechseln, nicht nur den
+// Datensatz oeffnen - defaultEntityKey ist "projects", der Eintrag gehoert
+// aber zu "milestones".
+await duePage.locator('.due-widget__item', { hasText: 'Kickoff overdue' }).click()
+await duePage.waitForSelector('.drawer')
+console.log('16) Klick auf Faelligkeits-Eintrag oeffnet:', await duePage.locator('.drawer__head h2').innerText())
+await duePage.keyboard.press('Escape')
+await duePage.getByRole('tab', { name: 'List' }).click()
+await duePage.waitForSelector('table tbody tr')
+const activeTabAfterDueClick = await duePage.locator('.entity-tabs > button[aria-selected="true"]').innerText()
+console.log('    Aktive Entitaet danach:', activeTabAfterDueClick)
+if (activeTabAfterDueClick.toLowerCase() !== 'milestones') {
+  fail('Klick auf einen Faelligkeits-Eintrag wechselt nicht zur richtigen Entitaet')
+}
+await dueCtx.close()
+rmSync(dueOutDir, { recursive: true, force: true })
+
 console.log(errors.length ? '\nKonsolenfehler:\n' + errors.join('\n') : '\nKeine Konsolenfehler.')
 await browser.close()
 mock.close()
