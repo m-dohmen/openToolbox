@@ -254,6 +254,13 @@ const ageCases = [
   ['2026-08-13T12:00:00Z', 'days', 3],
   ['2026-06-16T12:00:00Z', 'months', 2],
   ['2024-08-16T12:00:00Z', 'years', 2],
+  // 360-364-Tage-Grenzfall: floor(days/365) waere hier 0 ("0 years ago"),
+  // wenn der Wechsel auf den gerundeten Monats-Bucket statt auf days haengt.
+  ['2025-08-21T12:00:00Z', 'months', 12],
+  ['2025-08-17T12:00:00Z', 'months', 12],
+  ['2025-08-16T12:00:00Z', 'years', 1],
+  // Ungueltiger Zeitstempel darf nicht bis zur i18n-Ausgabe als NaN durchlaufen.
+  ['not-a-date', 'unknown', 0],
 ]
 const trEn = translator('en')
 const trDe = translator('de')
@@ -1544,6 +1551,20 @@ console.log('89) Nach erneutem Oeffnen:', await page28.locator('.prose h2').inne
 if ((await page28.locator('.prose h2').innerText()) !== 'Audit findings 2026') fail('Der Text reist nicht mit der Datei')
 await page28.screenshot({ path: resolve(tmp, 'startseite.png') })
 await page28.close()
+
+// Idle-Update der relativen Alters-Angabe: eine offen bleibende, unberuehrte
+// Datei muss sich ohne Klick oder Neuladen aktualisieren.
+const page29 = await ctx.newPage()
+page29.on('pageerror', (e) => errors.push(String(e)))
+await page29.clock.install({ time: new Date() })
+await page29.goto('file://' + homeFile)
+await page29.waitForSelector('.filebar__meta')
+const ageBeforeIdle = await page29.locator('.filebar__meta').innerText()
+await page29.clock.fastForward('05:00')
+const ageAfterIdle = await page29.locator('.filebar__meta').innerText()
+console.log('90) Alters-Angabe vor/nach 5 Minuten Leerlauf:', JSON.stringify(ageBeforeIdle), '/', JSON.stringify(ageAfterIdle))
+if (ageBeforeIdle === ageAfterIdle) fail('Relative Alters-Angabe aktualisiert sich nicht von selbst in einer offenen Datei')
+await page29.close()
 
 // Vorschau im hellen Modus
 await page3.getByLabel('Settings').click()

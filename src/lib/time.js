@@ -6,6 +6,7 @@
  */
 export function relativeAge(iso, now = Date.now()) {
   const then = new Date(iso).getTime()
+  if (!Number.isFinite(then)) return { unit: 'unknown', n: 0 }
   const seconds = Math.max(0, Math.floor((now - then) / 1000))
   if (seconds < 60) return { unit: 'now', n: 0 }
   const minutes = Math.floor(seconds / 60)
@@ -14,7 +15,8 @@ export function relativeAge(iso, now = Date.now()) {
   if (hours < 24) return { unit: 'hours', n: hours }
   const days = Math.floor(hours / 24)
   if (days < 30) return { unit: 'days', n: days }
-  const months = Math.floor(days / 30)
-  if (months < 12) return { unit: 'months', n: months }
+  // Der Wechsel auf "years" haengt an days, nicht am gerundeten Monats-Bucket -
+  // sonst zeigt 360-364 Tage "0 years ago" (floor(364/365) = 0) statt "12 months".
+  if (days < 365) return { unit: 'months', n: Math.floor(days / 30) }
   return { unit: 'years', n: Math.floor(days / 365) }
 }
