@@ -111,10 +111,16 @@ upsert_agent() {
   fi
 
   if [[ -n "$id" ]]; then
+    # --runtime-id gehoert hier ausdruecklich dazu: Runtime-Ids sind nicht
+    # stabil. Registriert sich ein Daemon neu, bekommt er eine neue Id, und ein
+    # Agent, der noch die alte haelt, faellt lautlos aus — jeder geplante Lauf
+    # scheitert dann mit "Unexpected server error", waehrend die Oberflaeche
+    # den Agenten weiter als "idle" zeigt. Genau daran hingen beide Takte.
     multica agent update "$id" \
       --description "$desc" \
       --instructions "$ins" \
       --model "$MODEL" \
+      --runtime-id "$RUNTIME_ID" \
       --max-concurrent-tasks "$maxtasks" >/dev/null
     printf '  %-26s aktualisiert (%s)\n' "$name" "${id:0:8}" >&2
   else
