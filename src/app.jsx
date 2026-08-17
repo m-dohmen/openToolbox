@@ -51,6 +51,7 @@ import { Hint } from './hint.jsx'
 import { ChatDock } from './chat.jsx'
 import { AI_DEFAULTS } from './lib/ai.js'
 import { countOpen, DEFAULT_COUNT_URL } from './lib/count.js'
+import { hasDueDates } from './lib/dueDate.js'
 import { relativeAge } from './lib/time.js'
 import { translator, DEFAULT_LOCALE } from './i18n.js'
 
@@ -68,6 +69,11 @@ const SINGLE = isSingleEntity(ENTITIES)
 
 /** Optional: Kacheln über den Bestand. Fehlt der Export, gibt es die Ansicht nicht. */
 const DASHBOARD = domainModule.DASHBOARD?.tiles?.length ? domainModule.DASHBOARD : null
+/* Das Fälligkeiten-Widget lebt in der Dashboard-Ansicht, hängt aber nicht am
+   DASHBOARD-Export - eine Domäne kann `dueDate` deklarieren, ohne je Kacheln
+   zu definieren, und bekommt die Ansicht dann trotzdem. */
+const HAS_DUE_DATES = hasDueDates(ENTITIES)
+const SHOW_DASHBOARD_VIEW = Boolean(DASHBOARD || HAS_DUE_DATES)
 /* Hat diese Domaene ueberhaupt Anhaenge? Sonst gibt es weder Anzeige noch
    Budget - ein Werkzeug ohne Dateien soll davon nichts merken. */
 const ATTACHMENTS = hasAttachments(ENTITIES)
@@ -1007,7 +1013,7 @@ function Workbench({
         />
       ) : (
       <>
-      {!intake && (ENTITY_KEYS.length > 1 || DASHBOARD || settings.auditLog || WIZARD || homeText) && (
+      {!intake && (ENTITY_KEYS.length > 1 || SHOW_DASHBOARD_VIEW || settings.auditLog || WIZARD || homeText) && (
         <div class="entity-tabs" role="tablist" aria-label={tr('entities.tabsLabel')}>
           {ENTITY_KEYS.length > 1 &&
             ENTITY_KEYS.map((key) => (
@@ -1023,7 +1029,7 @@ function Workbench({
                 {ENTITIES[key].schema.plural}
               </button>
             ))}
-          {(DASHBOARD || settings.auditLog || WIZARD || homeText) && (
+          {(SHOW_DASHBOARD_VIEW || settings.auditLog || WIZARD || homeText) && (
             <div class="entity-tabs__views">
               {homeText && (
                 <button
@@ -1041,7 +1047,7 @@ function Workbench({
               >
                 {tr('view.list')}
               </button>
-              {DASHBOARD && (
+              {SHOW_DASHBOARD_VIEW && (
                 <button
                   role="tab"
                   aria-selected={String(view === 'dashboard')}
@@ -1108,7 +1114,7 @@ function Workbench({
           }}
           tr={tr}
         />
-      ) : view === 'dashboard' ? (
+      ) : view === 'dashboard' && SHOW_DASHBOARD_VIEW ? (
         <DashboardView
           dashboard={DASHBOARD}
           entities={ENTITIES}
@@ -1117,6 +1123,7 @@ function Workbench({
           accent={settings.colors.accent}
           dark={dark}
           examplePrompts={showHints}
+          onNavigate={navigateReference}
           tr={tr}
         />
       ) : (

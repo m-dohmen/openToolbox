@@ -7,9 +7,11 @@ import { applyActions } from '../src/lib/actions.js'
 import { parse } from '../src/lib/markdown.js'
 import { translator } from '../src/i18n.js'
 import { relativeAge } from '../src/lib/time.js'
-import { readFileSync, writeFileSync, mkdirSync } from 'node:fs'
+import { groupByDueDate, hasDueDates } from '../src/lib/dueDate.js'
+import { readFileSync, writeFileSync, mkdirSync, rmSync } from 'node:fs'
 import { resolve, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { execFileSync } from 'node:child_process'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const dist = resolve(root, 'dist/index.html')
@@ -277,6 +279,57 @@ if (trEn(ageKeys.minutes, 15) !== '15 minutes ago') fail('Englischer Minutentext
 if (trDe(ageKeys.days, 3) !== 'vor 3 Tagen') fail('Deutscher Tagestext falsch')
 if (trEn(ageKeys.minutes, 1) !== '1 minute ago') fail('Einzahl in Minutentext fehlt')
 if (trDe(ageKeys.days, 1) !== 'vor 1 Tag') fail('Einzahl in Tagestext fehlt')
+
+/*
+ * Fälligkeiten-Gruppierung (Dashboard-Widget): reine Funktion, "heute" wird
+ * hereingereicht statt aus new Date() gelesen - genau die injizierbare Uhr,
+ * die die Aufgabe verlangt. "today" ist ein Montag (2026-08-17), die Woche
+ * läuft also bis Sonntag 2026-08-23 und "nächste 30 Tage" bis 2026-09-22.
+ * Jede Grenze wird an beiden Enden geprüft, dazu: erledigt raus, leerer Wert
+ * raus, eine Entität ohne dueDate-Deklaration bleibt komplett außen vor.
+ */
+const dueDateSchema = (dueDate) => ({
+  idField: 'id', singular: 'item', plural: 'items', titleField: 'title',
+  list: ['title', 'due'], facets: [], search: ['title'],
+  ...(dueDate ? { dueDate } : {}),
+  fields: [
+    { key: 'title', label: 'Title', type: 'text' },
+    { key: 'due', label: 'Due', type: 'date' },
+    { key: 'status', label: 'Status', type: 'enum', values: ['open', 'done'] },
+  ],
+})
+const dueDateEntities = {
+  items: { schema: dueDateSchema('due'), isDone: (r) => r.status === 'done' },
+  others: { schema: dueDateSchema(null), isDone: () => false },
+}
+const dueDateRecords = {
+  items: [
+    { id: 'B1', title: 'Yesterday', due: '2026-08-16', status: 'open' },   // overdue (day before today)
+    { id: 'B2', title: 'Today', due: '2026-08-17', status: 'open' },       // this week (lower boundary)
+    { id: 'B3', title: 'End of week', due: '2026-08-23', status: 'open' }, // this week (upper boundary, Sunday)
+    { id: 'B4', title: 'Next Monday', due: '2026-08-24', status: 'open' }, // upcoming (lower boundary)
+    { id: 'B5', title: 'Window end', due: '2026-09-22', status: 'open' },  // upcoming (upper boundary)
+    { id: 'B6', title: 'Just too far', due: '2026-09-23', status: 'open' }, // one day past the window - excluded
+    { id: 'B7', title: 'No due date', due: '', status: 'open' },           // no value - excluded
+    { id: 'B8', title: 'Finished overdue', due: '2026-08-01', status: 'done' }, // done - excluded
+  ],
+  // Not declared as dueDate on `others` - must not surface even though the
+  // date would be overdue if the widget read any date field it could find.
+  others: [{ id: 'O1', title: 'Unrelated date', due: '2026-08-01', status: 'open' }],
+}
+const dueGroups = groupByDueDate(dueDateEntities, dueDateRecords, { today: new Date(2026, 7, 17) })
+const ids = (list) => list.map((i) => i.record.id)
+console.log('0f) Fälligkeiten — überfällig:', ids(dueGroups.overdue), '| diese Woche:', ids(dueGroups.thisWeek), '| kommend:', ids(dueGroups.upcoming))
+if (ids(dueGroups.overdue).join() !== 'B1') fail('Überfällig-Gruppe falsch abgegrenzt')
+if (ids(dueGroups.thisWeek).join() !== 'B2,B3') fail('Diese-Woche-Gruppe falsch abgegrenzt (Montag/Sonntag-Grenze)')
+if (ids(dueGroups.upcoming).join() !== 'B4,B5') fail('Kommend-Gruppe falsch abgegrenzt (30-Tage-Grenze)')
+const allGrouped = [...ids(dueGroups.overdue), ...ids(dueGroups.thisWeek), ...ids(dueGroups.upcoming)]
+if (allGrouped.includes('B6')) fail('Datum jenseits der 30-Tage-Grenze haette nicht erscheinen duerfen')
+if (allGrouped.includes('B7')) fail('Datensatz ohne Datum haette nicht erscheinen duerfen')
+if (allGrouped.includes('B8')) fail('Erledigter Datensatz haette nicht als faellig gelten duerfen')
+if (allGrouped.includes('O1')) fail('Entitaet ohne dueDate-Deklaration wurde trotzdem einbezogen')
+if (!hasDueDates(dueDateEntities)) fail('hasDueDates erkennt eine deklarierte Entitaet nicht')
+if (hasDueDates({ others: dueDateEntities.others })) fail('hasDueDates meldet faelschlich eine Deklaration')
 
 const browser = await chromium.launch()
 const ctx = await browser.newContext({ acceptDownloads: true, viewport: { width: 1280, height: 850 } })
@@ -811,6 +864,13 @@ if (tileCount !== 6) fail('Erwartet 6 Kacheln aus dem DASHBOARD-Export')
 if (statValues[0] !== '11') fail('Anzahl-Kachel stimmt nicht mit dem Bestand ueberein')
 if (statValues[1] !== railOverdue) fail('Ueberfaellig-Kachel weicht von der Seitenleiste ab')
 
+// Negativfall: src/domain.js deklariert kein dueDate (das Feld "due" existiert,
+// wird aber nicht als solches benannt) - das Faelligkeiten-Widget darf hier
+// schlicht nicht existieren, das Dashboard bleibt exakt wie zuvor.
+const dueWidgetCount = await page14.locator('.due-widget').count()
+console.log('34a) Faelligkeiten-Widget ohne dueDate-Deklaration:', dueWidgetCount)
+if (dueWidgetCount !== 0) fail('Widget erscheint, obwohl die Domaene kein dueDate deklariert')
+
 const donutTotal = await page14.locator('.donut__total').textContent()
 const legendSum = (await page14.locator('.legend__value').allInnerTexts()).reduce(
   (n, t) => n + Number(t),
@@ -862,6 +922,60 @@ for (const part of ['filebar', 'rail', 'toolbar', 'watermark', 'actions']) {
 if (printed.table === 'none') fail('Tabelle fehlt im Druck')
 await page14.screenshot({ path: resolve(tmp, 'druck-liste.png'), fullPage: true })
 await page14.emulateMedia({ media: 'screen' })
+
+/*
+ * Positivfall des Faelligkeiten-Widgets: eigener Build mit
+ * test/fixtures/due-date.domain.js, die `dueDate` deklariert. src/domain.js
+ * wird dafuer nur so lange ausgetauscht, wie der Build laeuft - genau wie in
+ * test/multi-entity.mjs. Die Browser-Uhr wird auf einen festen Montag
+ * gestellt, sonst haengt "diese Woche" vom Tag des Testlaufs ab.
+ */
+const dueOutDir = resolve(root, 'dist-due-date')
+const dueDist = resolve(dueOutDir, 'index.html')
+const domainPath = resolve(root, 'src/domain.js')
+const dueDomainFixture = resolve(root, 'test/fixtures/due-date.domain.js')
+const originalDomainForDue = readFileSync(domainPath, 'utf8')
+writeFileSync(domainPath, readFileSync(dueDomainFixture, 'utf8'))
+try {
+  execFileSync('npx', ['vite', 'build', '--outDir', 'dist-due-date'], { cwd: root, stdio: 'pipe' })
+} finally {
+  writeFileSync(domainPath, originalDomainForDue)
+}
+console.log('36a) Faelligkeiten-Build erzeugt:', dueDist)
+
+const pageDue = await ctx.newPage()
+pageDue.on('pageerror', (e) => errors.push(String(e)))
+pageDue.on('console', (m) => m.type() === 'error' && errors.push(m.text()))
+await pageDue.clock.install({ time: new Date(2026, 7, 17, 9) })
+await openList(pageDue, dueDist)
+await pageDue.getByRole('tab', { name: 'Dashboard' }).click()
+await pageDue.waitForSelector('.dashboard')
+
+// Nur nicht-leere Gruppen: die Fixture hat absichtlich keinen Datensatz in
+// "Naechste 30 Tage", die Gruppe darf also gar nicht erst auftauchen.
+const dueGroupLabels = await pageDue.locator('.due-widget__group-label').allInnerTexts()
+console.log('36b) Faelligkeiten-Gruppen:', dueGroupLabels)
+if (dueGroupLabels.length !== 2) fail('Erwartet 2 sichtbare Gruppen - die leere Gruppe haette verborgen bleiben muessen')
+if (!dueGroupLabels.some((l) => l.startsWith('Overdue'))) fail('Ueberfaellig-Gruppe fehlt')
+if (!dueGroupLabels.some((l) => l.startsWith('This week'))) fail('Diese-Woche-Gruppe fehlt')
+if (dueGroupLabels.some((l) => l.startsWith('Next 30 days'))) fail('Leere Gruppe "Next 30 days" haette verborgen bleiben muessen')
+
+const dueItems = await pageDue.locator('.due-widget__item').allInnerTexts()
+console.log('    Eintraege:', dueItems)
+if (dueItems.length !== 2) fail('Erwartet 2 sichtbare Eintraege (erledigt/ohne Datum/zu weit weg ausgeschlossen)')
+if (dueItems.some((t) => /Far future|Done overdue|No due date/.test(t))) {
+  fail('Ausgeschlossener Datensatz erscheint trotzdem im Faelligkeiten-Widget')
+}
+
+// Klick auf einen Eintrag oeffnet den zugehoerigen Datensatz - dieselbe
+// Navigation wie beim Reference-Chip, nur vom Dashboard aus.
+await pageDue.locator('.due-widget__item', { hasText: 'This week task' }).click()
+await pageDue.waitForSelector('.drawer')
+console.log('36c) Klick auf Faelligkeits-Eintrag oeffnet:', await pageDue.locator('.drawer__head h2').innerText())
+const dueOpenedTitle = await pageDue.locator('#f-title').inputValue()
+if (dueOpenedTitle !== 'This week task') fail('Klick auf Faelligkeits-Eintrag oeffnet den falschen Datensatz')
+
+rmSync(dueOutDir, { recursive: true, force: true })
 
 // Beispiel-Prompts, Version und Aenderungsprotokoll.
 const page15 = await ctx.newPage()

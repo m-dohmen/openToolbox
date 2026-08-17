@@ -23,6 +23,7 @@
  * vorhersehbar.
  */
 import { fieldValue, findField } from './lib/entities.js'
+import { groupByDueDate, hasDueDates } from './lib/dueDate.js'
 import { shade } from './lib/color.js'
 import { Hint } from './hint.jsx'
 
@@ -158,9 +159,70 @@ function DonutTile({ entity, records, tile, accent, dark, tr }) {
   )
 }
 
+/**
+ * Fälligkeiten über alle Entitäten, die `schema.dueDate` gesetzt haben - ein
+ * Feldschlüssel, genau wie `schema.totalField`. Ohne die Deklaration nimmt
+ * diese Funktion die Entität gar nicht erst in den Blick, deshalb ändert sich
+ * am Dashboard einer Domäne ohne `dueDate` nichts.
+ *
+ * `today` kommt von außen durch (Default `new Date()` in groupByDueDate) -
+ * das ist die injizierbare Uhr, die die Aufgabe verlangt: ein Test setzt hier
+ * ein festes Datum, statt sich auf den Tag zu verlassen, an dem er zufällig
+ * läuft.
+ */
+function DueDateWidget({ entities, recordsByEntity, today, onNavigate, tr }) {
+  const groups = groupByDueDate(entities, recordsByEntity, today ? { today } : {})
+  const sections = [
+    { key: 'overdue', label: tr('dashboard.dueDate.overdue') },
+    { key: 'thisWeek', label: tr('dashboard.dueDate.thisWeek') },
+    { key: 'upcoming', label: tr('dashboard.dueDate.upcoming') },
+  ].filter((s) => groups[s.key].length)
+
+  if (!sections.length) return null
+
+  return (
+    <div class="tile due-widget">
+      <p class="tile__label">{tr('dashboard.dueDate.title')}</p>
+      <div class="due-widget__groups">
+        {sections.map((s) => (
+          <div class={'due-widget__group due-widget__group--' + s.key} key={s.key}>
+            <p class="due-widget__group-label">
+              {s.label} <span class="due-widget__count">{groups[s.key].length}</span>
+            </p>
+            <ul class="due-widget__list">
+              {groups[s.key].map(({ entityKey, entity, record, value }) => (
+                <li key={entityKey + ':' + record[entity.schema.idField]}>
+                  <button
+                    class="due-widget__item"
+                    onClick={() => onNavigate(entityKey, record[entity.schema.idField])}
+                  >
+                    <span class="due-widget__title">{record[entity.schema.titleField]}</span>
+                    <span class="due-widget__date">{entity.formatDate(value)}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 /* ── Ansicht ──────────────────────────────────────────────────── */
 
-export function DashboardView({ dashboard, entities, recordsByEntity, defaultEntityKey, accent, dark, examplePrompts, tr }) {
+export function DashboardView({
+  dashboard,
+  entities,
+  recordsByEntity,
+  defaultEntityKey,
+  accent,
+  dark,
+  examplePrompts,
+  onNavigate,
+  today,
+  tr,
+}) {
   return (
     <div class="dashboard">
       {examplePrompts && (
@@ -168,7 +230,10 @@ export function DashboardView({ dashboard, entities, recordsByEntity, defaultEnt
           <Hint show id="dashboard" tr={tr} />
         </div>
       )}
-      {dashboard.tiles.map((tile, i) => {
+      {hasDueDates(entities) && (
+        <DueDateWidget entities={entities} recordsByEntity={recordsByEntity} today={today} onNavigate={onNavigate} tr={tr} />
+      )}
+      {dashboard?.tiles?.map((tile, i) => {
         const key = tile.entity ?? defaultEntityKey
         const entity = entities[key]
         if (!entity) return null
