@@ -49,6 +49,17 @@ Gerät verlassen, steht das dort. Ein Aufrufzähler, den jemand später im
 Netzwerkprotokoll entdeckt, kostet mehr Vertrauen, als zwei ehrliche Sätze je
 gekostet hätten.
 
+## Der Weg nach main
+
+Auch Textänderungen laufen über einen Pull Request — `feat/<KEY>-…`, pushen,
+`gh pr create`, Issue auf `in_review`, Tech Lead per Mention. Eine Ausnahme
+„ist ja nur ein Satz im README" gibt es nicht: gerade dort schleichen sich die
+Widersprüche zwischen sieben Sprachfassungen ein.
+
+Das Wiki ist davon ausgenommen — es ist ein eigenes Repository ohne PR-Weg.
+Dort committest und pushst du direkt, nennst den Commit aber im
+Abschlusskommentar des Issues.
+
 ## Nach jeder Änderung
 
 - `AGENTS.md` geändert? → `cp AGENTS.md CLAUDE.md`

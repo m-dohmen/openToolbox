@@ -30,8 +30,9 @@ Status: `backlog`, `todo`, `in_progress`, `in_review`, `done`, `blocked`,
 | Rolle | Weckt bei … |
 |---|---|
 | **Product Manager** | fertiger Zerlegung → **Tech Lead** |
-| **Tech Lead** | Code-Anteil → **Entwickler** · Demo-Anteil → **Demo-Ersteller** · Doku-Anteil → **Doku-Pfleger** · alles fertig → **Release-Manager** · Stufe fertig → **Product Manager** |
-| **Entwickler**, **Demo-Ersteller**, **Doku-Pfleger** | Übergabe oder Eskalation → **Tech Lead** |
+| **Tech Lead** | Code-Anteil → **Entwickler** · Demo-Anteil → **Demo-Ersteller** · Doku-Anteil → **Doku-Pfleger** · PR inhaltlich abgenommen → **Reviewer** · alles gemergt → **Release-Manager** · Stufe fertig → **Product Manager** |
+| **Entwickler**, **Demo-Ersteller**, **Doku-Pfleger** | PR offen oder Eskalation → **Tech Lead** |
+| **Reviewer** | gemergt → **Tech Lead** · Änderungswunsch → **Autor des PR** |
 | **Release-Manager** | Befund beim Bauen oder rote CI → **Tech Lead** |
 
 Michael wird von niemandem außer dem Product Manager angesprochen, und auch
@@ -57,10 +58,32 @@ multica agent list --output json |
    Beschreibung („wartet auf <KEY>").
 3. **Fertig heißt weitergereicht.** Wer abschließt, benennt den nächsten
    Schritt und weckt den nächsten Verantwortlichen.
-4. **„Done" heißt „in main".** Ein Issue wird erst `done`, wenn gepusht und
-   nach `main` gemergt ist und die CI grün ist. Code auf einem ungepushten
-   Branch ist nicht geliefert. Bei der Übergabe Branch, Commit-SHA und
-   Push-Status nennen.
+4. **„Done" heißt „gemergt".** Nichts geht direkt nach `main`. Jede Änderung
+   läuft über einen Pull Request; gemergt wird ausschließlich vom **Reviewer**,
+   und er setzt das Issue anschließend auf `done`. Niemand merged den eigenen
+   PR. Ein Branch ohne PR ist nicht geliefert, ein PR ohne Merge auch nicht.
+
+### Der Weg nach main
+
+```
+Branch  →  Push  →  Pull Request  →  Tech Lead (inhaltlich)  →  Reviewer (Tor + Merge)  →  done
+```
+
+Verbindlich für alle, die Dateien ändern:
+
+```bash
+git switch -c feat/<KEY>-kurzbeschreibung
+# arbeiten, committen
+git push -u origin HEAD
+gh pr create --fill --title "<KEY> …" --body "…"
+```
+
+Der PR-Rumpf nennt: das Issue (`Closes <KEY>` reicht nicht — schreibe den KEY
+aus, Multica-Issues sind keine GitHub-Issues), was geändert wurde, wie geprüft
+wurde (`npm test`, `npm run build:demo`), und was bewusst offen bleibt.
+
+Danach das Issue auf `in_review` und den Tech Lead per Mention wecken, mit
+PR-Nummer. Ohne diese Mention liegt der PR nur herum.
 
 ### Fehler statt Blockade
 
