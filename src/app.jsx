@@ -461,6 +461,19 @@ function Workbench({
     setDirty(true)
   }
 
+  /* Der Keydown-Listener unten haengt an einem Effekt ohne Abhaengigkeiten und
+     wird deshalb erst nach dem naechsten Rendern neu gebunden - ein passiver
+     Effekt laeuft nach dem Malen, nicht synchron mit dem Klick, der ihn
+     ausloest. Zwei Aktionen kurz hintereinander (z.B. Knopf, dann Strg+Z)
+     koennen so noch den alten Listener treffen, dessen Schluss ueber einen
+     inzwischen veralteten undo/redo-Stand verfuegt. Ueber ein Ref aufgeloest
+     bekommt selbst der alte Listener immer die aktuelle Funktion - die
+     Zuweisung passiert synchron im Rendern, lange bevor der Effekt greift. */
+  const undoRef = useRef(undo)
+  const redoRef = useRef(redo)
+  undoRef.current = undo
+  redoRef.current = redo
+
   /* Tabs zwischen Entitäten wechseln Filter/Sortierung/Entwurf zurück -
      die sind pro Schema, ein Übertrag zwischen unterschiedlichen Feldern
      ergäbe keinen Sinn. */
@@ -626,10 +639,10 @@ function Workbench({
         const key = e.key.toLowerCase()
         if (key === 'z' && !e.shiftKey) {
           e.preventDefault()
-          undo()
+          undoRef.current()
         } else if (key === 'y' || (key === 'z' && e.shiftKey)) {
           e.preventDefault()
-          redo()
+          redoRef.current()
         }
       }
     }
