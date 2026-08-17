@@ -102,8 +102,28 @@ button, input, select, textarea { font-family: var(--font); font-size: inherit; 
 .filebar__links a:hover { background: rgba(255, 255, 255, 0.12); color: var(--tone-white); }
 .filebar__links svg { width: 14px; height: 14px; display: block; }
 
-.filebar__state { margin-left: auto; display: flex; align-items: center; gap: 10px; }
-.filebar__links + .filebar__state { margin-left: 0; }
+/* Rueckgaengig/Wiederholen sitzt zwischen den Verweisen und dem Zustand und
+   uebernimmt den Rechtsschub - Verweise sind optional, dieses Paar ist es
+   nicht, also traegt es den `margin-left: auto` unabhaengig davon. */
+.filebar__history { margin-left: auto; display: flex; align-items: center; gap: 2px; }
+.filebar__links + .filebar__history { margin-left: 0; }
+.filebar__history-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: none;
+  background: none;
+  border-radius: var(--r);
+  color: var(--tone-accent-light);
+  cursor: pointer;
+}
+.filebar__history-btn svg { width: 14px; height: 14px; display: block; }
+.filebar__history-btn:hover:not(:disabled) { background: rgba(255, 255, 255, 0.12); color: var(--tone-white); }
+.filebar__history-btn:disabled { opacity: 0.35; cursor: default; }
+
+.filebar__state { margin-left: 0; display: flex; align-items: center; gap: 10px; }
 
 .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--tone-accent-light); flex: none; }
 .dot--dirty { background: var(--pending); }

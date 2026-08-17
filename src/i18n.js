@@ -49,6 +49,8 @@ const STRINGS = {
     'filebar.encrypted': 'encrypted',
     'filebar.plain': 'plain text',
     'filebar.saving': 'writing…',
+    'filebar.undo': 'Undo (Ctrl+Z)',
+    'filebar.redo': 'Redo (Ctrl+Y)',
 
     'sidebar.overview': 'Overview',
     'sidebar.overdue': 'Overdue',
@@ -640,6 +642,8 @@ const STRINGS = {
     'filebar.encrypted': 'verschlüsselt',
     'filebar.plain': 'Klartext',
     'filebar.saving': 'speichert…',
+    'filebar.undo': 'Rückgängig (Strg+Z)',
+    'filebar.redo': 'Wiederholen (Strg+Y)',
 
     'sidebar.overview': 'Übersicht',
     'sidebar.overdue': 'Überfällig',

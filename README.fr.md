@@ -86,6 +86,8 @@ s'impriment en un PDF propre.
 - **Un journal des modifications au niveau du champ**, déduit automatiquement à chaque enregistrement : quel enregistrement, quel champ, avant et après.
 - **Des pièces jointes avec un budget de taille visible**, car un outil qu'on ne peut plus envoyer par courriel n'est plus cet outil.
 - **Une page d'accueil modifiable**, pour que le fichier s'explique avant d'afficher un tableau.
+- **Annuler/rétablir pour la session**, pour chaque création, modification et suppression, avec
+  Ctrl/Cmd+Z et Ctrl/Cmd+Y ou les deux boutons dans la barre du fichier.
 
 ## Démarrage rapide
 

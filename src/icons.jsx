@@ -85,3 +85,17 @@ export const IconPaperclipSmall = (props) => (
     <path d="M19 11.5 12.3 18.2a4.2 4.2 0 0 1-6-6l7.1-7.1a2.8 2.8 0 0 1 4 4l-7.1 7.1a1.4 1.4 0 0 1-2-2l6.4-6.4" />
   </svg>
 )
+
+export const IconUndo = (props) => (
+  <svg {...base} {...props}>
+    <path d="M7 8H15.5a4.5 4.5 0 0 1 0 9H10" />
+    <path d="M10.5 4.5 7 8l3.5 3.5" />
+  </svg>
+)
+
+export const IconRedo = (props) => (
+  <svg {...base} {...props}>
+    <path d="M17 8H8.5a4.5 4.5 0 0 0 0 9H14" />
+    <path d="M13.5 4.5 17 8l-3.5 3.5" />
+  </svg>
+)

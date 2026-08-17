@@ -8,6 +8,7 @@ import { parse } from '../src/lib/markdown.js'
 import { translator } from '../src/i18n.js'
 import { relativeAge } from '../src/lib/time.js'
 import { groupByDueDate, hasDueDates } from '../src/lib/dueDate.js'
+import { HISTORY_LIMIT, pushHistory } from '../src/lib/history.js'
 import { readFileSync, writeFileSync, mkdirSync, rmSync } from 'node:fs'
 import { resolve, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -338,6 +339,20 @@ if (allGrouped.includes('O1')) fail('Entitaet ohne dueDate-Deklaration wurde tro
 if (!hasDueDates(dueDateEntities)) fail('hasDueDates erkennt eine deklarierte Entitaet nicht')
 if (hasDueDates({ others: dueDateEntities.others })) fail('hasDueDates meldet faelschlich eine Deklaration')
 
+/*
+ * Undo/Redo-Verlauf (reine Funktion): der Stack waechst bis zur Grenze und
+ * verwirft danach das AELTESTE Element, nicht das juengste - wer 50 Schritte
+ * zurueckliegt, hat den ersten davon ohnehin nicht mehr im Kopf, den
+ * letzten Schritt zu verlieren waere dagegen genau der, den man gerade
+ * rueckgaengig machen wollte.
+ */
+let historyStack = []
+for (let i = 0; i < HISTORY_LIMIT + 5; i++) historyStack = pushHistory(historyStack, `state-${i}`)
+console.log(`0g) Verlauf gedeckelt: ${historyStack.length}/${HISTORY_LIMIT}, aeltester Eintrag: ${historyStack[0]}`)
+if (historyStack.length !== HISTORY_LIMIT) fail('Verlauf ueberschreitet die Grenze')
+if (historyStack[0] !== 'state-5') fail('Verlauf hat nicht die aeltesten Eintraege verworfen')
+if (historyStack[historyStack.length - 1] !== `state-${HISTORY_LIMIT + 4}`) fail('Juengster Eintrag fehlt nach dem Deckeln')
+
 const browser = await chromium.launch()
 const ctx = await browser.newContext({ acceptDownloads: true, viewport: { width: 1280, height: 850 } })
 // Headless kennt keinen nativen Dateidialog -> Download-Pfad erzwingen.
@@ -393,6 +408,87 @@ await page.getByRole('button', { name: 'Apply' }).click()
 const rows2 = await page.locator('table tbody tr').count()
 console.log('2) Datensatz angelegt — Zeilen:', rows2)
 if (rows2 !== 12) fail('Anlegen hat nicht gegriffen')
+
+/*
+ * Undo/Redo: Anlegen rueckgaengig machen und wiederholen, per Knopf und per
+ * Tastenkuerzel. Deckt Akzeptanzkriterium 1 ("Anlegen -> Rueckgaengig ->
+ * Datensatz ist weg; Wiederholen -> Datensatz ist wieder da") ab.
+ */
+await page.locator('.filebar__history-btn').first().click()
+const rowsAfterUndo = await page.locator('table tbody tr').count()
+const goneAfterUndo = (await page.getByText('Smoke test entry').count()) === 0
+console.log('2a) Anlegen rueckgaengig — Zeilen:', rowsAfterUndo, '| Eintrag weg:', goneAfterUndo)
+if (rowsAfterUndo !== 11 || !goneAfterUndo) fail('Rueckgaengig hat die Neuanlage nicht zurueckgenommen')
+
+await page.locator('.filebar__history-btn').nth(1).click()
+const rowsAfterRedo = await page.locator('table tbody tr').count()
+const backAfterRedo = (await page.getByText('Smoke test entry').count()) === 1
+console.log('2b) Wiederholen — Zeilen:', rowsAfterRedo, '| Eintrag zurueck:', backAfterRedo)
+if (rowsAfterRedo !== 12 || !backAfterRedo) fail('Wiederholen hat die Neuanlage nicht zurueckgebracht')
+
+// Dasselbe ueber Strg+Z / Strg+Y statt der Knoepfe.
+await page.keyboard.press('Control+z')
+const rowsAfterCtrlZ = await page.locator('table tbody tr').count()
+console.log('2c) Strg+Z — Zeilen:', rowsAfterCtrlZ)
+if (rowsAfterCtrlZ !== 11) fail('Tastenkuerzel Strg+Z hat nicht rueckgaengig gemacht')
+await page.keyboard.press('Control+y')
+const rowsAfterCtrlY = await page.locator('table tbody tr').count()
+console.log('    Strg+Y — Zeilen:', rowsAfterCtrlY)
+if (rowsAfterCtrlY !== 12) fail('Tastenkuerzel Strg+Y hat nicht wiederholt')
+
+/*
+ * Loeschen rueckgaengig machen: der Datensatz muss mit denselben Werten
+ * zurueckkommen, nicht nur die Zeilenzahl stimmen.
+ */
+await page.getByText('Smoke test entry').click()
+await page.waitForSelector('.drawer')
+await page.getByRole('button', { name: 'Delete', exact: true }).click()
+await page.getByRole('button', { name: 'Confirm delete' }).click()
+const rowsAfterDelete = await page.locator('table tbody tr').count()
+console.log('2d) Geloescht — Zeilen:', rowsAfterDelete)
+if (rowsAfterDelete !== 11) fail('Loeschen hat nicht gegriffen')
+
+await page.locator('.filebar__history-btn').first().click()
+const rowsAfterUndoDelete = await page.locator('table tbody tr').count()
+const restoredOwner = await page.locator('tr:has-text("Smoke test entry")').innerText()
+console.log('2e) Loeschen rueckgaengig — Zeilen:', rowsAfterUndoDelete, '| Zeile:', restoredOwner.replace(/\s+/g, ' '))
+if (rowsAfterUndoDelete !== 12) fail('Rueckgaengig hat das Loeschen nicht zurueckgenommen')
+if (!restoredOwner.includes('QA')) fail('Wiederhergestellter Datensatz hat seine Werte verloren')
+
+// Redo-Verlauf wird durch eine neue Aenderung verworfen, wie in jedem Editor -
+// nicht nur geleert, weil das Loeschen wiederholt wurde.
+if (await page.locator('.filebar__history-btn').nth(1).isDisabled()) {
+  fail('Redo sollte nach dem letzten Rueckgaengig verfuegbar sein')
+}
+
+/*
+ * Editieren rueckgaengig machen: der alte Feldwert muss zurueckkommen, nicht
+ * nur die Knopfzustaende sich aendern - dasselbe Muster wie beim Loeschen
+ * (2d/2e). Zugriff ueber den Titel "Smoke test entry", nicht ueber "erste
+ * Zeile": die Sortierung kann sich zwischen den Schritten aendern, ein
+ * Bezeichner nicht.
+ */
+await page.locator('tr:has-text("Smoke test entry")').locator('.cell-id').click()
+await page.waitForSelector('.drawer')
+await page.locator('#f-owner').fill('New owner after undo')
+await page.getByRole('button', { name: 'Apply' }).click()
+const editedRow = await page.locator('tr:has-text("Smoke test entry")').innerText()
+console.log('2f) Editiert — Zeile:', editedRow.replace(/\s+/g, ' '))
+if (!editedRow.includes('New owner after undo')) fail('Editieren hat nicht gegriffen')
+if (!(await page.locator('.filebar__history-btn').nth(1).isDisabled())) {
+  fail('Eine neue Aenderung haette den Redo-Verlauf leeren muessen')
+}
+
+await page.locator('.filebar__history-btn').first().click()
+const revertedRow = await page.locator('tr:has-text("Smoke test entry")').innerText()
+console.log('2g) Editieren rueckgaengig — Zeile:', revertedRow.replace(/\s+/g, ' '))
+if (!revertedRow.includes('QA')) fail('Rueckgaengig hat den alten Feldwert nicht wiederhergestellt')
+if (revertedRow.includes('New owner after undo')) fail('Rueckgaengig hat den neuen Feldwert nicht entfernt')
+
+await page.locator('.filebar__history-btn').nth(1).click()
+const redoneRow = await page.locator('tr:has-text("Smoke test entry")').innerText()
+console.log('    Editieren wiederholt — Zeile:', redoneRow.replace(/\s+/g, ' '))
+if (!redoneRow.includes('New owner after undo')) fail('Wiederholen hat den neuen Feldwert nicht zurueckgebracht')
 
 // Speichern (ohne File System Access API -> Download-Pfad)
 const saved = resolve(tmp, 'runde1.html')

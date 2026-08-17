@@ -31,7 +31,7 @@ import {
 } from './lib/entities.js'
 import { Wordmark } from './brand.jsx'
 import { paletteVariables } from './lib/color.js'
-import { IconSave, IconSettings, IconLink, IconPaperclipSmall } from './icons.jsx'
+import { IconSave, IconSettings, IconLink, IconPaperclipSmall, IconUndo, IconRedo } from './icons.jsx'
 import { SettingsPage } from './settings.jsx'
 import { DashboardView } from './dashboard.jsx'
 import { WizardView } from './wizard.jsx'
@@ -39,6 +39,7 @@ import { MergeDialog } from './merge.jsx'
 import { HomeView } from './home.jsx'
 import { extractPayload, diffAll, applyMerge } from './lib/merge.js'
 import { diffTrail, trailFor } from './lib/trail.js'
+import { pushHistory } from './lib/history.js'
 import {
   readAttachment,
   usedBytes,
@@ -91,6 +92,12 @@ function normalizeRecordsByEntity(records) {
 }
 
 const seedAll = () => Object.fromEntries(ENTITY_KEYS.map((key) => [key, ENTITIES[key].seed()]))
+
+/* Strg+Z/Strg+Y sollen den Datensatz-Verlauf steuern, nicht die
+   Bordmittel-Undo eines Textfelds ueberschreiben, waehrend jemand gerade in
+   einem Formular tippt. */
+const isEditableTarget = (el) =>
+  Boolean(el) && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable)
 
 /** Anpassbare Grundfarben. Die Abstufungen werden daraus gerechnet. */
 export const DEFAULT_COLORS = {
@@ -400,6 +407,11 @@ function Workbench({
      diffen. Liegt bewusst nur im Speicher: in die Datei gehoert das Ergebnis
      des Vergleichs, nicht noch eine zweite Kopie aller Datensaetze. */
   const [snapshot, setSnapshot] = useState(initialRecordsByEntity)
+  /* Sitzungslokaler Rueckgaengig/Wiederholen-Verlauf ueber recordsByEntity.
+     Lebt nur hier im Speicher - kein Eintrag geht in den Datenblock, ein
+     Speichern raeumt ihn deshalb auch nicht ab (siehe save() weiter unten). */
+  const [undoStack, setUndoStack] = useState([])
+  const [redoStack, setRedoStack] = useState([])
 
   const tr = translator(settings.locale)
   const showHints = settings.examplePrompts
@@ -414,10 +426,53 @@ function Workbench({
     setTimeout(() => setToast(null), 3600)
   }
 
+  /**
+   * Einziger Weg, auf dem ein Datensatz-Aenderung den Verlauf fuellt: den
+   * bisherigen Stand vor dem Anwenden auf den Undo-Stack legen, den
+   * Redo-Stack leeren - eine neue Aenderung macht das, was zuvor rueckgaengig
+   * gemacht wurde, endgueltig unerreichbar, wie in jedem Editor.
+   */
+  const recordChange = (next) => {
+    setUndoStack((stack) => pushHistory(stack, recordsByEntity))
+    setRedoStack([])
+    setRecordsByEntity(typeof next === 'function' ? next(recordsByEntity) : next)
+  }
+
   const mutate = (next) => {
-    setRecordsByEntity((all) => ({ ...all, [activeKey]: next }))
+    recordChange((all) => ({ ...all, [activeKey]: next }))
     setDirty(true)
   }
+
+  const undo = () => {
+    if (!undoStack.length) return
+    const prior = undoStack[undoStack.length - 1]
+    setUndoStack((stack) => stack.slice(0, -1))
+    setRedoStack((stack) => pushHistory(stack, recordsByEntity))
+    setRecordsByEntity(prior)
+    setDirty(true)
+  }
+
+  const redo = () => {
+    if (!redoStack.length) return
+    const later = redoStack[redoStack.length - 1]
+    setRedoStack((stack) => stack.slice(0, -1))
+    setUndoStack((stack) => pushHistory(stack, recordsByEntity))
+    setRecordsByEntity(later)
+    setDirty(true)
+  }
+
+  /* Der Keydown-Listener unten haengt an einem Effekt ohne Abhaengigkeiten und
+     wird deshalb erst nach dem naechsten Rendern neu gebunden - ein passiver
+     Effekt laeuft nach dem Malen, nicht synchron mit dem Klick, der ihn
+     ausloest. Zwei Aktionen kurz hintereinander (z.B. Knopf, dann Strg+Z)
+     koennen so noch den alten Listener treffen, dessen Schluss ueber einen
+     inzwischen veralteten undo/redo-Stand verfuegt. Ueber ein Ref aufgeloest
+     bekommt selbst der alte Listener immer die aktuelle Funktion - die
+     Zuweisung passiert synchron im Rendern, lange bevor der Effekt greift. */
+  const undoRef = useRef(undo)
+  const redoRef = useRef(redo)
+  undoRef.current = undo
+  redoRef.current = redo
 
   /* Tabs zwischen Entitäten wechseln Filter/Sortierung/Entwurf zurück -
      die sind pro Schema, ein Übertrag zwischen unterschiedlichen Feldern
@@ -580,6 +635,16 @@ function Workbench({
         setDraft(null)
         setShowKey(false)
       }
+      if ((e.metaKey || e.ctrlKey) && !isEditableTarget(e.target)) {
+        const key = e.key.toLowerCase()
+        if (key === 'z' && !e.shiftKey) {
+          e.preventDefault()
+          undoRef.current()
+        } else if (key === 'y' || (key === 'z' && e.shiftKey)) {
+          e.preventDefault()
+          redoRef.current()
+        }
+      }
     }
     window.addEventListener('keydown', onKey)
     return () => window.removeEventListener('keydown', onKey)
@@ -658,7 +723,7 @@ function Workbench({
   const runActions = (actions) => {
     const outcome = applyActions(recordsByEntity, actions, ENTITIES, tr, activeKey)
     if (outcome.done.length) {
-      setRecordsByEntity(outcome.next)
+      recordChange(outcome.next)
       setDirty(true)
       notify(tr('toast.changesApplied', outcome.done.length))
     } else if (outcome.problems.length) {
@@ -766,7 +831,7 @@ function Workbench({
         mutate(incoming)
         notify(tr('toast.recordsImported', incoming.length))
       } else if (incoming && typeof incoming === 'object') {
-        setRecordsByEntity((all) => ({ ...all, ...incoming }))
+        recordChange((all) => ({ ...all, ...incoming }))
         setDirty(true)
         const count = Object.values(incoming).reduce((n, arr) => n + (arr?.length ?? 0), 0)
         notify(tr('toast.recordsImported', count))
@@ -894,7 +959,7 @@ function Workbench({
   function finishWizard(created, note) {
     if (!Object.keys(created).length) return
     let count = 0
-    setRecordsByEntity((prev) => {
+    recordChange((prev) => {
       const next = { ...prev }
       for (const [key, rows] of Object.entries(created)) {
         next[key] = [...(prev[key] ?? []), ...rows]
@@ -932,6 +997,10 @@ function Workbench({
         size={payloadSize}
         lastSaved={lastSaved}
         onSave={requestSave}
+        canUndo={undoStack.length > 0}
+        canRedo={redoStack.length > 0}
+        onUndo={undo}
+        onRedo={redo}
         locale={settings.locale}
         tr={tr}
       />
@@ -1365,7 +1434,7 @@ function Workbench({
             onCancel={() => setMerge(null)}
             onApply={(picks) => {
               const { next, counts } = applyMerge(ENTITIES, ENTITY_KEYS, recordsByEntity, merge.diff, picks)
-              setRecordsByEntity(next)
+              recordChange(next)
               setDirty(true)
               setMerge(null)
               notify(tr('merge.done', counts.added, counts.changed, counts.removed))
@@ -1547,7 +1616,26 @@ const AGE_KEYS = {
   years: 'filebar.ageYears',
 }
 
-function FileBar({ name, tagline, links, attachments, aiOn, dirty, saving, sealed, count, size, lastSaved, onSave, locale, tr }) {
+function FileBar({
+  name,
+  tagline,
+  links,
+  attachments,
+  aiOn,
+  dirty,
+  saving,
+  sealed,
+  count,
+  size,
+  lastSaved,
+  onSave,
+  canUndo,
+  canRedo,
+  onUndo,
+  onRedo,
+  locale,
+  tr,
+}) {
   const dateLocale = locale === 'de' ? 'de-DE' : 'en-US'
   const stamp = lastSaved
     ? new Date(lastSaved).toLocaleString(dateLocale, { dateStyle: 'short', timeStyle: 'short' })
@@ -1605,6 +1693,26 @@ function FileBar({ name, tagline, links, attachments, aiOn, dirty, saving, seale
           ))}
         </span>
       )}
+      <span class="filebar__history">
+        <button
+          class="filebar__history-btn"
+          title={tr('filebar.undo')}
+          aria-label={tr('filebar.undo')}
+          disabled={!canUndo}
+          onClick={onUndo}
+        >
+          <IconUndo />
+        </button>
+        <button
+          class="filebar__history-btn"
+          title={tr('filebar.redo')}
+          aria-label={tr('filebar.redo')}
+          disabled={!canRedo}
+          onClick={onRedo}
+        >
+          <IconRedo />
+        </button>
+      </span>
       <span class="filebar__state">
         <span class={'dot ' + (dirty ? 'dot--dirty' : sealed ? 'dot--sealed' : '')} />
         {dirty ? tr('filebar.unsaved') : sealed ? tr('filebar.encrypted') : tr('filebar.plain')}
