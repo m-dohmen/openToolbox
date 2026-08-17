@@ -1552,6 +1552,14 @@ function FileBar({ name, tagline, links, attachments, aiOn, dirty, saving, seale
   const stamp = lastSaved
     ? new Date(lastSaved).toLocaleString(dateLocale, { dateStyle: 'short', timeStyle: 'short' })
     : tr('filebar.savedNever')
+  // Reines Neurendern haelt die relative Angabe nur beim naechsten Save aktuell -
+  // eine offen liegende, unberuehrte Datei braucht einen eigenen Tick.
+  const [, tick] = useState(0)
+  useEffect(() => {
+    if (!lastSaved) return undefined
+    const id = setInterval(() => tick((n) => n + 1), 30000)
+    return () => clearInterval(id)
+  }, [lastSaved])
   const age = lastSaved ? relativeAge(lastSaved) : null
   const shown = usableLinks(links)
 
@@ -1565,7 +1573,7 @@ function FileBar({ name, tagline, links, attachments, aiOn, dirty, saving, seale
         <span>{tr('filebar.records', count)}</span>
         <span>{tr('filebar.dataBlock', kb(size))}</span>
         <span>{tr('filebar.saved', stamp)}</span>
-        {age && <span>{tr(AGE_KEYS[age.unit], age.n)}</span>}
+        {age && AGE_KEYS[age.unit] && <span>{tr(AGE_KEYS[age.unit], age.n)}</span>}
         {aiOn && <span class="filebar__ai">{tr('filebar.aiActive')}</span>}
       </span>
       {attachments && (

@@ -1,6 +1,6 @@
 {
   "name": "opentoolbox",
-  "version": "0.8.0",
+  "version": "0.9.0",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -10,7 +10,8 @@
     "screenshots": "node scripts/screenshots.mjs",
     "social": "node scripts/social-preview.mjs",
     "demos:index": "node scripts/demo-index.mjs",
-    "prompts": "node scripts/build-prompts.mjs"
+    "prompts": "node scripts/build-prompts.mjs",
+    "verify": "node scripts/verify.mjs"
   },
   "dependencies": {
     "preact": "^10.24.3"
