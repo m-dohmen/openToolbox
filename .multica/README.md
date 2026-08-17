@@ -10,9 +10,11 @@ jeder darf, und wie eine Idee von Michael bis zum Release durchläuft.
 
 ```
 Michael  →  Product Manager  →  Tech Lead  →  Entwickler
-   (Idee als Issue)   (schneidet, weckt)  │       Demo-Ersteller
+   (Idee als Issue)   (schneidet, weckt)  │       Demo-Ersteller     →  PR
                                           │       Doku-Pfleger
-                                          └────→  Release-Manager
+                                          │
+                                          ├──→  Reviewer  →  Merge  →  done
+                                          └──→  Release-Manager
 ```
 
 Michael spricht ausschließlich mit dem **Product Manager**. Niemand sonst
@@ -25,6 +27,24 @@ den Tech Lead. Der verteilt, reviewt und ist der Einzige, der `done` setzt.
 Format `[@Name](mention://agent/<UUID>)`. Das ist die Stelle, an der solche
 Ketten reißen, deshalb steht sie in jeder Rolleninstruktion.
 
+## Nichts geht direkt nach main
+
+Jede Änderung läuft über einen Pull Request, und es gibt **zwei Prüfungen mit
+verschiedenen Fragen**:
+
+| | Frage |
+|---|---|
+| **Tech Lead** | Wurde das Richtige gebaut? Akzeptanzkriterien, Schnitt, fehlende Anteile. |
+| **Reviewer** | Darf das sicher landen? CI, geschlossene Datei, kein Nutzertext als Markup, greifende Zusicherungen, nachgezogene Doku, aktuelle Demos. |
+
+Gemergt wird ausschließlich vom Reviewer, und niemand merged den eigenen PR.
+**Diese Trennung ersetzt die menschliche Prüfung** — deshalb darf sie nicht
+zusammengelegt werden, auch nicht „für diese eine Kleinigkeit". Die CI prüft
+das gebaute Ergebnis; ob eine Zusicherung das neue Verhalten wirklich abdeckt
+und ob die Dokumentation nachgezogen wurde, prüft sie nicht.
+
+Ausgenommen ist nur das Wiki: eigenes Repository, kein PR-Weg.
+
 ## Dateien
 
 | Datei | Inhalt |
@@ -32,7 +52,7 @@ Ketten reißen, deshalb steht sie in jeder Rolleninstruktion.
 | `setup.sh` | legt Agenten, Squad und Takt an — idempotent |
 | `agents/_produkt.md` | Produktprofil, für alle Rollen verbindlich |
 | `agents/_multica.md` | Spielregeln in Multica: Mentions, Status, Eskalation, Routing |
-| `agents/<rolle>.md` | die Rolle selbst |
+| `agents/<rolle>.md` | die Rolle selbst (inkl. `reviewer.md`) |
 | `squad-build.md` | Instruktionen der Squad BUILD |
 
 Jede Agenteninstruktion wird aus **Rolle + Produktprofil + Spielregeln**
@@ -86,3 +106,21 @@ jeweils andere schrieb. Der Tech Lead hat das Duplikat erkannt und abgeräumt,
 aber die Ursache gehört an die Wurzel: Zerlegung lässt sich nicht
 parallelisieren. Zusätzlich wiederholt der PM die Duplikatprüfung unmittelbar
 vor dem Anlegen.
+
+## Was GitHub-seitig noch fehlt
+
+Der PR-Weg steht in den Instruktionen — **erzwungen** ist er damit noch nicht.
+Solange `main` ungeschützt ist, könnte ein Agent bei einem Fehlschluss trotzdem
+direkt pushen. Zum Erzwingen in **Settings → Branches → Branch protection rule**
+für `main`:
+
+- *Require a pull request before merging*
+- *Require status checks to pass* → `build` und `demo`
+- *Do not allow bypassing the above settings*
+
+Der Punkt *Require approvals* greift erst mit **zwei GitHub-Konten**: GitHub
+lässt niemanden den eigenen Pull Request freigeben. Laufen alle Agenten unter
+demselben Token, ist der Reviewer formal der Autor und kann nicht genehmigen.
+Mit einem zweiten Konto — Agenten öffnen PRs als Konto A, der Reviewer
+genehmigt und merged als Konto B — wird die Trennung von GitHub durchgesetzt
+statt nur von der Instruktion.

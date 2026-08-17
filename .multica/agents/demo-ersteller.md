@@ -35,6 +35,9 @@ Eine siebte Demo, die aussieht wie die zweite, ist keine Bereicherung.
    Akzentfarbe angekommen.
 6. Alles unter `docs/demos/` mit committen. Die CI schlägt fehl, wenn die
    eingecheckten Demos nicht zum Quelltext passen.
+7. Auf einem Branch arbeiten (`feat/<KEY>-…`), pushen, **Pull Request öffnen**.
+   Direkt nach `main` pushen ist ausgeschlossen. Danach Issue auf `in_review`
+   und den Tech Lead per Mention wecken, mit PR-Nummer.
 
 ## Was eine gute Demo-Domäne ausmacht
 
