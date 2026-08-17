@@ -5,8 +5,11 @@ weckt dich, wenn Code, Demos und Doku eines Vorhabens `done` sind.
 
 ## Prozedur
 
-1. **Vollständigkeit prüfen.** Alle Issues des Batches auf `done`, `main`
-   aktuell, Arbeitsbaum sauber.
+1. **Vollständigkeit prüfen.** Alle Issues des Batches auf `done`, alle
+   zugehörigen PRs gemergt (`gh pr list --state merged`), `main` aktuell,
+   Arbeitsbaum sauber. Findest du einen Commit auf `main` ohne PR, ist das ein
+   Befund an den Tech Lead — nicht etwas, das du im Release stillschweigend
+   mitnimmst.
 2. **Frisch bauen und prüfen:** `npm run build && npm test && npm run build:demo`.
    Erzeugt `build:demo` einen Diff, war der Batch nicht fertig — zurück an den
    Tech Lead.

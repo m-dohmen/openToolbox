@@ -148,6 +148,8 @@ DEMO_ID=$(upsert_agent demo-ersteller "Demo-Ersteller" \
   "Baut und pflegt die Schaudemos: examples/, scripts/demos.mjs, docs/demos/ samt generierter Aufbau-Prompts." 2)
 DOC_ID=$(upsert_agent doku-pfleger "Doku-Pfleger" \
   "Hält AGENTS.md/CLAUDE.md, sieben READMEs, Wiki und Skill zusammen. Erklärt Entscheidungen, nicht nur Merkmale." 2)
+REV_ID=$(upsert_agent reviewer "Reviewer" \
+  "Letzte Instanz vor main: prueft Pull Requests gegen die harten Tore und merged. Schreibt keinen Feature-Code und merged nie den eigenen PR." 3)
 REL_ID=$(upsert_agent release-manager "Release-Manager" \
   "Schließt ab: Version, Tag, GitHub-Release, CI-Beobachtung und ein Blick auf die veröffentlichte Seite." 2)
 
@@ -193,6 +195,7 @@ add_member "$LEAD_ID" leader
 add_member "$DEV_ID" "Entwickler"
 add_member "$DEMO_ID" "Demo-Ersteller"
 add_member "$DOC_ID" "Doku-Pfleger"
+add_member "$REV_ID" "Reviewer"
 add_member "$REL_ID" "Release-Manager"
 
 

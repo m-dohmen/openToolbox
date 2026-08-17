@@ -16,8 +16,11 @@ Lead, fertig geschnitten. Du gibst an ihn zurück, nie an Michael.
 6. `npm run build && npm test`. Alle drei Suiten müssen laufen.
 7. Berührt die Änderung das Verhalten der Demos: `npm run build:demo` und den
    erzeugten Diff mit committen — sonst schlägt die CI fehl.
-8. Pushen, Pull Request oder Merge nach `main` nach Vorgabe des Leads, dann
-   `in_review` mit Diff-Zusammenfassung, Branch, Commit-SHA und Testnachweis.
+8. Pushen und **Pull Request öffnen** (`gh pr create`). Direkt nach `main` zu
+   pushen ist ausgeschlossen — auch bei einer Einzeiler-Korrektur.
+9. Issue auf `in_review`, Tech Lead per Mention wecken, mit PR-Nummer,
+   Diff-Zusammenfassung und Testnachweis. Du merged nicht selbst; das macht
+   der Reviewer.
 
 ## Woran Änderungen in diesem Repo scheitern
 

@@ -11,10 +11,11 @@ ist der Product Manager.**
 
 | Rolle | Zuständig für |
 |---|---|
-| Tech Lead (Leader) | Verteilen, Review, Merge, `done`, Release anstoßen |
+| Tech Lead (Leader) | Verteilen, inhaltliches Review, Release anstoßen |
 | Entwickler | `src/`, `test/` |
 | Demo-Ersteller | `examples/`, `scripts/demos.mjs`, `docs/demos/` |
 | Doku-Pfleger | `AGENTS.md`/`CLAUDE.md`, sieben READMEs, Wiki, Skill |
+| Reviewer | Torprüfung des PR, Merge, `done` |
 | Release-Manager | Version, Tag, GitHub-Release, CI |
 
 Alle laufen auf derselben Runtime. Eine Plattformmatrix gibt es hier nicht: die
@@ -31,8 +32,10 @@ Anwendung baut und prüft headless, überall gleich.
 3. **Fertig heißt weitergereicht.** Wer abschließt, benennt den nächsten
    Schritt und weckt den nächsten Verantwortlichen. Ist eine Stufe fertig,
    meldet der Lead das dem Product Manager — der wird sonst nicht wach.
-4. **„Done" heißt „in main".** Gepusht, gemergt, CI grün. Der Lead prüft das
-   nachweislich nach.
+4. **„Done" heißt „gemergt".** Nichts geht direkt nach `main`. Jede Änderung
+   läuft über einen Pull Request, gemergt wird ausschließlich vom Reviewer,
+   und er setzt danach `done`. Niemand merged den eigenen PR — deshalb steht
+   hier keine menschliche Prüfung daneben: die Trennung ersetzt sie.
 
 ## Die Reihenfolge, die bei diesem Produkt trägt
 
@@ -45,10 +48,22 @@ gebaut, beide langen READMEs und die fünf kurzen ergänzt und das Wiki
 nachgezogen sind. Die CI erzwingt einen Teil davon — sie ist die letzte
 Instanz, nicht die erste.
 
+## Der Weg nach main
+
+```
+Branch  →  PR  →  Tech Lead: wurde das Richtige gebaut?
+                     →  Reviewer: darf das sicher landen?  →  Merge  →  done
+```
+
+Zwei Prüfungen mit **verschiedenen Fragen**. Eine davon wegzulassen, weil „die
+CI ist doch grün", ist genau der Fehler, gegen den die Trennung existiert: die
+CI prüft das gebaute Ergebnis, nicht ob die Zusicherung das neue Verhalten
+wirklich abdeckt oder ob die Doku nachgezogen wurde.
+
 ## Was jedes Issue am Ende trägt
 
 Einen Abschlusskommentar: was geändert wurde, wie geprüft, was offen ist. Bei
-Code zusätzlich Branch, Commit-SHA und Push-Status.
+Code zusätzlich PR-Nummer und Merge-Commit.
 
 ## Grenzen
 
