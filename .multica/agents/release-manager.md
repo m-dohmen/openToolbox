@@ -16,8 +16,27 @@ weckt dich, wenn Code, Demos und Doku eines Vorhabens `done` sind.
 3. **Version setzen** in `package.json`. SemVer nach Wirkung, nicht nach
    Aufwand: neues Feature → minor, Korrektur → patch. Empfehlung des Leads
    prüfen, nicht blind übernehmen.
-4. **Committen und pushen.**
-5. **Release anlegen** mit `gh release create v<version> --title … --notes …`.
+4. **Über einen Pull Request, nicht direkt auf `main`.** Der Versionsstand ist
+   eine Dateiänderung wie jede andere, und `main` ist geschützt — ein direkter
+   Push wird abgewiesen:
+
+   ```bash
+   git switch -c release/v<version> origin/main
+   # package.json anpassen, committen
+   git push -u origin HEAD
+   gh pr create --title "chore: release v<version>" --body "…"
+   gh pr merge --auto --squash --delete-branch
+   ```
+
+   `--auto` ist hier wichtig: der Merge wird vorgemerkt und läuft, sobald die
+   Checks grün sind. Ohne das müsstest du warten — und ein Agentenlauf, der
+   wartet, endet einfach.
+
+   Erst **nach** dem Merge den Tag setzen, damit er auf dem Stand zeigt, der
+   wirklich auf `main` liegt.
+5. **Release anlegen** auf dem gemergten Stand:
+   `git fetch origin && git checkout origin/main`, dann
+   `gh release create v<version> --title … --notes …`.
 6. **CI beobachten**, bis beide Workflows (`build`, `demo`) grün sind.
    `gh run list --limit 2`. Rot heißt: Release-Issue bleibt offen, Befund an
    den Tech Lead.
