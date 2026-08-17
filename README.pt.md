@@ -64,6 +64,8 @@ larguras em CSS e o anel é um único círculo SVG. As duas visões imprimem com
 - **Dois idiomas de interface** (inglês, alemão), numa configuração que viaja com o arquivo.
 - **Vários tipos de registro e relações entre eles**, quando um só não basta.
 - **Painéis e folha de estilo para impressão**, porque análise costuma terminar num slide ou num anexo.
+- **Um widget de prazos no painel**, ativado com um único campo do esquema — atrasados, esta semana,
+  próximos 30 dias — agregado entre todas as entidades que o declararem.
 - **Um registro de alterações**, preenchido a cada gravação com data, versão e o que mudou.
 - **Prompts de exemplo embutidos**, para que quem receber o arquivo consiga mandar alterá-lo sem ter
   lido esta página.

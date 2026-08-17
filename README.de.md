@@ -135,6 +135,9 @@ Dashboard · CSV-Import · Änderungsprotokoll · Versionsnummern.**
   [Mehrere Entitäten](#mehrere-entitäten-und-beziehungen).
 - **Dashboard-Kacheln und ein Druck-Stylesheet**, weil Analyse meistens in einer Folie oder einer
   Anlage endet — siehe [Dashboard](#dashboard).
+- **Ein Fälligkeiten-Widget im Dashboard**, mit einem Schema-Feld angeschaltet — überfällig, diese
+  Woche, nächste 30 Tage, über alle Entitäten hinweg, die es deklarieren — siehe
+  [Fälligkeiten](#fälligkeiten).
 - **Ein Änderungsprotokoll**, bei jedem Speichern gefüllt mit Datum, Version und dem, was sich
   geändert hat — siehe [Versionen und Änderungsprotokoll](#versionen-und-änderungsprotokoll).
 - **Beispiel-Prompts in der Datei**, damit der Empfänger sie ändern lassen kann, ohne diese Datei
@@ -392,6 +395,30 @@ Gezeichnet **ohne Diagrammbibliothek**: Die Balken sind CSS-Breiten, der Ring is
 SVG-Kreis mit `stroke-dasharray`. Eine Diagrammbibliothek würde eine Datei, die per Mail durchkommen
 muss, um ein Vielfaches aufblähen — für vier Kacheltypen. Die Kategoriefarben leiten sich aus der
 Akzentfarbe des Werkzeugs ab, ein umgebrandetes Werkzeug färbt sein Dashboard also selbst um.
+
+### Fälligkeiten
+
+`dueDate` im Schema auf einen Feldschlüssel gesetzt — ein reines `date`-Feld oder ein `computed`-Feld,
+genau wie `totalField` ein Zahlenfeld benennt — und oben im Dashboard erscheint ein
+Fälligkeiten-Widget:
+
+```js
+export const SCHEMA = {
+  // …
+  dueDate: 'review',
+}
+```
+
+Anders als die Kacheln oben braucht das keinen `DASHBOARD`-Export: Fälligkeitssteuerung ist der
+häufigste Grund, ein solches Werkzeug überhaupt zu öffnen, deshalb erscheint das Widget von selbst,
+sobald irgendeine Entität `dueDate` deklariert — mit oder ohne Kacheln. Drei Gruppen, leere werden
+verborgen: **Überfällig** (vor heute), **diese Woche** (Montag bis Sonntag der laufenden lokalen
+Kalenderwoche) und die **nächsten 30 Tage** danach. Ein per `isDone()` erledigter Datensatz taucht in
+keiner Gruppe auf — erledigte Arbeit ist nicht mehr fällig. Verglichen wird auf lokalen
+Kalendertagen, nicht auf dem UTC-Zeitpunkt, den `new Date('2026-08-20')` liefern würde — der landet
+westlich von Greenwich einen Tag zu früh. Bei mehreren Entitäten aggregiert das Widget über alle, die
+`dueDate` deklarieren, und ein Klick auf einen Eintrag springt direkt zum Datensatz. Eine Domäne ohne
+`dueDate` sieht ihr bisheriges Dashboard unverändert.
 
 ## Versionen und Änderungsprotokoll
 

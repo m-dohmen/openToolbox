@@ -54,13 +54,16 @@ Do not guess the domain. Ask everything at once and let them answer in one go:
 
 If they already gave enough detail, skip the questions and state the assumptions you made instead.
 
-Two things to raise yourself, because users rarely ask for them and both are cheap:
+Three things to raise yourself, because users rarely ask for them and all three are cheap:
 
 - **A calculated field** (`type: 'computed'`) wherever a number would otherwise be kept up to date by
   hand — a score, days remaining, a budget variance. It is recomputed on every render and never
   stored, so it cannot go stale.
 - **A dashboard** (`DASHBOARD` export) whenever the tool's output will be shown to anyone — a
   steering committee, a client, a review. Without the export the view does not exist.
+- **The due-date widget** (`dueDate` on the schema) whenever the answer to interview question 4 was a
+  date that can lapse — overdue items, upcoming reviews, expiring approvals. See `AGENTS.md` for the
+  field shape; it shows up on the dashboard on its own, no `DASHBOARD` export required.
 
 If they have a spreadsheet of real data, ask for a few header rows: naming the fields the way their
 columns are named makes the built-in CSV import map them correctly on the first try. Do **not** paste
