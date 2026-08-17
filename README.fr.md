@@ -65,6 +65,8 @@ s'impriment en un PDF propre.
 - **Import CSV avec correspondance des colonnes**, pour saisir de vraies données sans les retaper.
 - **Deux langues d'interface** (anglais, allemand), réglage qui voyage avec le fichier.
 - **Plusieurs types d'enregistrements et leurs relations**, quand un seul ne suffit pas.
+- **Un widget d'échéances dans le tableau de bord**, activé par un seul champ du schéma — en retard,
+  cette semaine, les 30 prochains jours — agrégé sur toutes les entités qui le déclarent.
 - **Tableaux de bord et feuille de style d'impression**, parce qu'une analyse finit généralement en
   diapositive ou en annexe.
 - **Un journal des modifications**, alimenté à chaque enregistrement : date, version et ce qui a

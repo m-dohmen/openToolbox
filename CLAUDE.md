@@ -332,6 +332,42 @@ filtered table view.
 Both the list and the dashboard have a print stylesheet — the browser makes the PDF, everything
 interactive drops away. Worth mentioning at handover; it is how these end up as meeting appendices.
 
+### Due dates on the dashboard
+
+Set `dueDate` on a schema to a field key — a plain `date` field or a `computed` one, the same way
+`totalField` points at a number field — and a "Fälligkeiten"/"Due dates" widget appears at the top
+of the dashboard automatically:
+
+```js
+export const SCHEMA = {
+  // …
+  dueDate: 'review',   // field key holding the date to track, or leave unset
+}
+```
+
+This is deliberately **not** a `DASHBOARD` export. Fälligkeitssteuerung is the most common reason a
+consultant opens one of these tools at all — it should not depend on someone also having built stat
+tiles. So the widget shows up on its own even without a `DASHBOARD` export, as soon as any entity
+declares `dueDate`. Domains that never mention it see exactly their old dashboard, tiles or none.
+
+Three groups, hidden when empty: **overdue** (before today), **this week** (Monday through Sunday of
+the current local calendar week) and **the next 30 days** after that Sunday. Group boundaries are
+fixed in this version, not configurable — a setting here would be one more thing to explain to a
+recipient who just wants to know what is late. A record where `isDone(record)` is true is excluded
+from all three groups; a finished item is not "due" in any group, and counting it as overdue would
+flag closed work as outstanding. Comparisons run on local calendar dates parsed from the field's ISO
+string, not on the UTC instant `new Date('2026-08-20')` would give you — that constructor lands on
+the previous day everywhere west of Greenwich, which is exactly the kind of off-by-one nobody
+notices until a steering committee meeting starts with the wrong item flagged red.
+
+With `ENTITIES`, the widget aggregates across every entity that declares `dueDate` — a portfolio
+tool can flag an overdue milestone and an overdue action item in the same list. Clicking an entry
+switches to that record's entity and opens it, using the same navigation as a reference chip.
+
+The widget's clock is a parameter, not a call to `new Date()` buried inside it — an "overdue" bucket
+that can only be exercised against whatever day the test happens to run on is not really tested. You
+will not normally touch this; it matters if you extend the widget yourself.
+
 ## Optional second file
 
 `src/app.jsx` — only if the user needs something the schema cannot express: an extra sidebar

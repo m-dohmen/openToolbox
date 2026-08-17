@@ -119,6 +119,8 @@ dashboard · CSV import · change log · version numbers.**
   [Multiple entities and relationships](#multiple-entities-and-relationships).
 - **Dashboard tiles and a print stylesheet**, because analysis usually ends in a slide or an
   appendix — see [Dashboard](#dashboard).
+- **A due-date widget on the dashboard**, opt in with one schema field — overdue, this week, next
+  30 days, across every entity that declares it — see [Due dates](#due-dates).
 - **A change log**, filled on every save with date, version, your note and the field-level changes
   worked out automatically — see [Version numbers and change log](#version-numbers-and-change-log).
 - **Attachments with a visible size budget**, because a tool you cannot email is not this tool —
@@ -339,6 +341,27 @@ one end of the range would disappear into the background.
 Tiles report on their entity's **full** record set, not the filtered table view: a tile can belong
 to a different entity than the one currently open, and "sometimes filtered, sometimes not" would be
 unpredictable.
+
+### Due dates
+
+Set `dueDate` on a schema to a field key — a plain `date` field or a `computed` one, the same way
+`totalField` names a number field — and a due-date widget appears at the top of the dashboard:
+
+```js
+export const SCHEMA = {
+  // …
+  dueDate: 'review',
+}
+```
+
+Unlike the tiles above, this needs no `DASHBOARD` export at all — due-date tracking is common enough
+on its own that it shows up the moment any entity declares it, tiles or none. Three groups, hidden
+when empty: **overdue** (before today), **this week** (Monday through Sunday of the current local
+calendar week) and the **next 30 days** after that. A record marked done by `isDone()` never appears
+— finished work is not outstanding. Dates are read as local calendar days, not UTC instants, so a
+`2026-08-20` due date doesn't slip a day west of Greenwich. With `ENTITIES`, the widget aggregates
+across every entity that opts in, and clicking an entry jumps straight to that record. A domain that
+never sets `dueDate` sees exactly its previous dashboard.
 
 ## Version numbers and change log
 

@@ -65,6 +65,8 @@ son anchuras CSS y el anillo es un único círculo SVG. Ambas vistas se imprimen
 - **Dos idiomas de interfaz** (inglés, alemán) en una preferencia que viaja con el archivo.
 - **Varios tipos de registro y relaciones entre ellos**, cuando uno solo no basta.
 - **Paneles e impresión**, porque el análisis suele acabar en una diapositiva o en un anexo.
+- **Un widget de fechas límite en el panel**, activado con un solo campo del esquema — vencidas,
+  esta semana, próximos 30 días — agregado entre todas las entidades que lo declaran.
 - **Un registro de cambios**, rellenado en cada guardado con fecha, versión y qué cambió.
 - **Prompts de ejemplo incrustados**, para que quien reciba el archivo pueda hacerlo modificar sin
   haber leído esta página.
