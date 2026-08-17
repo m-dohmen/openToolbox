@@ -1355,11 +1355,21 @@ await saveTo(page24, trailFile, 'Owner umgehaengt, einer neu, einer raus')
 await page24.getByRole('tab', { name: 'Change log' }).click()
 await page24.waitForSelector('.logview__list')
 await page24.locator('.trail summary').first().click()
+/* Das <details> oeffnet nativ und sofort, aber Chromium braucht danach einen
+   Layout-Durchlauf, bevor innerText() die Flex-Kinder (Feld/Vorher/Nachher)
+   sauber getrennt zurueckgibt - sonst liest man gelegentlich mitten in der
+   Anzeige und bekommt Titel und Wert ohne Trennung zusammengeklebt.
+   waitFor('visible') wartet auf ein stabiles Layout, bevor gelesen wird. */
+await page24.locator('.trail__list li').first().waitFor({ state: 'visible' })
 const trailItems = await page24.locator('.trail__list li').allInnerTexts()
 console.log('73) Feldaenderungen im Protokoll:', trailItems.length)
 trailItems.slice(0, 3).forEach((line) => console.log('   ', line.replace(/\n/g, ' ')))
 if (trailItems.length < 3) fail('Nicht alle drei Aenderungsarten protokolliert')
 const joined = trailItems.join(' ')
+// Feldname und Wert einzeln pruefen statt nur den Wert - sonst faellt ein
+// fehlendes Feld/Vorher (das Zusammenkleben, das diese Pruefung eigentlich
+// faengt) nicht auf, weil der neue Wert allein auch ohne Trennung vorkommt.
+if (!joined.includes('Owner')) fail('Feldname fehlt im Protokoll')
 if (!joined.includes('P. Neumann')) fail('Feldaenderung fehlt')
 if (!joined.includes('created')) fail('Anlegen fehlt')
 if (!joined.includes('deleted')) fail('Loeschen fehlt')
@@ -1388,6 +1398,7 @@ await page24.waitForSelector('table tbody tr')
 await page24.locator(`tr:has-text("${trailId}") .cell-id`).click()
 await page24.waitForSelector('.drawer')
 await page24.locator('.trail--record summary').click()
+await page24.locator('.trail--record .trail__list li').first().waitFor({ state: 'visible' })
 const recordTrail = await page24.locator('.trail--record .trail__list li').allInnerTexts()
 console.log('75) Historie des Datensatzes:', recordTrail.map((l) => l.replace(/\n/g, ' ')).join(' | '))
 if (!recordTrail.join(' ').includes('P. Neumann')) fail('Datensatz-Historie zeigt die Aenderung nicht')
