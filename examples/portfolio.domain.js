@@ -12,6 +12,7 @@
  *   - facets, free-text search, an overview total
  *   - overdue logic that differs per entity
  *   - a dashboard reporting across both entities
+ *   - a `dueDate` declaration on milestones, feeding the due-date widget
  *
  * Copy it over src/domain.js and run `npm run build` to see it. A real tool
  * would normally use rather less than this — most need one entity and no
@@ -128,6 +129,7 @@ export const ENTITIES = {
       facets: ['status'],
       search: ['id', 'title', 'owner'],
       totalField: 'effort',
+      dueDate: 'due',
       fields: [
         { key: 'title', label: 'Milestone', type: 'text', required: true },
         { key: 'projectId', label: 'Project', type: 'reference', entity: 'projects', required: true },
@@ -170,7 +172,7 @@ export const ENTITIES = {
       [
         ['Target architecture signed off', 'P-101', 'A. Reinke', -12, 'done', 15],
         ['Data migration dry run', 'P-101', 'T. Krueger', 8, 'in progress', 22],
-        ['Cutover rehearsal', 'P-101', 'A. Reinke', 34, 'open', 18],
+        ['Cutover rehearsal', 'P-101', 'A. Reinke', 0, 'open', 18],
         ['SEPA interface certified', 'P-102', 'K. Lorenz', -4, 'waiting', 9],
         ['Legacy adapter retired', 'P-102', 'K. Lorenz', 41, 'open', 12],
         ['BaFin report format approved', 'P-103', 'T. Krueger', -20, 'done', 11],
