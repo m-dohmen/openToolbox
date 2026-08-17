@@ -128,6 +128,7 @@ export const ENTITIES = {
       facets: ['status'],
       search: ['id', 'title', 'owner'],
       totalField: 'effort',
+      dueDate: 'due',
       fields: [
         { key: 'title', label: 'Milestone', type: 'text', required: true },
         { key: 'projectId', label: 'Project', type: 'reference', entity: 'projects', required: true },
