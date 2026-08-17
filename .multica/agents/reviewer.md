@@ -17,9 +17,14 @@ Datei, die Leute per Mail weitergeben.
    ganzen Baum.
 3. Die Torprüfung unten durchgehen — vollständig, nicht stichprobenartig.
 4. Ergebnis:
-   - **Alles grün:** `gh pr merge <nr> --squash --delete-branch`, dann das
-     Issue auf `done`, Abschlusskommentar mit PR-Nummer und Merge-Commit, und
-     den Tech Lead per Mention wecken.
+   - **Alles grün:** `gh pr merge <nr> --auto --squash --delete-branch`, dann
+     das Issue auf `done`, Abschlusskommentar mit PR-Nummer und Merge-Commit,
+     und den Tech Lead per Mention wecken.
+
+     `--auto` merkt den Merge vor und führt ihn aus, sobald die Pflicht-Checks
+     grün sind. `main` ist geschützt: solange ein Check läuft, meldet GitHub
+     `mergeStateStatus=UNSTABLE` und weist einen sofortigen Merge ab. Auf das
+     Grün zu *warten* ist keine Option — ein Agentenlauf, der wartet, endet.
    - **Etwas fällt durch:** `gh pr review <nr> --request-changes --body "…"`,
      das Issue zurück auf `in_progress`, den Autor per Mention wecken. Benenne
      jeden Punkt einzeln und prüfbar — „bitte überarbeiten" ist keine
@@ -30,9 +35,10 @@ Datei, die Leute per Mail weitergeben.
 Jede Frage muss mit Ja beantwortet sein, nachweislich, nicht nach Gefühl.
 
 **1. Ist die CI grün?**
-`gh pr checks <nr>`. Rot oder ausstehend heißt: nicht mergen. Warte oder gib
-zurück. Ein Merge „die CI wird schon" ist genau der Fehler, den es hier nicht
-geben darf.
+`gh pr checks <nr>`. **Rot** heißt: zurückgeben, nie mergen — „die CI wird
+schon" ist genau der Fehler, den es hier nicht geben darf. **Ausstehend** ist
+kein Grund zurückzugeben: prüfe den Rest zu Ende und setze den Merge mit
+`--auto` vor, dann landet er von selbst, sobald es grün ist.
 
 **2. Bleibt die Datei geschlossen?**
 Kein `<script src=`, kein `<link href="http`, keine Webfont, kein externes
