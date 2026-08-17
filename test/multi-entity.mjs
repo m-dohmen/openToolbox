@@ -232,7 +232,10 @@ try {
 }
 console.log('14) Faelligkeiten-Multi-Entity-Build erzeugt:', dueDist)
 
-const duePage = await ctx.newPage()
+// Eigener Browser-Context statt der gemeinsamen `ctx`: clock.install() friert
+// die Uhr fuer den ganzen Context ein, nicht nur die eine Seite.
+const dueCtx = await browser.newContext({ viewport: { width: 1280, height: 850 } })
+const duePage = await dueCtx.newPage()
 duePage.on('pageerror', (e) => errors.push(String(e)))
 await duePage.clock.install({ time: new Date(2026, 7, 17, 9) })
 await duePage.goto('file://' + dueDist)
@@ -268,7 +271,7 @@ console.log('    Aktive Entitaet danach:', activeTabAfterDueClick)
 if (activeTabAfterDueClick.toLowerCase() !== 'milestones') {
   fail('Klick auf einen Faelligkeits-Eintrag wechselt nicht zur richtigen Entitaet')
 }
-await duePage.close()
+await dueCtx.close()
 rmSync(dueOutDir, { recursive: true, force: true })
 
 console.log(errors.length ? '\nKonsolenfehler:\n' + errors.join('\n') : '\nKeine Konsolenfehler.')

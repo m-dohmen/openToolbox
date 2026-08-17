@@ -950,7 +950,12 @@ try {
 }
 console.log('36a) Faelligkeiten-Build erzeugt:', dueDist)
 
-const pageDue = await ctx.newPage()
+// Eigener Browser-Context statt der gemeinsamen `ctx`: clock.install() friert
+// die Uhr fuer den ganzen Context ein, nicht nur die eine Seite - in der
+// gemeinsamen `ctx` liefe sonst jeder spaetere Test mit stehender Zeit weiter
+// (z.B. die Idle-Aktualisierung der FileBar).
+const dueCtx = await browser.newContext({ viewport: { width: 1280, height: 850 } })
+const pageDue = await dueCtx.newPage()
 pageDue.on('pageerror', (e) => errors.push(String(e)))
 pageDue.on('console', (m) => m.type() === 'error' && errors.push(m.text()))
 await pageDue.clock.install({ time: new Date(2026, 7, 17, 9) })
@@ -982,6 +987,7 @@ console.log('36c) Klick auf Faelligkeits-Eintrag oeffnet:', await pageDue.locato
 const dueOpenedTitle = await pageDue.locator('#f-title').inputValue()
 if (dueOpenedTitle !== 'This week task') fail('Klick auf Faelligkeits-Eintrag oeffnet den falschen Datensatz')
 
+await dueCtx.close()
 rmSync(dueOutDir, { recursive: true, force: true })
 
 // Beispiel-Prompts, Version und Aenderungsprotokoll.
