@@ -157,6 +157,9 @@ Dashboard · CSV-Import · Änderungsprotokoll · Versionsnummern.**
   [Rückläufer zusammenführen](#rückläufer-zusammenführen).
 - **Anhänge mit sichtbarem Speicherbudget**, denn ein Werkzeug, das man nicht mehr verschicken kann,
   ist nicht mehr dieses Werkzeug — siehe [Anhänge](#anhänge).
+- **Rückgängig/Wiederholen für die Sitzung**, für jedes Anlegen, Ändern und Löschen, Strg/Cmd+Z und
+  Strg/Cmd+Y oder die zwei Knöpfe in der Dateizeile — siehe
+  [Rückgängig und Wiederholen](#rückgängig-und-wiederholen).
 
 ## Schnellstart
 
@@ -522,10 +525,26 @@ haben:
 Zähler aus, KI-Anbindung aus — dann öffnet die Datei **keine** Netzwerkverbindung. Nachprüfbar im
 Netzwerk-Tab, und von der Testsuite zugesichert.
 
+## Rückgängig und Wiederholen
+
+Jedes Anlegen, Ändern und Löschen landet auf einem Verlauf für die Sitzung — Strg/Cmd+Z macht es
+rückgängig, Strg/Cmd+Y (auch Strg/Cmd+Umschalt+Z geht) wiederholt es, und dieselben zwei Aktionen
+stehen als Knöpfe in der Dateizeile für alle, die einen Klick dem Tastenkürzel vorziehen. Gedeckelt
+bei 50 Schritten; darüber hinaus fällt der älteste Eintrag zuerst, nicht der jüngste.
+
+Der Verlauf lebt nur im Speicher des Tabs. Er wird nie in den Datenblock geschrieben, Speichern
+räumt ihn deshalb nicht ab, und erneutes Öffnen der Datei bringt ihn nicht zurück — das ist eine
+bewusste Grenze: das ist ein Rückgängig *innerhalb der laufenden Sitzung*, keine Versionshistorie
+der Datei. Wer in einem Textfeld tippt, hat weiterhin das bordeigene Rückgängig des Feldes — das
+Tastenkürzel übernimmt erst, wenn der Fokus außerhalb eines Feldes liegt, damit sich beide nie um
+denselben Tastendruck streiten.
+
 ## Grenzen, die man kennen sollte
 
-- **Nicht gespeichert heißt verloren.** Es gibt keine automatische Sicherung — ohne Zieldatei kann es
-  sie nicht geben. Der gelbe Punkt und die Rückfrage beim Schließen sind das einzige Netz.
+- **Nicht gespeichert heißt verloren — über diese Sitzung hinaus.** Es gibt keine automatische
+  Sicherung — ohne Zieldatei kann es sie nicht geben. Innerhalb des offenen Tabs deckt
+  [Rückgängig/Wiederholen](#rückgängig-und-wiederholen) die letzten 50 Änderungen ab; der gelbe
+  Punkt und die Rückfrage beim Schließen sind das Netz für alles darüber hinaus.
   Strg/Cmd+S speichert.
 - **Ein Rechner, eine Datei.** Kein Mehrbenutzerbetrieb. Zwei Personen, die dieselbe Datei
   bearbeiten, erzeugen zwei Wahrheiten.

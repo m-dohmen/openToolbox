@@ -82,6 +82,8 @@ son anchuras CSS y el anillo es un único círculo SVG. Ambas vistas se imprimen
 - **Un registro de cambios a nivel de campo**, deducido automáticamente en cada guardado: qué registro, qué campo, antes y después.
 - **Adjuntos con un presupuesto de tamaño visible**, porque una herramienta que ya no se puede enviar por correo deja de ser esta herramienta.
 - **Una página de inicio editable**, para que el archivo se explique antes de mostrar una tabla.
+- **Deshacer/rehacer para la sesión**, para cada creación, edición y borrado, con Ctrl/Cmd+Z y
+  Ctrl/Cmd+Y o los dos botones de la barra del archivo.
 
 ## Inicio rápido
 

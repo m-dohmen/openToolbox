@@ -81,6 +81,8 @@ larguras em CSS e o anel é um único círculo SVG. As duas visões imprimem com
 - **Um registro de alterações em nível de campo**, deduzido automaticamente a cada gravação: qual registro, qual campo, antes e depois.
 - **Anexos com um orçamento de tamanho visível**, porque uma ferramenta que já não dá para enviar por e-mail deixa de ser esta ferramenta.
 - **Uma página inicial editável**, para que o arquivo se explique antes de mostrar uma tabela.
+- **Desfazer/refazer para a sessão**, para cada criação, edição e exclusão, com Ctrl/Cmd+Z e
+  Ctrl/Cmd+Y ou os dois botões na barra do arquivo.
 
 ## Início rápido
 

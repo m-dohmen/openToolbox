@@ -139,6 +139,8 @@ dashboard · CSV import · change log · version numbers.**
   [Guided entry](#guided-entry).
 - **Merging a copy that came back**, record by record, with a field-level diff — see
   [Merging a copy that came back](#merging-a-copy-that-came-back).
+- **Session undo/redo** for every create, edit and delete, Ctrl/Cmd+Z and Ctrl/Cmd+Y or the two
+  buttons in the file bar — see [Undo and redo](#undo-and-redo).
 
 ## Quick start
 
@@ -673,10 +675,24 @@ Three ways, all in the sidebar and in Settings → Data:
 - **The AI assistant**, on an explicit instruction, can create records from an attached document.
   See [The AI assistant](#the-ai-assistant).
 
+## Undo and redo
+
+Every create, edit and delete goes onto a history for the session — Ctrl/Cmd+Z undoes it, Ctrl/Cmd+Y
+(Ctrl/Cmd+Shift+Z also works) redoes it, and the same two actions sit as buttons in the file bar for
+anyone who prefers a click over a shortcut. Capped at 50 steps; past that, the oldest is dropped
+first, not the newest.
+
+The history lives in the tab's memory only. It is never written into the data block, so saving does
+not clear it and reopening the file does not bring it back — that is a deliberate line: this undoes
+a slip *within the current session*, it is not a version history of the file. Typing in a text field
+still gets the browser's own undo for that field; the shortcut only takes over once focus is outside
+one, so the two never fight over the same keystroke.
+
 ## Limits worth knowing
 
-- **Not saved means lost.** There is no autosave — without a target file there cannot be one. The
-  amber dot and the tab-close prompt are the only safety net. Ctrl/Cmd+S saves.
+- **Not saved means lost — beyond this session.** There is no autosave — without a target file there
+  cannot be one. Within the open tab, [undo/redo](#undo-and-redo) covers the last 50 changes; the
+  amber dot and the tab-close prompt are the safety net for everything past that. Ctrl/Cmd+S saves.
 - **One machine, one file.** No multi-user mode — two people editing the same file produce two
   truths. What there *is* since v0.4.0 is a way to reconcile them afterwards, record by record; see
   [Merging a copy that came back](#merging-a-copy-that-came-back). Live collaboration is still out
