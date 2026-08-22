@@ -974,6 +974,12 @@ const dueWidgetCount = await page14.locator('.due-widget').count()
 console.log('34a) Faelligkeiten-Widget ohne dueDate-Deklaration:', dueWidgetCount)
 if (dueWidgetCount !== 0) fail('Widget erscheint, obwohl die Domaene kein dueDate deklariert')
 
+// Derselbe Negativfall fuer die Kennzahl-Kacheln: ohne metrics-Deklaration
+// rendert das Dashboard exakt die bisherigen Kacheln, keine dazu.
+const metricTileCount = await page14.locator('.tile--metric').count()
+console.log('34b) Kennzahl-Kacheln ohne metrics-Deklaration:', metricTileCount)
+if (metricTileCount !== 0) fail('Kennzahl-Kacheln erscheinen, obwohl die Domaene keine metrics deklariert')
+
 const donutTotal = await page14.locator('.donut__total').textContent()
 const legendSum = (await page14.locator('.legend__value').allInnerTexts()).reduce(
   (n, t) => n + Number(t),
@@ -1085,6 +1091,140 @@ if (dueOpenedTitle !== 'This week task') fail('Klick auf Faelligkeits-Eintrag oe
 
 await dueCtx.close()
 rmSync(dueOutDir, { recursive: true, force: true })
+
+/*
+ * Kennzahl-Kacheln (metrics): eigener Build mit test/fixtures/metrics.domain.js,
+ * deren Seed so gewaehlt ist, dass jede Kachel mit Handzaehlung stimmt:
+ * 6 Datensaetze, davon 5 offen; Summe 26.5; Mittelwert 26.5/6 = 4.416.. -> 4.42;
+ * offen: Summe 20.5, Mittelwert 20.5/5 = 4.1 -> "4.10" (zwei Nachkommastellen).
+ */
+const metricsOutDir = resolve(root, 'dist-metrics')
+const metricsDist = resolve(metricsOutDir, 'index.html')
+const metricsFixture = resolve(root, 'test/fixtures/metrics.domain.js')
+const originalDomainForMetrics = readFileSync(domainPath, 'utf8')
+writeFileSync(domainPath, readFileSync(metricsFixture, 'utf8'))
+try {
+  execFileSync('npx', ['vite', 'build', '--outDir', 'dist-metrics'], { cwd: root, stdio: 'pipe' })
+} finally {
+  writeFileSync(domainPath, originalDomainForMetrics)
+}
+console.log('36e) Kennzahlen-Build erzeugt:', metricsDist)
+
+const metricsCtx = await browser.newContext({ viewport: { width: 1280, height: 850 } })
+const pageMetrics = await metricsCtx.newPage()
+pageMetrics.on('pageerror', (e) => errors.push(String(e)))
+pageMetrics.on('console', (m) => m.type() === 'error' && errors.push(m.text()))
+await openList(pageMetrics, metricsDist)
+await pageMetrics.getByRole('tab', { name: 'Dashboard' }).click()
+await pageMetrics.waitForSelector('.dashboard')
+
+// Alle drei Kachelformen stimmen mit dem Handzaehler ueberein.
+const metricValues = await pageMetrics.locator('.tile--metric .tile__value').allInnerTexts()
+console.log('36f) Kennzahl-Kacheln:', metricValues.join(' | '))
+if (metricValues.length !== 5) fail('Erwartet 5 Kennzahl-Kacheln aus der metrics-Deklaration')
+const [countAll, countOpen, sumAll, avgAll, avgOpen] = metricValues
+if (countAll !== '6') fail(`Anzahl-Kachel zaehlt ${countAll} statt 6`)
+if (countOpen !== '5') fail(`Gefilterte Anzahl-Kachel zaehlt ${countOpen} statt 5 - die erledigte Aufgabe gehoert nicht in den offenen Bestand`)
+if (sumAll !== '26.5') fail(`Summen-Kachel rechnet ${sumAll} statt 26.5`)
+if (avgAll !== '4.42') fail(`Mittelwert-Kachel rechnet ${avgAll} statt 4.42 (26.5/6, zwei Nachkommastellen)`)
+if (avgOpen !== '4.10') fail(`Offene-Mittelwert-Kachel rechnet ${avgOpen} statt 4.10 (20.5/5)`)
+
+// textContent statt innerText - das Label wird per CSS in Grossbuchstaben
+// gesetzt, und genau diese Darstellung soll der Test nicht mitprüfen.
+const firstMetricLabel = await pageMetrics.locator('.tile--metric').first().locator('.tile__label').textContent()
+const firstMetricCaption = await pageMetrics.locator('.tile--metric').first().locator('.tile__caption').textContent()
+if (firstMetricLabel !== 'Tasks in file') fail('Label der Deklaration wird nicht uebernommen')
+if (firstMetricCaption !== 'all statuses') fail('Caption der Deklaration wird nicht angezeigt')
+
+// Live-Aktualisierung: Basiswert aendern, ohne neu zu laden - die Kacheln
+// rechnen beim Rendern und muessen der Aenderung sofort folgen.
+await pageMetrics.getByRole('tab', { name: 'List' }).click()
+await pageMetrics.locator('tr:has-text("Twelve days task")').locator('.cell-id').click()
+await pageMetrics.waitForSelector('.drawer')
+await pageMetrics.locator('#f-effort').fill('40')
+await pageMetrics.getByRole('button', { name: 'Apply' }).click()
+await pageMetrics.waitForSelector('.drawer', { state: 'detached' })
+await pageMetrics.getByRole('tab', { name: 'Dashboard' }).click()
+const metricValuesAfter = await pageMetrics.locator('.tile--metric .tile__value').allInnerTexts()
+console.log('36g) Nach Basiswertänderung (12 → 40):', metricValuesAfter.join(' | '))
+if (metricValuesAfter[2] !== '54.5') fail(`Summen-Kachel folgt nicht: ${metricValuesAfter[2]} statt 54.5`)
+if (metricValuesAfter[4] !== '9.70') fail(`Offene-Mittelwert-Kachel folgt nicht: ${metricValuesAfter[4]} statt 9.70 (48.5/5)`)
+if (metricValuesAfter[0] !== '6') fail('Anzahl-Kachel haette von der Wertänderung unberuehrt bleiben muessen')
+
+// Klick auf eine Kachel springt zur Liste (V1 ungefiltert), auch per Tastatur.
+await pageMetrics.locator('.tile--metric').first().click()
+await pageMetrics.waitForSelector('table tbody tr')
+console.log('36h) Klick auf Kachel — Ansicht:', await pageMetrics.locator('[role="tab"][aria-selected="true"]').allInnerTexts())
+if ((await pageMetrics.locator('.dashboard').count()) !== 0) fail('Klick auf die Kachel verlaesst das Dashboard nicht')
+
+await pageMetrics.getByRole('tab', { name: 'Dashboard' }).click()
+await pageMetrics.locator('.tile--metric').first().focus()
+await pageMetrics.keyboard.press('Enter')
+await pageMetrics.waitForSelector('table tbody tr')
+console.log('36i) Enter auf fokussierter Kachel landet ebenfalls in der Liste')
+
+// Dezimalzeichen folgt der Oberflächensprache: Deutsch formatiert mit Komma.
+await pageMetrics.getByLabel('Settings').click()
+await pageMetrics.getByRole('button', { name: 'Deutsch' }).click()
+await pageMetrics.getByRole('button', { name: 'Zurück zur Liste' }).click()
+await pageMetrics.waitForSelector('table tbody tr')
+await pageMetrics.getByRole('tab', { name: 'Dashboard' }).click()
+const metricValuesDe = await pageMetrics.locator('.tile--metric .tile__value').allInnerTexts()
+console.log('36l) Deutsche Oberfläche:', metricValuesDe.join(' | '))
+// Nach der Basiswertänderung gilt weiter 54.5 als Summe, avg = 9.08 bzw. 9.70 -
+// hier zählt nur das Komma als Dezimalzeichen.
+if (metricValuesDe[2] !== '54,5') fail(`Deutsche Summe falsch: ${metricValuesDe[2]} statt 54,5`)
+if (metricValuesDe[3] !== '9,08') fail(`Deutsches Dezimalzeichen fehlt: ${metricValuesDe[3]} statt 9,08`)
+if (metricValuesDe[4] !== '9,70') fail(`Deutsches Dezimalzeichen fehlt: ${metricValuesDe[4]} statt 9,70`)
+
+await metricsCtx.close()
+rmSync(metricsOutDir, { recursive: true, force: true })
+
+/*
+ * Verworfene Deklarationen werden benannt statt still ignoriert: eigener Build
+ * mit test/fixtures/metrics-invalid.domain.js - unbekannter Katalogeintrag,
+ * Summe ueber ein Textfeld, avg ohne Feld. Die gueltige Deklaration muss daneben
+ * weiterlaufen, und das Werkzeug selbst bleibt bedienbar.
+ */
+const invalidOutDir = resolve(root, 'dist-metrics-invalid')
+const invalidDist = resolve(invalidOutDir, 'index.html')
+writeFileSync(domainPath, readFileSync(resolve(root, 'test/fixtures/metrics-invalid.domain.js'), 'utf8'))
+try {
+  execFileSync('npx', ['vite', 'build', '--outDir', 'dist-metrics-invalid'], { cwd: root, stdio: 'pipe' })
+} finally {
+  writeFileSync(domainPath, originalDomainForMetrics)
+}
+console.log('36j) Build mit ungueltigen Deklarationen erzeugt:', invalidDist)
+
+const invalidCtx = await browser.newContext({ viewport: { width: 1280, height: 850 } })
+const pageInvalid = await invalidCtx.newPage()
+pageInvalid.on('pageerror', (e) => errors.push(String(e)))
+pageInvalid.on('console', (m) => m.type() === 'error' && errors.push(m.text()))
+await openList(pageInvalid, invalidDist)
+await pageInvalid.getByRole('tab', { name: 'Dashboard' }).click()
+await pageInvalid.waitForSelector('.dashboard')
+
+const rejectedReasons = await pageInvalid.locator('.tile--metric-issue li').allInnerTexts()
+console.log('36k) Verworfene Deklarationen:', JSON.stringify(rejectedReasons))
+if (rejectedReasons.length !== 3) fail('Erwartet 3 benannte Verwerfungen')
+if (!rejectedReasons.some((t) => t.includes('"total"'))) fail('Der unbekannte Katalogeintrag "total" wurde nicht benannt')
+if (!rejectedReasons.some((t) => t.includes('Title') && t.toLowerCase().includes('numeric'))) {
+  fail('Die Summe ueber das Textfeld "Title" wurde nicht als nicht-numerisch beanstandet')
+}
+if (!rejectedReasons.some((t) => t.includes('nonexistent'))) fail('Das fehlende Feld wurde nicht benannt')
+
+const validCountTiles = await pageInvalid.locator('.tile--metric .tile__value').allInnerTexts()
+console.log('    Gueltige Kachel daneben:', validCountTiles.join(' | '))
+if (validCountTiles.length !== 1 || validCountTiles[0] !== '2') {
+  fail('Die gueltige Deklaration muss neben den verworfenen weiterlaufen')
+}
+
+await pageInvalid.getByRole('tab', { name: 'List' }).click()
+await pageInvalid.waitForSelector('table tbody tr')
+console.log('    Werkzeug weiterhin bedienbar — Zeilen:', await pageInvalid.locator('table tbody tr').count())
+
+await invalidCtx.close()
+rmSync(invalidOutDir, { recursive: true, force: true })
 
 // Beispiel-Prompts, Version und Aenderungsprotokoll.
 const page15 = await ctx.newPage()

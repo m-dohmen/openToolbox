@@ -274,6 +274,56 @@ if (activeTabAfterDueClick.toLowerCase() !== 'milestones') {
 await dueCtx.close()
 rmSync(dueOutDir, { recursive: true, force: true })
 
+/*
+ * Kennzahlen-Kacheln ueber Entitaetsgrenzen: eigener Build mit
+ * test/fixtures/metrics-multi.domain.js. Nur "certificates" deklariert
+ * metrics - "suppliers" bringt keine hervor, auch wenn es die gerade offene
+ * Entitaet ist. Der Klick auf eine Kachel muss zur Liste der deklarierenden
+ * Entitaet springen, nicht zu der, die zuletzt aktiv war.
+ */
+const metricsOutDir = resolve(root, 'dist-metrics-multi')
+const metricsDist = resolve(metricsOutDir, 'index.html')
+const metricsFixture = resolve(root, 'test/fixtures/metrics-multi.domain.js')
+const originalDomainForMetrics = readFileSync(domainPath, 'utf8')
+writeFileSync(domainPath, readFileSync(metricsFixture, 'utf8'))
+try {
+  execFileSync('npx', ['vite', 'build', '--outDir', 'dist-metrics-multi'], { cwd: root, stdio: 'pipe' })
+} finally {
+  writeFileSync(domainPath, originalDomainForMetrics)
+}
+console.log('17) Kennzahlen-Multi-Entity-Build erzeugt:', metricsDist)
+
+const metricsCtx = await browser.newContext({ viewport: { width: 1280, height: 850 } })
+const metricsPage = await metricsCtx.newPage()
+metricsPage.on('pageerror', (e) => errors.push(String(e)))
+await metricsPage.goto('file://' + metricsDist)
+await metricsPage.waitForSelector('.home, table tbody tr')
+if (await metricsPage.locator('.home').count()) await metricsPage.locator('.home__foot .btn--primary').click()
+await metricsPage.waitForSelector('table tbody tr')
+// Aktive Entitaet ist suppliers - die Kacheln gehoeren trotzdem zu certificates.
+await metricsPage.getByRole('tab', { name: 'Dashboard' }).click()
+await metricsPage.waitForSelector('.dashboard')
+
+const metricLabels = await metricsPage.locator('.tile--metric .tile__label').allTextContents()
+const metricValues = await metricsPage.locator('.tile--metric .tile__value').allInnerTexts()
+console.log('18) Kennzahl-Kacheln:', metricLabels.join(' | '), '—', metricValues.join(' | '))
+if (metricLabels.length !== 2) fail('Erwartet 2 Kacheln - suppliers deklariert keine, ein Default darf keine nachziehen')
+if (metricLabels[0] !== 'certificates') fail('count ohne Label tritt nicht auf den Plural zurueck')
+if (metricValues[0] !== '3') fail(`Anzahl-Kachel zaehlt ${metricValues[0]} statt 3`)
+if (metricValues[1] !== '400') fail(`Summen-Kachel rechnet ${metricValues[1]} statt 400 (100+250+50)`)
+
+// Klick aus der suppliers-Sicht: die Kachel kennt ihre Entitaet und schaltet um.
+// hasText mit Regex - das Label steht per CSS in Grossbuchstaben.
+await metricsPage.locator('.tile--metric', { hasText: /Certified volume/i }).click()
+await metricsPage.waitForSelector('table tbody tr')
+const activeAfterMetricClick = await metricsPage.locator('.entity-tabs > button[aria-selected="true"]').innerText()
+console.log('19) Nach Klick auf Kachel aktive Entitaet:', activeAfterMetricClick)
+if (activeAfterMetricClick.toLowerCase() !== 'certificates') {
+  fail('Klick auf eine Kachel wechselt nicht zur Liste ihrer Entitaet')
+}
+await metricsCtx.close()
+rmSync(metricsOutDir, { recursive: true, force: true })
+
 console.log(errors.length ? '\nKonsolenfehler:\n' + errors.join('\n') : '\nKeine Konsolenfehler.')
 await browser.close()
 mock.close()
