@@ -462,6 +462,7 @@ button, input, select, textarea { font-family: var(--font); font-size: inherit; 
   .filebar,
   .rail,
   .toolbar,
+  .globalsearch,
   .chat,
   .watermark,
   .head__actions,
@@ -573,6 +574,67 @@ button, input, select, textarea { font-family: var(--font); font-size: inherit; 
 .search:focus { border-color: var(--accent); outline: none; }
 
 .counter { font-family: var(--mono); font-size: 11.5px; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+/* ── Globale Suche und Feldfilter ─────────────────────────────── */
+
+.globalsearch {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+  padding: 12px 20px;
+  background: var(--panel);
+}
+.globalsearch .search { max-width: 460px; }
+
+/* Trefferzahl an den Entitäts-Reitern, solange global gesucht wird. */
+.tabcount {
+  margin-left: 7px;
+  padding: 0 7px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--accent-text);
+  font-family: var(--mono);
+  font-size: 11px;
+  font-weight: 400;
+  font-variant-numeric: tabular-nums;
+}
+
+.fieldfilter { display: grid; gap: 3px; margin-bottom: 12px; }
+.fieldfilter:last-child { margin-bottom: 0; }
+.fieldfilter__name { font-size: 12.5px; color: var(--ink); }
+.fieldfilter input {
+  width: 100%;
+  min-width: 0;
+  padding: 5px 8px;
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  background: var(--panel);
+}
+.fieldfilter input:focus { border-color: var(--accent); outline: none; }
+.range { display: flex; gap: 6px; align-items: center; color: var(--muted); }
+.range input { flex: 1; }
+
+/* Aktive Feldfilter als entfernbare Chips in der Werkzeugleiste - dieselbe
+   Form wie die Anhang-Chips im Chat, damit nicht zwei Chip-Sprachen entstehen. */
+.chips--filters { padding: 0; gap: 6px; }
+.chips__clear {
+  border: 0;
+  background: none;
+  cursor: pointer;
+  color: var(--accent-text);
+  font-size: 12px;
+  text-decoration: underline;
+  padding: 2px 4px;
+}
+
+/* Treffer-Hervorhebung: zurückhaltend, in beiden Farbwelt über die Tokens. */
+td mark {
+  background: var(--flag-soft);
+  color: var(--ink-strong);
+  font-weight: var(--tone-weight-semi);
+  border-radius: 2px;
+  padding: 0 1px;
+}
 
 .btn {
   display: inline-flex;

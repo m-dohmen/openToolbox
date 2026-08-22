@@ -9,6 +9,13 @@ import { translator } from '../src/i18n.js'
 import { relativeAge } from '../src/lib/time.js'
 import { groupByDueDate, hasDueDates } from '../src/lib/dueDate.js'
 import { HISTORY_LIMIT, pushHistory } from '../src/lib/history.js'
+import {
+  matchesSearch,
+  matchesFilters,
+  filterableFields,
+  filterChipLabel,
+  highlightParts,
+} from '../src/lib/search.js'
 import { readFileSync, writeFileSync, mkdirSync, rmSync } from 'node:fs'
 import { resolve, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -352,6 +359,109 @@ console.log(`0g) Verlauf gedeckelt: ${historyStack.length}/${HISTORY_LIMIT}, ael
 if (historyStack.length !== HISTORY_LIMIT) fail('Verlauf ueberschreitet die Grenze')
 if (historyStack[0] !== 'state-5') fail('Verlauf hat nicht die aeltesten Eintraege verworfen')
 if (historyStack[historyStack.length - 1] !== `state-${HISTORY_LIMIT + 4}`) fail('Juengster Eintrag fehlt nach dem Deckeln')
+
+/*
+ * Globale Suche und Feldfilter (lib/search.js), reine Funktionen: Treffer
+ * über mehrere Felder hinweg (auch Id, Anhangsname, Reference-Titel,
+ * berechnete Felder - nie der base64-Inhalt), Filter je Typ mit Grenzfällen,
+ * die Kombination beider, und die Zerlegung für die Hervorhebung.
+ */
+const sfSchema = {
+  idField: 'id', singular: 'item', plural: 'items', titleField: 'title',
+  list: ['title', 'owner', 'due', 'size', 'status'], facets: ['status'],
+  fields: [
+    { key: 'title', label: 'Title', type: 'text' },
+    { key: 'owner', label: 'Owner', type: 'text' },
+    { key: 'due', label: 'Due', type: 'date' },
+    { key: 'size', label: 'Size', type: 'number' },
+    { key: 'status', label: 'Status', type: 'enum', values: ['open', 'done'] },
+    { key: 'ref', label: 'Ref', type: 'reference', entity: 'others' },
+    { key: 'file', label: 'File', type: 'attachment' },
+    { key: 'score', label: 'Score', type: 'computed', compute: (r) => Number(r.size) * 2 },
+  ],
+}
+const sfEntity = { schema: sfSchema, isDone: () => false, isOverdue: () => false }
+const sfCtx = {
+  entities: {
+    items: sfEntity,
+    others: {
+      schema: { idField: 'id', titleField: 'name', fields: [{ key: 'name', label: 'Name', type: 'text' }] },
+    },
+  },
+  recordsByEntity: { others: [{ id: 'O-1', name: 'Nordwind IT GmbH' }] },
+}
+const sfRecords = [
+  { id: 'X-1', title: 'Alpha report', owner: 'T. Krueger', due: '2026-03-01', size: 5, status: 'open', ref: 'O-1', file: null },
+  { id: 'X-2', title: 'Beta audit', owner: 'A. Behrens', due: '2026-04-11', size: 15, status: 'done', ref: '', file: { name: 'proof.pdf', data: 'QUFB' } },
+]
+console.log('0h) Globale Suche über mehrere Felder:',
+  ['KRUEGER', 'beta audit', 'nordwind it', '2026-04-11', '30'].filter((q) =>
+    sfRecords.some((r) => matchesSearch(sfEntity, r, q, sfCtx))).length, '/ 5',
+  '| base64 als Treffer:', sfRecords.some((r) => matchesSearch(sfEntity, r, 'QUFB', sfCtx)))
+// Eigentümer (X-1), Titel (X-2), Reference-Titel (X-1), Datum (X-2), berechnetes Feld 15*2 (X-2)
+for (const q of ['KRUEGER', 'beta audit', 'nordwind it', '2026-04-11', '30']) {
+  if (!sfRecords.some((r) => matchesSearch(sfEntity, r, q, sfCtx))) fail(`Suche findet "${q}" nicht über die Felder hinweg`)
+}
+if (sfRecords.some((r) => matchesSearch(sfEntity, r, 'QUFB', sfCtx))) fail('Der base64-Inhalt eines Anhangs wurde durchsucht')
+if (!matchesSearch(sfEntity, sfRecords[0], 'x-1', sfCtx)) fail('Die Id wurde nicht durchsucht')
+
+const sfFilterable = filterableFields(sfSchema).map((f) => f.key)
+console.log('0i) Filterbare Felder:', sfFilterable.join(', '))
+if (sfFilterable.join(',') !== 'title,owner,due,size') {
+  fail('Facetten-, Anhangs- und berechnete Felder gehören nicht in den Filterbereich')
+}
+// Entität ohne einen einzigen filterbaren Typ - der Negativeingangsfall.
+const bareSchema = {
+  idField: 'id', singular: 'log', plural: 'logs', titleField: 'stamp', facets: [],
+  fields: [
+    { key: 'stamp', label: 'Stamp', type: 'computed', compute: (r) => r.at },
+    { key: 'file', label: 'File', type: 'attachment' },
+  ],
+}
+if (filterableFields(bareSchema).length !== 0) fail('Eine Entität ohne passende Feldtypen bekam doch Filter')
+
+// Datensatz für die Filterfälle: X-2 - done, size 15, due 2026-04-11, Behrens.
+const sfFilters = (f) => matchesFilters(sfEntity, sfRecords[1], f)
+const sfBlank = { id: 'X-3', title: 'Empty', owner: '', due: '', size: '', status: 'open', ref: '', file: null }
+console.log('0j) Feldfilter an einem Datensatz:',
+  'enum-mehrfach:', sfFilters({ status: { v: '', values: ['open', 'done'], from: '', to: '' } }),
+  '| zahl-von-bis:', sfFilters({ size: { v: '', values: [], from: '10', to: '15' } }),
+  '| text-enthält:', sfFilters({ owner: { v: 'BEHRENS', values: [], from: '', to: '' } }))
+if (!sfFilters({ status: { v: '', values: ['open', 'done'], from: '', to: '' } })) fail('Mehrfachauswahl schneidet erlaubte Werte ab')
+if (sfFilters({ status: { v: '', values: ['open'], from: '', to: '' } })) fail('Mehrfachauswahl ließ einen fremden Wert durch')
+if (!sfFilters({ size: { v: '', values: [], from: '10', to: '15' } })) fail('Zahlbereich verliert den eingeschlossenen Wert')
+if (sfFilters({ size: { v: '', values: [], from: '16', to: '' } })) fail('Zahlbereich von: Grenze nicht eingehalten')
+if (!sfFilters({ size: { v: '', values: [], from: '15', to: '' } })) fail('von-Grenze soll einschließend sein')
+if (sfFilters({ size: { v: '', values: [], from: '', to: '14' } })) fail('Zahlbereich bis: Grenze nicht eingehalten')
+if (!sfFilters({ due: { v: '', values: [], from: '2026-04-11', to: '' } })) fail('Datum von-Grenze soll einschließend sein')
+if (sfFilters({ due: { v: '', values: [], from: '2026-04-12', to: '' } })) fail('Datumsbereich von: Grenze nicht eingehalten')
+if (!sfFilters({ due: { v: '', values: [], from: '', to: '2026-04-11' } })) fail('Datum bis-Grenze soll einschließend sein')
+if (sfFilters({ due: { v: '', values: [], from: '', to: '2026-04-10' } })) fail('Datumsbereich bis: Grenze nicht eingehalten')
+if (!sfFilters({ owner: { v: 'BEHRENS', values: [], from: '', to: '' } })) fail('enthält-Filter ignoriert Groß-/kleinschreibung')
+if (matchesFilters(sfEntity, sfBlank, { owner: { v: '', values: [], from: '', to: '' }, due: { v: '', values: [], from: '2020-01-01', to: '' } })) {
+  fail('Ein Datensatz ohne Datum ist durch jeden Datumsbereich gerutscht')
+}
+if (matchesFilters(sfEntity, sfBlank, { size: { v: '', values: [], from: '0', to: '' } })) {
+  fail('Ein Datensatz ohne Zahl ist durch jeden Bereich gerutscht (Number("") === 0)')
+}
+// Kombination: Suche schneidet zuerst, der Filter entscheidet im Rest.
+if (!(matchesSearch(sfEntity, sfRecords[1], 'audit', sfCtx) && sfFilters({ size: { v: '', values: [], from: '10', to: '' } }))) {
+  fail('Kombination aus Suche und Filter trifft den passenden Datensatz nicht')
+}
+if (matchesSearch(sfEntity, sfRecords[0], 'audit', sfCtx)) fail('Suchbegriff traf den falschen Datensatz')
+
+const hiParts = highlightParts('Consultant T. Krueger', 'KRUEGER')
+console.log('0k) Hervorhebung:', JSON.stringify(hiParts))
+if (JSON.stringify(hiParts) !== JSON.stringify([{ text: 'Consultant T. ', hit: false }, { text: 'Krueger', hit: true }])) {
+  fail('Der Suchbegriff wurde nicht korrekt zur Hervorhebung zerlegt')
+}
+if (JSON.stringify(highlightParts('a-b', 'a-b')) !== JSON.stringify([{ text: 'a-b', hit: true }])) {
+  fail('Sonderzeichen im Suchbegriff wurden als Muster gelesen')
+}
+if (highlightParts('Unverändert', '').length !== 1) fail('Ohne Suchbegriff sollte nichts zerlegt werden')
+if (filterChipLabel(sfSchema, 'size', { v: '', values: [], from: '10', to: '15' }) !== 'Size: 10 – 15') fail('Chiptext Zahlbereich falsch')
+if (filterChipLabel(sfSchema, 'size', { v: '', values: [], from: '10', to: '' }) !== 'Size: 10 – …') fail('Chiptext offene Obergrenze falsch')
+if (filterChipLabel(sfSchema, 'status', { v: '', values: ['open', 'done'], from: '', to: '' }) !== 'Status: open, done') fail('Chiptext Mehrfachauswahl falsch')
 
 const browser = await chromium.launch()
 const ctx = await browser.newContext({ acceptDownloads: true, viewport: { width: 1280, height: 850 } })
@@ -1792,6 +1902,95 @@ const ageAfterIdle = await page29.locator('.filebar__meta').innerText()
 console.log('90) Alters-Angabe vor/nach 5 Minuten Leerlauf:', JSON.stringify(ageBeforeIdle), '/', JSON.stringify(ageAfterIdle))
 if (ageBeforeIdle === ageAfterIdle) fail('Relative Alters-Angabe aktualisiert sich nicht von selbst in einer offenen Datei')
 await page29.close()
+
+/* Globale Suche und Feldfilter in der Oberfläche: das Suchfeld steht im
+   Kopfbereich und trifft alle Felder aller Entitäten - auch Zahlen und
+   Daten, die nie in schema.search standen. Feldfilter je Feldtyp laufen über
+   die Seitenleiste, aktive Filter erscheinen als entfernbare Chips. Der
+   Zustand lebt nur in der Sitzung: nach dem Neuladen ist alles zurück. */
+const page30 = await ctx.newPage()
+page30.on('pageerror', (e) => errors.push(String(e)))
+await openList(page30, dist)
+
+const searchBox = page30.locator('.globalsearch input[type="search"]')
+if ((await searchBox.count()) !== 1) fail('Das globale Suchfeld fehlt im Kopfbereich')
+
+// Treffer über mehrere Felder hinweg: "krueger" steht beim Eigentümer, nicht im Titel.
+await searchBox.fill('krueger')
+await page30.waitForTimeout(150)
+const kruegerRows = await page30.locator('table tbody tr').count()
+const kruegerMarks = await page30.locator('td mark').count()
+console.log('91) Suche "krueger":', kruegerRows, 'Zeilen | Hervorhebungen:', kruegerMarks,
+  '| Zähler:', await page30.locator('.toolbar .counter').innerText())
+if (kruegerRows !== 2) fail('Die Volltextsuche über Nicht-Titel-Felder traf nicht die erwarteten Zeilen')
+if (kruegerMarks < 1) fail('Der Suchtreffer wurde in der Tabelle nicht hervorgehoben')
+if (!/2 of 11/.test(await page30.locator('.toolbar .counter').innerText())) fail('Der Zähler zeigt nicht die Trefferzahl')
+
+// Zahlen und Daten sind ebenfalls Volltext - beides stand nie in schema.search.
+await searchBox.fill('16')
+await page30.waitForTimeout(150)
+const sixteenTitle = await page30.locator('tr:has-text("Recalibrate") .cell-title').innerText()
+console.log('92) Suche "16" trifft den Aufwand:', sixteenTitle.split('\n')[0])
+if (!sixteenTitle.includes('Recalibrate')) fail('Die Suche findet keine Zahlenwerte')
+const plus21 = new Date(Date.now() + 21 * 86400000).toISOString().slice(0, 10)
+await searchBox.fill(plus21)
+await page30.waitForTimeout(150)
+if ((await page30.locator('table tbody tr').count()) !== 1) fail('Die Suche findet keine Datumswerte')
+await searchBox.fill('')
+await page30.waitForTimeout(150)
+if ((await page30.locator('table tbody tr').count()) !== 11) fail('Nach dem Leeren der Suche fehlen Zeilen')
+
+// Text-Filter (enthält) als Chip - und wieder entfernen.
+await page30.locator('.fieldfilter input[aria-label="Owner contains…"]').fill('behrens')
+await page30.waitForTimeout(150)
+const behrensRows = await page30.locator('table tbody tr').count()
+console.log('93) Enthält-Filter "behrens":', behrensRows, 'Zeilen | Chips:', await page30.locator('.chips--filters .chip').count())
+if (behrensRows !== 2) fail('Der enthält-Filter schneidet nicht wie erwartet')
+if ((await page30.locator('.chips--filters .chip').count()) !== 1) fail('Der aktive Filter erscheint nicht als Chip')
+await page30.locator('.chips--filters .chip button').click()
+await page30.waitForTimeout(150)
+if ((await page30.locator('table tbody tr').count()) !== 11) fail('Entfernen des Chips hebt den Filter nicht auf')
+
+// Zahl (von/bis) und Datum (von/bis), dann beide zusammen.
+await page30.locator('.fieldfilter input[aria-label="Effort in days from"]').fill('10')
+await page30.locator('.fieldfilter input[aria-label="Effort in days to"]').fill('15')
+await page30.waitForTimeout(150)
+const effortRows = await page30.locator('table tbody tr').count()
+console.log('94) Aufwand 10 bis 15:', effortRows, 'Zeilen')
+if (effortRows !== 2) fail('Der Zahlenbereich filtert nicht korrekt')
+const pastBoundary = new Date(Date.now() - 2 * 86400000).toISOString().slice(0, 10)
+await page30.locator('.fieldfilter input[aria-label="Due date from"]').fill(pastBoundary)
+await page30.waitForTimeout(150)
+const comboRangeRows = await page30.locator('table tbody tr').count()
+console.log('    zuzüglich Fälligkeit ab', pastBoundary, ':', comboRangeRows, 'Zeilen | Chips:',
+  await page30.locator('.chips--filters .chip').count())
+if (comboRangeRows !== 1) fail('Zahl- und Datumsbereich kombinieren sich nicht')
+if ((await page30.locator('.chips--filters .chip').count()) !== 2) fail('Zwei aktive Filter erscheinen nicht als zwei Chips')
+if (!(await page30.locator('.chips__clear').count())) fail('Bei mehreren Filtern fehlt der Alles-löschen-Knopf')
+await page30.locator('.chips__clear').click()
+await page30.waitForTimeout(150)
+if ((await page30.locator('table tbody tr').count()) !== 11) fail('Alle Filter löschen räumt nicht auf')
+
+// Kombination aus globaler Suche und Feldfilter: erst schneidet die Suche,
+// im Rest entscheidet der Bereich.
+await searchBox.fill('krueger')
+await page30.locator('.fieldfilter input[aria-label="Effort in days from"]').fill('10')
+await page30.waitForTimeout(150)
+const comboRows = await page30.locator('table tbody tr').count()
+const comboTitle = comboRows ? await page30.locator('table tbody tr').first().locator('.cell-title').innerText() : ''
+console.log('95) Suche "krueger" + Aufwand ab 10:', comboRows, '|', comboTitle.split('\n')[0])
+if (comboRows !== 1 || !comboTitle.includes('Sign off')) fail('Suche und Filter schneiden nicht gemeinsam korrekt')
+
+// Sitzungsspeicher: nichts davon übersteht ein Neuladen.
+await openList(page30, dist)
+const reloadedRows = await page30.locator('table tbody tr').count()
+const reloadedQuery = await searchBox.inputValue()
+const reloadedChips = await page30.locator('.chips--filters .chip').count()
+console.log('96) Nach Neuladen:', reloadedRows, 'Zeilen | Suchfeld:', JSON.stringify(reloadedQuery), '| Chips:', reloadedChips)
+if (reloadedRows !== 11 || reloadedQuery !== '' || reloadedChips !== 0) {
+  fail('Suche/Filter sollen nur in der Sitzung leben, nicht im Datenblock oder Speicher')
+}
+await page30.close()
 
 // Vorschau im hellen Modus
 await page3.getByLabel('Settings').click()

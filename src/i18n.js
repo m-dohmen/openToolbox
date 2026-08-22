@@ -62,8 +62,15 @@ const STRINGS = {
     'sidebar.importJson': 'Import JSON',
     'sidebar.importCsv': 'Import CSV',
 
-    'search.placeholder': 'Search titles, owners, notes…',
+    'search.placeholder': 'Search all records…',
     'search.counter': (visible, total) => `${visible} of ${total}`,
+
+    'sidebar.filters': 'Filters',
+    'filters.contains': 'contains…',
+    'filters.from': 'from',
+    'filters.to': 'to',
+    'filters.remove': 'Remove this filter',
+    'filters.clearAll': 'Clear all filters',
 
     'empty.noMatches': 'No matches',
     'empty.noMatchesHint': 'Clear the filters or change the search term.',
@@ -655,8 +662,15 @@ const STRINGS = {
     'sidebar.importJson': 'JSON importieren',
     'sidebar.importCsv': 'CSV importieren',
 
-    'search.placeholder': 'Titel, Verantwortliche, Notizen durchsuchen…',
+    'search.placeholder': 'Alle Datensätze durchsuchen…',
     'search.counter': (visible, total) => `${visible} von ${total}`,
+
+    'sidebar.filters': 'Filter',
+    'filters.contains': 'enthält …',
+    'filters.from': 'von',
+    'filters.to': 'bis',
+    'filters.remove': 'Diesen Filter entfernen',
+    'filters.clearAll': 'Alle Filter löschen',
 
     'empty.noMatches': 'Keine Treffer',
     'empty.noMatchesHint': 'Filter zurücksetzen oder Suchbegriff ändern.',

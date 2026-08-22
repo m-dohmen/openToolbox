@@ -274,6 +274,121 @@ if (activeTabAfterDueClick.toLowerCase() !== 'milestones') {
 await dueCtx.close()
 rmSync(dueOutDir, { recursive: true, force: true })
 
+/*
+ * Globale Suche über Entitätsgrenzen (derselbe Build wie oben): der Begriff
+ * trifft den Lieferantennamen und - über die aufgelösten Referenztitel -
+ * dessen Zertifikate. Die Trefferzahl hängt an jedem Reiter, die Hervorhebung
+ * auch im Reference-Chip. Danach die Kombination aus Suche und Datumsbereich.
+ */
+await page.locator('.globalsearch input[type="search"]').fill('Nordwind')
+await page.waitForTimeout(150)
+const supBadge = await page.locator('.entity-tabs > button', { hasText: 'suppliers' }).locator('.tabcount').innerText()
+const certBadge = await page.locator('.entity-tabs > button', { hasText: 'certificates' }).locator('.tabcount').innerText()
+console.log('17) Treffer je Entität für "Nordwind" — suppliers:', supBadge, '| certificates:', certBadge)
+if (supBadge !== '1') fail('Die Trefferzahl am Suppliers-Reiter stimmt nicht')
+if (certBadge !== '3') fail('Die Suche findet die Zertifikate nicht über den Referenztitel')
+// Nicht per Rolle klicken: der zugängliche Name des Reiters trägt unter
+// aktiver Suche die Trefferzahl.
+await page.locator('.entity-tabs > button', { hasText: 'certificates' }).click()
+await page.waitForSelector('table tbody tr')
+const nordwindRows = await page.locator('table tbody tr').count()
+const nordwindMarks = await page.locator('.ref-chip mark').count()
+console.log('18) Zertifikatsliste unter "Nordwind":', nordwindRows, 'Zeilen | Hervorhebungen im Chip:', nordwindMarks)
+if (nordwindRows !== 3) fail('Die globale Suche filtert die Zielentität nicht')
+if (nordwindMarks < 1) fail('Der Treffer wird auch im Reference-Chip nicht hervorgehoben')
+const expFrom = new Date(Date.now() + 10 * 86400000).toISOString().slice(0, 10)
+await page.locator('.fieldfilter input[aria-label="Expiry date from"]').fill(expFrom)
+await page.waitForTimeout(150)
+const nordwindFresh = await page.locator('table tbody tr').first().locator('.cell-title').innerText()
+console.log('    zuzüglich Ablauf ab', expFrom, ':', nordwindFresh.split('\n')[0])
+if ((await page.locator('table tbody tr').count()) !== 1 || !nordwindFresh.includes('SOC 2')) {
+  fail('Suche und Feldfilter schneiden über die Entitäten hinweg nicht korrekt')
+}
+await page.locator('.globalsearch input[type="search"]').fill('')
+await page.waitForTimeout(150)
+
+/*
+ * Negativfall und Mehrfachauswahl: eigener Build mit einer Entität ("log"),
+ * die nur ein berechnetes Feld und einen Anhang besitzt. Für sie darf weder
+ * Filterbereich noch Chip erscheinen - gefunden wird sie von der globalen
+ * Suche trotzdem. Die andere Entität übt die Mehrfachauswahl einer
+ * Aufzählung ohne Facettengruppe und dieselben Chips.
+ */
+const sfOutDir = resolve(root, 'dist-search-negative')
+const sfDist = resolve(sfOutDir, 'index.html')
+const sfFixture = resolve(root, 'test/fixtures/search-filter-negative.domain.js')
+const originalDomainForSf = readFileSync(domainPath, 'utf8')
+writeFileSync(domainPath, readFileSync(sfFixture, 'utf8'))
+try {
+  execFileSync('npx', ['vite', 'build', '--outDir', 'dist-search-negative'], { cwd: root, stdio: 'pipe' })
+} finally {
+  writeFileSync(domainPath, originalDomainForSf)
+}
+console.log('19) Suche/Filter-Negativ-Build erzeugt:', sfDist)
+
+const sfPage = await ctx.newPage()
+sfPage.on('pageerror', (e) => errors.push(String(e)))
+await sfPage.goto('file://' + sfDist)
+await sfPage.waitForSelector('.home, table tbody tr')
+if (await sfPage.locator('.home').count()) await sfPage.locator('.home__foot .btn--primary').click()
+await sfPage.waitForSelector('table tbody tr')
+
+// "things" hat filterbare Typen - der Bereich ist da, ohne dass Facetten nötig wären.
+const thingFilters = await sfPage.locator('.fieldfilter').count()
+console.log('20) Filterfelder bei "things":', thingFilters)
+if (thingFilters < 3) fail('Der Filterbereich zeigt die filterbaren Typen nicht')
+
+// Ein Begriff, Treffer in beiden Entitäten, Zahl an jedem Reiter.
+await sfPage.locator('.globalsearch input[type="search"]').fill('2026')
+await sfPage.waitForTimeout(150)
+const thingsBadge = await sfPage.locator('.entity-tabs > button', { hasText: 'things' }).locator('.tabcount').innerText()
+const logBadge = await sfPage.locator('.entity-tabs > button', { hasText: 'log entries' }).locator('.tabcount').innerText()
+console.log('21) Treffer für "2026" — things:', thingsBadge, '| log entries:', logBadge)
+if (thingsBadge !== '2' || logBadge !== '1') fail('Trefferzahlen je Entität stimmen nicht (auch das berechnete Feld muss treffen)')
+
+// Negativfall: keine filterbaren Typen, keine Filterfläche, keine Chips.
+await sfPage.locator('.entity-tabs > button', { hasText: 'log entries' }).click()
+await sfPage.waitForSelector('table tbody tr')
+const logRows = await sfPage.locator('table tbody tr').count()
+const logFilters = await sfPage.locator('.fieldfilter').count()
+const logChips = await sfPage.locator('.chips--filters .chip').count()
+console.log('22) "log entries" unter aktiver Suche:', logRows, 'Zeilen | Filterfelder:', logFilters, '| Chips:', logChips)
+if (logRows !== 1) fail('Der Datensatz der typlosen Entität wurde von der Suche nicht gefunden')
+if (logFilters !== 0) fail('Eine Entität ohne passende Feldtypen bekam doch einen Filterbereich')
+if (logChips !== 0) fail('Eine Entität ohne passende Feldtypen bekam doch Filter-Chips')
+
+// Mehrfachauswahl an der Aufzählung ohne Facette, als Chip entfernbare,
+// kombiniert mit der laufenden Suche.
+await sfPage.locator('.entity-tabs > button', { hasText: 'things' }).click()
+await sfPage.waitForSelector('table tbody tr')
+await sfPage.locator('.fieldfilter .filter button', { hasText: 'blue' }).click()
+await sfPage.waitForTimeout(150)
+const blueRows = await sfPage.locator('table tbody tr').count()
+console.log('23) Mehrfachauswahl "blue":', blueRows, 'Zeilen | Chip:', await sfPage.locator('.chips--filters .chip em').innerText())
+if (blueRows !== 1) fail('Die Mehrfachauswahl schneidet nicht korrekt')
+await sfPage.locator('.globalsearch input[type="search"]').fill('alpha')
+await sfPage.waitForTimeout(150)
+if ((await sfPage.locator('table tbody tr').count()) !== 0) fail('Suche und Filter schließen den letzten Treffer nicht aus')
+if (!(await sfPage.locator('.empty').count())) fail('Der Leerzustand erscheint nicht')
+await sfPage.locator('.globalsearch input[type="search"]').fill('')
+await sfPage.waitForTimeout(150)
+if ((await sfPage.locator('table tbody tr').count()) !== 1) fail('Ohne Suchbegriff bleibt der Auswahlfilter nicht allein übrig')
+await sfPage.locator('.chips--filters .chip button').click()
+await sfPage.waitForTimeout(150)
+if ((await sfPage.locator('table tbody tr').count()) !== 2) fail('Chip entfernt den Auswahlfilter nicht')
+
+// Nur Sitzungsspeicher: nach dem Neuladen ist alles weg.
+await sfPage.reload()
+await sfPage.waitForSelector('.home, table tbody tr')
+if (await sfPage.locator('.home').count()) await sfPage.locator('.home__foot .btn--primary').click()
+await sfPage.waitForSelector('table tbody tr')
+const reloadedThings = await sfPage.locator('table tbody tr').count()
+const reloadedQuery = await sfPage.locator('.globalsearch input[type="search"]').inputValue()
+console.log('24) Nach Neuladen:', reloadedThings, 'Zeilen | Suchfeld:', JSON.stringify(reloadedQuery))
+if (reloadedThings !== 2 || reloadedQuery !== '') fail('Filter-/Suchzustand überlebte das Neuladen - er gehört nur in die Sitzung')
+await sfPage.close()
+rmSync(sfOutDir, { recursive: true, force: true })
+
 console.log(errors.length ? '\nKonsolenfehler:\n' + errors.join('\n') : '\nKeine Konsolenfehler.')
 await browser.close()
 mock.close()
