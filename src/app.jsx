@@ -53,6 +53,7 @@ import { ChatDock } from './chat.jsx'
 import { AI_DEFAULTS } from './lib/ai.js'
 import { countOpen, DEFAULT_COUNT_URL } from './lib/count.js'
 import { hasDueDates } from './lib/dueDate.js'
+import { hasMetrics } from './lib/metrics.js'
 import { relativeAge } from './lib/time.js'
 import { translator, DEFAULT_LOCALE } from './i18n.js'
 
@@ -72,9 +73,11 @@ const SINGLE = isSingleEntity(ENTITIES)
 const DASHBOARD = domainModule.DASHBOARD?.tiles?.length ? domainModule.DASHBOARD : null
 /* Das Fälligkeiten-Widget lebt in der Dashboard-Ansicht, hängt aber nicht am
    DASHBOARD-Export - eine Domäne kann `dueDate` deklarieren, ohne je Kacheln
-   zu definieren, und bekommt die Ansicht dann trotzdem. */
+   zu definieren, und bekommt die Ansicht dann trotzdem. Für Kennzahlen gilt
+   dieselbe Haltung: `metrics` allein schaltet die Ansicht frei. */
 const HAS_DUE_DATES = hasDueDates(ENTITIES)
-const SHOW_DASHBOARD_VIEW = Boolean(DASHBOARD || HAS_DUE_DATES)
+const HAS_METRICS = hasMetrics(ENTITIES)
+const SHOW_DASHBOARD_VIEW = Boolean(DASHBOARD || HAS_DUE_DATES || HAS_METRICS)
 /* Hat diese Domaene ueberhaupt Anhaenge? Sonst gibt es weder Anzeige noch
    Budget - ein Werkzeug ohne Dateien soll davon nichts merken. */
 const ATTACHMENTS = hasAttachments(ENTITIES)
@@ -1192,7 +1195,12 @@ function Workbench({
           accent={settings.colors.accent}
           dark={dark}
           examplePrompts={showHints}
+          locale={settings.locale}
           onNavigate={navigateReference}
+          onShowList={(key) => {
+            switchEntity(key)
+            setView('list')
+          }}
           tr={tr}
         />
       ) : (

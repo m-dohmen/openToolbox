@@ -24,6 +24,7 @@
  */
 import { fieldValue, findField } from './lib/entities.js'
 import { groupByDueDate, hasDueDates } from './lib/dueDate.js'
+import { formatMetricValue, metricValue, validateMetrics } from './lib/metrics.js'
 import { shade } from './lib/color.js'
 import { Hint } from './hint.jsx'
 
@@ -64,6 +65,58 @@ function groupRows(entity, records, groupBy, measure) {
     key,
     value: measureValue(entity, records.filter((r) => r[groupBy] === key), measure),
   }))
+}
+
+/**
+ * Kennzahl-Kachel aus `schema.metrics` - count, sum oder avg, gerechnet über
+ * den vollen Bestand der eigenen Entität. Klick springt zur Liste dieser
+ * Entität (V1 ungefiltert); die Tastatur bekommt dieselbe Aktion, ein
+ * role="button" ohne Tastenpfad wäre nur die halbe Kachel.
+ */
+function MetricTile({ entityKey, entity, records, metric, locale, onShowList }) {
+  const value = formatMetricValue(
+    metricValue(entity, records, metric),
+    locale,
+    metric.op === 'avg' ? 2 : undefined,
+  )
+  const open = () => onShowList(entityKey)
+  return (
+    <div
+      class="tile tile--stat tile--metric"
+      role="button"
+      tabIndex={0}
+      onClick={open}
+      onKeyDown={(e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault()
+          open()
+        }
+      }}
+    >
+      <p class="tile__label">{metric.label}</p>
+      <p class="tile__value">{value}</p>
+      {metric.caption && <p class="tile__caption">{metric.caption}</p>}
+    </div>
+  )
+}
+
+/**
+ * Verworfene Deklarationen werden benannt, nicht still übergangen - als eigene
+ * Kachel zwischen den gültigen, damit sie im Raster auffallen statt in der
+ * Konsole zu verblassen.
+ */
+function MetricIssueTile({ entity, issues, tr }) {
+  if (!issues.length) return null
+  return (
+    <div class="tile tile--metric-issue">
+      <p class="tile__label">{tr('dashboard.metrics.rejected', entity.schema.plural)}</p>
+      <ul class="metric-issues">
+        {issues.map((issue, i) => (
+          <li key={i}>{tr('dashboard.metrics.' + issue.code, ...issue.params)}</li>
+        ))}
+      </ul>
+    </div>
+  )
 }
 
 /* ── Kacheln ──────────────────────────────────────────────────── */
@@ -219,10 +272,37 @@ export function DashboardView({
   accent,
   dark,
   examplePrompts,
+  locale = 'en',
   onNavigate,
+  onShowList,
   today,
   tr,
 }) {
+  /**
+   * Kennzahlen je Entität, die eine deklariert hat - die Entität steckt in der
+   * Deklaration selbst, anders als bei DASHBOARD-Tiles gibt es hier keinen
+   * Default, der von der gerade offenen Ansicht abhinge. Ungültige Einträge
+   * kommen als Verwerfungen mit, damit nichts still verschwindet.
+   */
+  const metricTiles = Object.entries(entities).flatMap(([key, entity]) => {
+    const { metrics, issues } = validateMetrics(entity.schema)
+    if (!metrics.length && !issues.length) return []
+    const records = recordsByEntity[key] ?? []
+    return [
+      ...metrics.map((metric, i) => (
+        <MetricTile
+          key={'metric:' + key + ':' + i}
+          entityKey={key}
+          entity={entity}
+          records={records}
+          metric={metric}
+          locale={locale}
+          onShowList={onShowList}
+        />
+      )),
+      <MetricIssueTile key={'metric-issues:' + key} entity={entity} issues={issues} tr={tr} />,
+    ]
+  })
   return (
     <div class="dashboard">
       {examplePrompts && (
@@ -230,6 +310,7 @@ export function DashboardView({
           <Hint show id="dashboard" tr={tr} />
         </div>
       )}
+      {metricTiles}
       {hasDueDates(entities) && (
         <DueDateWidget entities={entities} recordsByEntity={recordsByEntity} today={today} onNavigate={onNavigate} tr={tr} />
       )}
