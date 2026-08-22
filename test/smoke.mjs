@@ -509,6 +509,61 @@ console.log('1c) Berechnetes Feld im Formular als:', computedControl)
 if (computedControl !== 'OUTPUT') fail('Berechnetes Feld ist im Formular beschreibbar')
 await page.keyboard.press('Escape')
 
+/*
+ * Sortierung (OPEN-18): Dreiklang auf/ab/Zurück am Spaltenkopf, Zahlen
+ * numerisch statt wortweise. Der dritte Klick auf denselben Kopf stellt die
+ * Datenblock-Reihenfolge wieder her - der Pfeil verschwindet, aria-sort mit.
+ */
+const headD = page.getByRole('columnheader', { name: /^D\b/ })
+const effortCells = () =>
+  page
+    .locator('td.cell-num:not(.cell-computed)')
+    .allInnerTexts()
+    .then((t) => t.join())
+await headD.click()
+const effortAsc = await effortCells()
+console.log('1d) Aufwand nach 1. Klick:', effortAsc, '| aria-sort:', await headD.getAttribute('aria-sort'))
+if (effortAsc !== '1,2,3,4,5,6,8,10,12,16,20') fail('Aufwand nicht numerisch aufsteigend (10 hinter 9) sortiert')
+if ((await headD.getAttribute('aria-sort')) !== 'ascending') fail('Erster Klick muss aufsteigend sortieren')
+await headD.click()
+const effortDesc = await effortCells()
+console.log('    Nach 2. Klick:', effortDesc, '| aria-sort:', await headD.getAttribute('aria-sort'))
+if (effortDesc !== '20,16,12,10,8,6,5,4,3,2,1') fail('Zweiter Klick muss absteigend sortieren')
+if ((await headD.getAttribute('aria-sort')) !== 'descending') fail('aria-sort meldet nicht absteigend')
+await headD.click()
+const dataOrder = await page.locator('td.cell-id').allInnerTexts()
+console.log('1e) Nach 3. Klick zurück auf Datenblock-Reihenfolge:', dataOrder.join(','), '| aria-sort:', await headD.getAttribute('aria-sort'))
+if (dataOrder.join() !== Array.from({ length: 11 }, (_, i) => 'A-' + (1041 + i)).join()) {
+  fail('Dritter Klick hat nicht zur Datenblock-Reihenfolge zurückgestellt')
+}
+if ((await headD.getAttribute('aria-sort')) !== null) fail('Nach dem dritten Klick darf kein Sortierindikator bleiben')
+
+// Datumschronologie: der Kopf sortiert nach dem ISO-Wert, nicht nach der
+// angezeigten Schreibweise.
+const headDue = page.getByRole('columnheader', { name: /^Due/ })
+await headDue.click()
+const dueSequence = (await page.locator('td.cell-date').allInnerTexts()).map((t) => {
+  const [m, d, y] = t.split('/')
+  return `${y}-${m}-${d}`
+})
+const dueAscending = dueSequence.every((s, i, a) => i === 0 || a[i - 1] <= s)
+console.log('1f) Fälligkeit chronologisch:', dueSequence.join(' '), '| aufsteigend:', dueAscending)
+if (!dueAscending) fail('Datums-Sortierung folgt nicht der Chronologie')
+
+// Leerwerte stehen in BEIDEN Richtungen unten - die erledigten Punkte ohne
+// Restlaufzeit dürfen nie über den befüllten Werten liegen.
+const headLeft = page.getByRole('columnheader', { name: /^Left/ })
+await headLeft.click()
+const leftAsc = await page.locator('td.cell-computed').allInnerTexts()
+await headLeft.click()
+const leftDesc = await page.locator('td.cell-computed').allInnerTexts()
+const blanksAtBottom = (cells) => cells.slice(-2).every((t) => t === '—')
+console.log('1g) Restlaufzeit absteigend:', leftDesc.join(' '), '| Leerwerte unten:',
+  blanksAtBottom(leftAsc), '/', blanksAtBottom(leftDesc))
+if (!blanksAtBottom(leftAsc)) fail('Leerwerte liegen bei aufsteigender Sortierung nicht unten')
+if (!blanksAtBottom(leftDesc)) fail('Leerwerte rutschen bei absteigender Sortierung nach oben')
+await headLeft.click()
+
 // Neuen Datensatz anlegen
 await page.getByRole('button', { name: 'New action item' }).first().click()
 await page.locator('#f-title').fill('Smoke test entry')

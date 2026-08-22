@@ -62,6 +62,7 @@ import { ChatDock } from './chat.jsx'
 import { AI_DEFAULTS } from './lib/ai.js'
 import { countOpen, DEFAULT_COUNT_URL } from './lib/count.js'
 import { hasDueDates } from './lib/dueDate.js'
+import { nextSort, sortRecords } from './lib/sort.js'
 import { relativeAge } from './lib/time.js'
 import { translator, DEFAULT_LOCALE } from './i18n.js'
 
@@ -706,11 +707,17 @@ function Workbench({
         matchesSearch(entity, r, query, searchCtx) &&
         matchesFilters(entity, r, filters),
     )
-    return out.sort((a, b) => {
-      const x = fieldValue(entity, a, sort.key) ?? ''
-      const y = fieldValue(entity, b, sort.key) ?? ''
-      if (typeof x === 'number' && typeof y === 'number') return (x - y) * sort.dir
-      return String(x).localeCompare(String(y), settings.locale) * sort.dir
+    /* Die Sortierung lebt in lib/sort.js: Typvergleich, Leerwerte unten,
+       Gleichstand über die Datenblock-Reihenfolge. Sie sieht sich auch
+       recordsByEntity an, weil Reference-Spalten nach dem Titel des Ziels
+       und nicht nach der Id ordnen. */
+    return sortRecords({
+      entity,
+      entities: ENTITIES,
+      recordsByEntity,
+      records: out,
+      sort,
+      locale: settings.locale,
     })
   }, [records, query, facet, filters, sort, settings.locale, activeKey, recordsByEntity])
 
@@ -736,8 +743,7 @@ function Workbench({
 
   const payloadSize = useMemo(() => JSON.stringify(recordsByEntity).length, [recordsByEntity])
 
-  const sortBy = (key) =>
-    setSort((s) => ({ key, dir: s.key === key ? -s.dir : 1 }))
+  const sortBy = (key) => setSort((s) => nextSort(s, key))
 
   /* Datensätze ------------------------------------------------- */
 
@@ -1977,14 +1983,16 @@ function Cell({ record, field, schema, entities, recordsByEntity, entity, onNavi
   return <td>{value ? <Hi text={value} q={q} /> : '—'}</td>
 }
 
+/* Der Kopf trägt den Pfeil nur, solange eine Sortierung nach ihm läuft -
+   der dritte Klick stellt die Datenblock-Reihenfolge wieder her (sort: null). */
 const Th = ({ sort, k, onSort, align, children }) => (
   <th
-    aria-sort={sort.key === k ? (sort.dir === 1 ? 'ascending' : 'descending') : undefined}
+    aria-sort={sort?.key === k ? (sort.dir === 1 ? 'ascending' : 'descending') : undefined}
     style={align === 'right' ? 'text-align:right' : undefined}
     onClick={() => onSort(k)}
   >
     {children}
-    {sort.key === k && <span class="caret">{sort.dir === 1 ? '▲' : '▼'}</span>}
+    {sort?.key === k && <span class="caret">{sort.dir === 1 ? '▲' : '▼'}</span>}
   </th>
 )
 
