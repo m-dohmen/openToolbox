@@ -40,7 +40,7 @@ import {
 } from './lib/search.js'
 import { Wordmark } from './brand.jsx'
 import { paletteVariables } from './lib/color.js'
-import { IconSave, IconSettings, IconLink, IconPaperclipSmall, IconUndo, IconRedo } from './icons.jsx'
+import { IconSave, IconSettings, IconLink, IconPaperclipSmall, IconUndo, IconRedo, IconCopy } from './icons.jsx'
 import { SettingsPage } from './settings.jsx'
 import { DashboardView } from './dashboard.jsx'
 import { WizardView } from './wizard.jsx'
@@ -795,6 +795,36 @@ function Workbench({
     setDraft(null)
   }
 
+  /**
+   * Duplizieren legt die Kopie über denselben Weg an wie das Übernehmen im
+   * Formular: mutate setzt sie auf den Undo-Stapel, markiert die Datei als
+   * geändert und lässt sie erst mit dem nächsten Speichern in einer neuen
+   * Datei landen - im Protokoll erscheint sie dann als Anlegen-Ereignis,
+   * weil der Protokoll-Eintrag beim Speichern gegen den letzten Stand
+   * abgeleitet wird. Kopiert wird der gespeicherte Datensatz, nicht ein
+   * etwaiger offener Formularstand: ungespeicherte Eingaben gehören nicht
+   * in eine Kopie.
+   */
+  const duplicate = (id) => {
+    const source = records.find((r) => r[schema.idField] === id)
+    if (!source) return
+    const copy = { ...source, [schema.idField]: entity.uid() }
+    if (String(source[schema.titleField] ?? '').trim()) {
+      copy[schema.titleField] = tr('drawer.duplicateSuffix', source[schema.titleField])
+    }
+    /* Dieselbe Budgetprüfung wie beim Übernehmen: Eine Kopie mit Anhang
+       verdoppelt dessen Platz, und erst hier schlägt die Ablehnung ein,
+       statt nach dem nächsten Speichern entdeckt zu werden. */
+    const nextRecords = [...records, copy]
+    const after = usedBytes(ENTITIES, { ...recordsByEntity, [activeKey]: nextRecords })
+    const limit = (settings.attachmentBudgetMb ?? DEFAULT_BUDGET_MB) * 1024 * 1024
+    if (after > limit) {
+      return notify(tr('attach.overBudget', mb(after).toFixed(1), settings.attachmentBudgetMb), 'error')
+    }
+    mutate(nextRecords)
+    setDraft({ ...copy })
+  }
+
   /* Austausch -------------------------------------------------- */
 
   const exportCsv = () => {
@@ -1397,6 +1427,9 @@ function Workbench({
                         {field(key).short ?? field(key).label}
                       </Th>
                     ))}
+                    <th class="cell-action" scope="col">
+                      <span class="visually-hidden">{tr('drawer.duplicate')}</span>
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1422,6 +1455,21 @@ function Workbench({
                           q={query}
                         />
                       ))}
+                      <td class="cell-action">
+                        {/* stopPropagation: der Klick gehoert der Aktion, nicht
+                            dem Zeilenwechsel ins Formular des Originals. */}
+                        <button
+                          class="iconbtn row-duplicate"
+                          title={`${tr('drawer.duplicate')}: ${r[schema.titleField]}`}
+                          aria-label={`${tr('drawer.duplicate')}: ${r[schema.titleField]}`}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            duplicate(r[schema.idField])
+                          }}
+                        >
+                          <IconCopy />
+                        </button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -1478,6 +1526,7 @@ function Workbench({
             onCancel={() => setDraft(null)}
             onSave={commit}
             onDelete={remove}
+            onDuplicate={duplicate}
             showHints={showHints}
             log={log}
             locale={settings.locale}
@@ -2117,7 +2166,7 @@ function FieldInput({ field: f, record: r, entity, entities, recordsByEntity, on
   return <input id={id} ref={inputRef} value={r[f.key]} onInput={set} />
 }
 
-function RecordDrawer({ record, schema, singular, entity, entities, recordsByEntity, isNew, onCancel, onSave, onDelete, showHints, log, locale, tr }) {
+function RecordDrawer({ record, schema, singular, entity, entities, recordsByEntity, isNew, onCancel, onSave, onDelete, onDuplicate, showHints, log, locale, tr }) {
   const [r, setR] = useState(record)
   const [confirm, setConfirm] = useState(false)
   const [touched, setTouched] = useState({})
@@ -2222,6 +2271,13 @@ function RecordDrawer({ record, schema, singular, entity, entities, recordsByEnt
         <button class="btn btn--quiet" onClick={onCancel}>
           {tr('common.cancel')}
         </button>
+        {/* Nur fuer gespeicherte Datensaetze: ein noch nie uebernommener
+            Entwurf hat keinen Inhalt, den eine Kopie tragen koennte. */}
+        {!isNew && (
+          <button class="btn btn--quiet" onClick={() => onDuplicate(r[schema.idField])}>
+            {tr('drawer.duplicate')}
+          </button>
+        )}
         {!isNew && (
           <button
             class="btn btn--danger"
