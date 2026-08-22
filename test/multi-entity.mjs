@@ -103,6 +103,37 @@ const firstChip = await page.locator('.ref-chip').first().innerText()
 console.log('3) Erster Reference-Chip:', firstChip)
 if (/^S-\d/.test(firstChip)) fail('Reference-Chip zeigt rohe Id statt Titel')
 
+/*
+ * Sortierung (OPEN-18): die Reference-Spalte sortiert nach dem aufgeloesten
+ * Lieferantennamen, nicht nach der rohen Id - die Tabelle zeigt den Namen,
+ * also muss der Kopf dieselbe Ordnung legen. Aufzaehlungen sortieren nach
+ * ihrer Beschriftung.
+ */
+await page.getByRole('columnheader', { name: 'Supplier', exact: true }).click()
+const chipsByTitle = await page.locator('.ref-chip').allInnerTexts()
+const expectedChips = [
+  'Elbe Hardware Solutions',
+  'Havel Consulting Partners',
+  'Nordwind IT GmbH',
+  'Nordwind IT GmbH',
+  'Rheinmetall Services AG',
+  'Rheinmetall Services AG',
+  'Spree Cloud Systems',
+  'Spree Cloud Systems',
+  'Spree Cloud Systems',
+]
+console.log('2a) Nach Supplier-Kopf sortiert:', chipsByTitle.join(' | '))
+if (chipsByTitle.join('|') !== expectedChips.join('|')) {
+  fail('Reference-Spalte sortiert nach Id statt nach Titel: ' + chipsByTitle.join(', '))
+}
+
+await page.getByRole('columnheader', { name: /^Type/ }).click()
+const pillsByLabel = await page.locator('td .pill').allInnerTexts()
+console.log('2b) Nach Type-Kopf sortiert:', pillsByLabel.join(', '))
+if (pillsByLabel.join('|') !== ['ISO 27001', 'ISO 27001', 'ISO 27001', 'Other', 'Other', 'PCI-DSS', 'PCI-DSS', 'SOC 2', 'SOC 2'].join('|')) {
+  fail('Aufzaehlungsspalte sortiert nicht nach Beschriftung: ' + pillsByLabel.join(', '))
+}
+
 // 3) Klick auf den Chip springt zur Suppliers-Ansicht und oeffnet den Datensatz
 await page.locator('.ref-chip').first().click()
 await page.waitForSelector('.drawer')
