@@ -99,3 +99,10 @@ export const IconRedo = (props) => (
     <path d="M13.5 4.5 17 8l-3.5 3.5" />
   </svg>
 )
+
+export const IconCopy = (props) => (
+  <svg {...base} {...props}>
+    <rect x="9" y="9" width="11.5" height="11.5" rx="1" />
+    <path d="M15 5V4.5A1.5 1.5 0 0 0 13.5 3h-9A1.5 1.5 0 0 0 3 4.5v9A1.5 1.5 0 0 0 4.5 15H5" />
+  </svg>
+)
