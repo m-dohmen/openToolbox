@@ -662,6 +662,12 @@ and it finds what you can see rather than what is stored: attachments count by t
 only (the embedded base64 is noise, not text), reference fields by the title of the record they
 point at, calculated fields like any other — and the record id counts too.
 
+![Global search and field filters](docs/screenshots/search.png)
+
+One frame with the whole mechanism at work: a term that finds its matches in two entities, two
+field filters narrowing the list to two rows, and above the table the chips that carry each
+filter — with *clear all* next to them.
+
 Below the facet groups, the sidebar gains one filter per field worth filtering, shaped by its
 type: text matches on *contains*, an enum offers multi-select, numbers and dates take a from/to
 range. Fields that already run as facets stay quick filters with their counts — they keep doing
