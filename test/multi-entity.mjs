@@ -150,7 +150,9 @@ console.log('5) Loesch-Schutz-Meldung:', guardToast)
 if (!guardToast.includes("Can't delete")) fail('Loesch-Schutz griff nicht wie erwartet')
 const suppliersStill = await page.locator('.drawer').count()
 if (suppliersStill !== 1) fail('Drawer wurde trotz Lösch-Schutz geschlossen')
-await page.locator('.drawer__foot .btn--quiet').click()
+// Der Fuss hat seit dem Duplizieren zwei stille Knoepfe - Abbrechen ist
+// namentlich angesprochen, nicht ueber seine Klasse.
+await page.getByRole('button', { name: 'Cancel' }).click()
 
 // 5) Reference-Feld im Formular: Select mit dem Titel-Feld der Zielentitaet
 // Klick gezielt auf die Id-Zelle, nicht auf die Zeilenmitte - die faellt bei
@@ -242,6 +244,36 @@ if (supplierRowsAfterWizard !== 6 || certRowsFinal !== 11) fail('Wizard hat nich
 const wizChip = await page.locator('tr:has-text("ISO 9001 certificate") .ref-chip').innerText()
 console.log('    Aufgeloester Supplier:', wizChip)
 if (wizChip !== 'Suedwind Logistik GmbH') fail('Referenz auf den im selben Durchlauf angelegten Datensatz fehlt')
+
+/*
+ * Duplizieren mit zwei Entitaeten (OPEN-20): die Kopie bleibt in ihrer
+ * Entitaet, traegt die Id ihres eigenen Praefix, der Reference-Wert reist
+ * mit, und ein Strg+Z nimmt sie vollstaendig zurueck.
+ */
+const certSourceId = await page.locator('tr:has-text("ISO 9001 certificate") .cell-id').innerText()
+await page.locator('tr:has-text("ISO 9001 certificate") .cell-action button').click()
+
+const certRowsAfterDuplicate = await page.locator('table tbody tr').count()
+console.log('13a) Zertifikat dupliziert — Zeilen:', certRowsAfterDuplicate)
+if (certRowsAfterDuplicate !== 12) fail('Duplizieren hat im aktiven Tab nicht gegriffen')
+
+const certCopyRow = page.locator('tr:has-text("ISO 9001 certificate (Copy)")')
+if ((await certCopyRow.count()) !== 1) fail('Zertifikats-Kopie fehlt oder liegt doppelt')
+const certCopyId = await certCopyRow.locator('.cell-id').innerText()
+if (!certCopyId.startsWith('C-')) fail('Kopie traegt nicht das Id-Praefix ihrer Entitaet')
+if (certCopyId === certSourceId) fail('Kopie traegt dieselbe Id wie das Original')
+const certCopyChip = await certCopyRow.locator('.ref-chip').innerText()
+if (certCopyChip !== 'Suedwind Logistik GmbH') fail('Kopie hat den Reference-Wert nicht uebernommen')
+if ((await page.locator('.drawer__head .cell-id').innerText()) !== certCopyId) {
+  fail('Nach dem Duplizieren oeffnet nicht das Formular der Kopie')
+}
+
+await page.keyboard.press('Escape')
+await page.keyboard.press('Control+z')
+const certRowsAfterUndoDuplicate = await page.locator('table tbody tr').count()
+const certCopyGone = (await page.locator('tr:has-text("ISO 9001 certificate (Copy)")').count()) === 0
+console.log('13b) Duplikat rueckgaengig — Zeilen:', certRowsAfterUndoDuplicate, '| Kopie weg:', certCopyGone)
+if (certRowsAfterUndoDuplicate !== 11 || !certCopyGone) fail('Strg+Z hat die Zertifikats-Kopie nicht vollstaendig entfernt')
 
 /*
  * Faelligkeiten-Widget ueber Entitaetsgrenzen: eigener Build mit

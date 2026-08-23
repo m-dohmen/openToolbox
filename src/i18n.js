@@ -81,6 +81,8 @@ const STRINGS = {
     'drawer.edit': (singular) => `Edit ${singular}`,
     'drawer.delete': 'Delete',
     'drawer.confirmDelete': 'Confirm delete',
+    'drawer.duplicate': 'Duplicate',
+    'drawer.duplicateSuffix': (title) => `${title} (Copy)`,
     'drawer.ariaLabel': 'Edit record',
     'drawer.blockedByReferences': (refs) =>
       `Can't delete — still referenced by: ${refs}.`,
@@ -681,6 +683,8 @@ const STRINGS = {
     'drawer.edit': (singular) => `Bearbeiten: ${singular}`,
     'drawer.delete': 'Löschen',
     'drawer.confirmDelete': 'Löschen bestätigen',
+    'drawer.duplicate': 'Duplizieren',
+    'drawer.duplicateSuffix': (title) => `${title} (Kopie)`,
     'drawer.ariaLabel': 'Datensatz bearbeiten',
     'drawer.blockedByReferences': (refs) =>
       `Löschen nicht möglich — wird noch referenziert von: ${refs}.`,

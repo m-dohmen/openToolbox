@@ -655,6 +655,80 @@ const redoneRow = await page.locator('tr:has-text("Smoke test entry")').innerTex
 console.log('    Editieren wiederholt — Zeile:', redoneRow.replace(/\s+/g, ' '))
 if (!redoneRow.includes('New owner after undo')) fail('Wiederholen hat den neuen Feldwert nicht zurueckgebracht')
 
+/*
+ * Duplizieren (OPEN-20): Kopie über die Zeilenaktion und über das geöffnete
+ * Formular, jeweils mit Namenszusatz, eigener Id und auf dem Undo-Stapel.
+ * Zugriff über den Titel als Bezeichner - nicht über "erste Zeile", denn die
+ * Sortierung kann sich zwischen den Schritten ändern.
+ */
+const sourceId = await page.locator('tr:has-text("Smoke test entry")').locator('.cell-id').innerText()
+await page.locator('tr:has-text("Smoke test entry") .cell-action button').click()
+
+const rowsAfterDuplicate = await page.locator('table tbody tr').count()
+console.log('2h) Dupliziert (Zeilenaktion) — Zeilen:', rowsAfterDuplicate)
+if (rowsAfterDuplicate !== 13) fail('Duplizieren hat keinen Datensatz angelegt')
+
+const copyRow = page.locator('tr:has-text("Smoke test entry (Copy)")')
+if ((await copyRow.count()) !== 1) fail('Kopie fehlt oder liegt doppelt')
+const copyValues = await copyRow.innerText()
+if (!copyValues.includes('New owner after undo')) fail('Kopie hat die Feldwerte des Originals nicht uebernommen')
+const copyId = await copyRow.locator('.cell-id').innerText()
+if (copyId === sourceId) fail('Kopie traegt dieselbe Id wie das Original')
+if ((await page.locator('tr:has-text("Smoke test entry")').count()) !== 2) fail('Original ist durch das Duplizieren veraendert oder verschwunden')
+
+// Nach dem Anlegen steht das Formular der Kopie offen, nicht das des Originals.
+const dupDrawerId = await page.locator('.drawer__head .cell-id').innerText()
+if (dupDrawerId !== copyId) fail('Nach dem Duplizieren oeffnet nicht das Formular der Kopie')
+const dupDrawerTitle = await page.locator('#f-title').inputValue()
+if (dupDrawerTitle !== 'Smoke test entry (Copy)') fail('Titelfeld der Kopie traegt den Namenszusatz nicht')
+
+await page.keyboard.press('Escape')
+await page.keyboard.press('Control+z')
+const rowsAfterUndoDuplicate = await page.locator('table tbody tr').count()
+const copyGone = (await page.locator('tr:has-text("Smoke test entry (Copy)")').count()) === 0
+console.log('2i) Duplikat rueckgaengig — Zeilen:', rowsAfterUndoDuplicate, '| Kopie weg:', copyGone)
+if (rowsAfterUndoDuplicate !== 12 || !copyGone) fail('Strg+Z hat die Kopie nicht vollstaendig entfernt')
+
+// Dieselbe Aktion aus dem geöffneten Formular heraus.
+await page.locator('tr:has-text("Smoke test entry") .cell-id').click()
+await page.waitForSelector('.drawer')
+await page.getByRole('button', { name: 'Duplicate', exact: true }).click()
+const rowsAfterDrawerDuplicate = await page.locator('table tbody tr').count()
+const secondCopyId = await page.locator('.drawer__head .cell-id').innerText()
+console.log('2j) Dupliziert (Formular) — Zeilen:', rowsAfterDrawerDuplicate, '| neue Id:', secondCopyId)
+if (rowsAfterDrawerDuplicate !== 13) fail('Duplizieren aus dem Formular hat keinen Datensatz angelegt')
+if (secondCopyId === sourceId || secondCopyId === copyId) {
+  fail('Formular zeigt nach dem Duplizieren nicht die frische Kopie')
+}
+if ((await page.locator('#f-title').inputValue()) !== 'Smoke test entry (Copy)') {
+  fail('Kopie aus dem Formular traegt den Namenszusatz nicht')
+}
+
+// Ein neuer, noch nie gespeicherter Entwurf bietet Duplizieren nicht an -
+// es gibt nichts, das man kopieren koennte.
+await page.keyboard.press('Escape')
+await page.getByRole('button', { name: 'New action item' }).first().click()
+await page.waitForSelector('.drawer')
+if (await page.getByRole('button', { name: 'Duplicate', exact: true }).count()) {
+  fail('Ein neuer Entwurf darf keine Duplizieren-Aktion anbieten')
+}
+await page.keyboard.press('Escape')
+
+/* Unspeicherte Kopien verhalten sich wie jeder neue Datensatz: ohne
+   Speichern ueberlebt ein Neuladen sie nicht. Frische Seite, weil die alte
+   nach Strg+Z oben ohnehin wieder bei 12 Zeilen steht. */
+await page.keyboard.press('Control+z')
+const rowsAfterSecondUndo = await page.locator('table tbody tr').count()
+if (rowsAfterSecondUndo !== 12) fail('Strg+Z hat das zweite Duplikat nicht entfernt')
+const pageFresh = await ctx.newPage()
+pageFresh.on('pageerror', (e) => errors.push(String(e)))
+await openList(pageFresh, dist)
+const freshRows = await pageFresh.locator('table tbody tr').count()
+const freshCopies = await pageFresh.locator('tr:has-text("(Copy)")').count()
+console.log('2k) Neuladen ohne Speichern — Zeilen:', freshRows, '| Kopien:', freshCopies)
+if (freshRows !== 11 || freshCopies !== 0) fail('Unspeicherte Kopie hat ein Neuladen ueberlebt')
+await pageFresh.close()
+
 // Speichern (ohne File System Access API -> Download-Pfad)
 const saved = resolve(tmp, 'runde1.html')
 const dl = await saveTo(page, saved, 'Testeintrag angelegt')
@@ -669,6 +743,35 @@ const savedPayload = readFileSync(saved, 'utf8').match(
 )[1]
 console.log('3a) "daysLeft" im gespeicherten Datenblock:', (savedPayload.match(/daysLeft/g) ?? []).length, 'mal')
 if (savedPayload.includes('daysLeft')) fail('Berechnetes Feld wurde in die Datei geschrieben')
+
+/*
+ * Duplizieren und Protokoll (OPEN-20): eine Kopie, die den Speichertermin
+ * erlebt, muss im Änderungsprotokoll als Anlegen-Ereignis stehen - abgeleitet
+ * gegen den letzten Stand, nicht eingetippt. Danach wird sie zurückgenommen
+ * und neu gespeichert, damit der weitere Ablauf wieder vom alten Datenstand
+ * ausgeht und keine der folgenden Zeilenzählungen kippt.
+ */
+await page.locator('tr:has-text("Smoke test entry") .cell-action button').click()
+await page.waitForSelector('.drawer')
+const loggedCopyId = await page.locator('.drawer__head .cell-id').innerText()
+await page.keyboard.press('Escape')
+await saveTo(page, saved, 'Kopie fuer das Protokoll')
+const savedLog = JSON.parse(
+  readFileSync(saved, 'utf8').match(/<script id="sb-payload"[^>]*>([\s\S]*?)<\/script>/)[1],
+)
+const copyCreated = (savedLog.data?.log ?? [])
+  .flatMap((entry) => entry.changes ?? [])
+  .filter((c) => c.op === 'created' && String(c.id) === String(loggedCopyId))
+console.log('3b) Protokoll: Anlegen-Ereignis der Kopie:', copyCreated.length ? copyCreated[0].title : 'fehlt')
+if (copyCreated.length !== 1) fail('Die Kopie fehlt als Anlegen-Ereignis im Änderungsprotokoll')
+if (copyCreated[0].title !== 'Smoke test entry (Copy)') {
+  fail('Anlegen-Ereignis trägt nicht den Titel der Kopie')
+}
+
+await page.keyboard.press('Control+z')
+const rowsAfterLogUndo = await page.locator('table tbody tr').count()
+if (rowsAfterLogUndo !== 12) fail('Ruecknahme der Protokoll-Kopie hat nicht gegriffen')
+await saveTo(page, saved, 'Kopie zurueckgenommen')
 
 // Wiederöffnen: kommt der Datenstand zurück?
 const page2 = await ctx.newPage()
