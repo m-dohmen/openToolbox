@@ -193,6 +193,10 @@ steht die Frage, die jeder Bauherr zu spät stellt: **sind wir noch im Budget?**
 
 ## Was diese Demo zeigt
 
+- **Duplizieren** — Angebote je Gewerk wiederholen sich: das nächste entsteht als Kopie eines
+  vorhandenen (Aktion im Zeilenmenü oder im offenen Datensatz), Gewerk-Verweis und Bindefrist
+  bleiben stehen, geändert werden nur Firma, Kontakt und Summe. Die Kopie erscheint im
+  Änderungsprotokoll und lässt sich mit Strg+Z wieder entfernen.
 - **Zwei Datenarten**: ein Angebot ohne sein Gewerk hat keine Aussage, ein Gewerk bekommt seine
   Zahl erst durch die Angebote.
 - **Die Auftragssumme wird nicht getippt**, sie steht im beauftragten Angebot und wird von dort
