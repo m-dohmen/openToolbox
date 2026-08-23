@@ -43,7 +43,6 @@ Clave de entidad `trades` — un registro es **Gewerk**, varios son **Gewerke**.
 - Segunda línea debajo: `trade`
 - Columnas de la tabla, en este orden: `name`, `trade`, `phase`, `budget`, `awarded`, `variance`, `start`
 - Filtros de la barra lateral: `trade`, `phase`
-- Campos que busca el buscador: `id`, `name`, `note`
 - Sumado en el resumen: `budget`
 - Deja de contar como abierto cuando: `r.phase === 'abgenommen'`
 - Se marca en rojo cuando: `r.phase === 'noch nicht angefragt' && r.start && r.start < iso(30)`
@@ -100,7 +99,6 @@ Clave de entidad `offers` — un registro es **Angebot**, varios son **Angebote*
 - Columna principal: `company`
 - Columnas de la tabla, en este orden: `company`, `tradeId`, `amount`, `perBudget`, `received`, `validUntil`, `state`
 - Filtros de la barra lateral: `state`
-- Campos que busca el buscador: `id`, `company`, `contact`, `note`
 - Sumado en el resumen: `amount`
 - Deja de contar como abierto cuando: `r.state === 'beauftragt' || r.state === 'abgelehnt'`
 - Se marca en rojo cuando: `r.state !== 'abgelehnt' && r.state !== 'beauftragt' && r.validUntil && r.validUntil < iso(0)`

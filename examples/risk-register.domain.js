@@ -9,7 +9,6 @@ export const SCHEMA = {
   subField: 'category',
   list: ['name', 'owner', 'review', 'likelihood', 'impact'],
   facets: ['likelihood', 'category'],
-  search: ['id', 'name', 'owner', 'category'],
   totalField: 'impact',
   fields: [
     { key: 'name', label: 'Risk', type: 'text', required: true },

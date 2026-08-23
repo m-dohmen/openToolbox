@@ -48,7 +48,6 @@ Ein Datensatz ist **Verarbeitung**, mehrere sind **Verarbeitungen**.
 - Zweite Zeile darunter: `area`
 - Tabellenspalten, in dieser Reihenfolge: `name`, `area`, `basis`, `subjects`, `retention`, `age`, `status`
 - Filter in der Seitenleiste: `area`, `status`, `risk`
-- Vom Suchfeld durchsucht: `id`, `name`, `system`, `purpose`, `contact`
 - Zählt nicht mehr als offen, wenn: `r.status === 'freigegeben'`
 - Rot markiert, wenn: `!r.reviewed || r.reviewed < iso(-365)`
 

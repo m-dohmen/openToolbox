@@ -43,7 +43,6 @@ Entity key `trades` — one record is a **Gewerk**, several are **Gewerke**.
 - Second line under the headline: `trade`
 - Table columns, in this order: `name`, `trade`, `phase`, `budget`, `awarded`, `variance`, `start`
 - Sidebar filters: `trade`, `phase`
-- Searched by the search box: `id`, `name`, `note`
 - Summed in the overview: `budget`
 - No longer counts as open when: `r.phase === 'abgenommen'`
 - Flagged red when: `r.phase === 'noch nicht angefragt' && r.start && r.start < iso(30)`
@@ -100,7 +99,6 @@ Entity key `offers` — one record is a **Angebot**, several are **Angebote**.
 - Headline column: `company`
 - Table columns, in this order: `company`, `tradeId`, `amount`, `perBudget`, `received`, `validUntil`, `state`
 - Sidebar filters: `state`
-- Searched by the search box: `id`, `company`, `contact`, `note`
 - Summed in the overview: `amount`
 - No longer counts as open when: `r.state === 'beauftragt' || r.state === 'abgelehnt'`
 - Flagged red when: `r.state !== 'abgelehnt' && r.state !== 'beauftragt' && r.validUntil && r.validUntil < iso(0)`

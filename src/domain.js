@@ -23,8 +23,6 @@ export const SCHEMA = {
   list: ['title', 'owner', 'due', 'daysLeft', 'status', 'effort', 'evidence'],
   /** Enum fields listed here become filter groups in the sidebar. */
   facets: ['status', 'area'],
-  /** Fields searched by the free text box. */
-  search: ['id', 'title', 'owner', 'area', 'note'],
   /** Number field summed up in the overview, null to hide the tile. */
   totalField: 'effort',
   fields: [

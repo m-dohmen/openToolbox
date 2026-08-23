@@ -43,7 +43,6 @@ Chave de entidade `projects` — um registro é **project**, vários são **proj
 - Segunda linha abaixo: `client`
 - Colunas da tabela, nesta ordem: `name`, `lead`, `phase`, `risk`, `budget`, `variance`, `end`
 - Filtros da barra lateral: `phase`, `risk`
-- Campos usados pela busca: `id`, `name`, `client`, `lead`
 - Somado no resumo: `budget`
 - Deixa de contar como aberto quando: `r.phase === 'Closed'`
 - Marcado em vermelho quando: `r.phase !== 'Closed' && r.end && r.end < today()`
@@ -85,7 +84,6 @@ Chave de entidade `milestones` — um registro é **milestone**, vários são **
 - Coluna principal: `title`
 - Colunas da tabela, nesta ordem: `title`, `projectId`, `owner`, `due`, `daysLeft`, `status`, `effort`
 - Filtros da barra lateral: `status`
-- Campos usados pela busca: `id`, `title`, `owner`
 - Somado no resumo: `effort`
 - Deixa de contar como aberto quando: `r.status === 'done'`
 - Marcado em vermelho quando: `r.status !== 'done' && r.due && r.due < today()`

@@ -46,7 +46,6 @@ Um registro é **Betriebsmittel**, vários são **Betriebsmittel**.
 - Segunda linha abaixo: `location`
 - Colunas da tabela, nesta ordem: `name`, `kind`, `location`, `lastTest`, `due`, `daysLeft`, `result`
 - Filtros da barra lateral: `kind`, `location`, `result`
-- Campos usados pela busca: `id`, `name`, `serial`, `tester`, `note`
 - Deixa de contar como aberto quando: `() => false`
 - Marcado em vermelho quando: `{ if (r.result === 'nicht bestanden') return true const d = dueDate(r) return !d || d < iso(0) }`
 

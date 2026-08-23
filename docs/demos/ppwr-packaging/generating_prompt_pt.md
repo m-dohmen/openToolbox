@@ -43,7 +43,6 @@ Chave de entidade `packagings` — um registro é **Verpackung**, vários são *
 - Segunda linha abaixo: `category`
 - Colunas da tabela, nesta ordem: `name`, `category`, `articles`, `weight`, `recyclate`, `docStatus`, `deadline`
 - Filtros da barra lateral: `category`, `docStatus`
-- Campos usados pela busca: `id`, `name`, `articles`, `note`
 - Deixa de contar como aberto quando: `r.docStatus === 'Erklärung erstellt'`
 - Marcado em vermelho quando: `r.docStatus !== 'Erklärung erstellt' && r.deadline && r.deadline < today()`
 
@@ -106,7 +105,6 @@ Chave de entidade `components` — um registro é **Bestandteil**, vários são 
 - Coluna principal: `name`
 - Colunas da tabela, nesta ordem: `name`, `packagingId`, `material`, `weight`, `recycled`, `grade`, `source`
 - Filtros da barra lateral: `material`, `grade`
-- Campos usados pela busca: `id`, `name`, `supplier`
 - Somado no resumo: `weight`
 - Deixa de contar como aberto quando: `() => false`
 - Marcado em vermelho quando: `r.source === 'fehlt noch'`

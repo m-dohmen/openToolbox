@@ -43,7 +43,6 @@ Entitätsschlüssel `packagings` — ein Datensatz ist **Verpackung**, mehrere s
 - Zweite Zeile darunter: `category`
 - Tabellenspalten, in dieser Reihenfolge: `name`, `category`, `articles`, `weight`, `recyclate`, `docStatus`, `deadline`
 - Filter in der Seitenleiste: `category`, `docStatus`
-- Vom Suchfeld durchsucht: `id`, `name`, `articles`, `note`
 - Zählt nicht mehr als offen, wenn: `r.docStatus === 'Erklärung erstellt'`
 - Rot markiert, wenn: `r.docStatus !== 'Erklärung erstellt' && r.deadline && r.deadline < today()`
 
@@ -106,7 +105,6 @@ Entitätsschlüssel `components` — ein Datensatz ist **Bestandteil**, mehrere 
 - Führende Spalte: `name`
 - Tabellenspalten, in dieser Reihenfolge: `name`, `packagingId`, `material`, `weight`, `recycled`, `grade`, `source`
 - Filter in der Seitenleiste: `material`, `grade`
-- Vom Suchfeld durchsucht: `id`, `name`, `supplier`
 - In der Übersicht summiert: `weight`
 - Zählt nicht mehr als offen, wenn: `() => false`
 - Rot markiert, wenn: `r.source === 'fehlt noch'`

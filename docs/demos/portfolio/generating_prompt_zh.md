@@ -43,7 +43,6 @@
 - 主列下方的第二行：`client`
 - 表格列，按此顺序：`name`, `lead`, `phase`, `risk`, `budget`, `variance`, `end`
 - 侧栏筛选：`phase`, `risk`
-- 搜索框检索的字段：`id`, `name`, `client`, `lead`
 - 在概览中求和：`budget`
 - 不再计为未完成的条件：`r.phase === 'Closed'`
 - 标红的条件：`r.phase !== 'Closed' && r.end && r.end < today()`
@@ -85,7 +84,6 @@
 - 主列：`title`
 - 表格列，按此顺序：`title`, `projectId`, `owner`, `due`, `daysLeft`, `status`, `effort`
 - 侧栏筛选：`status`
-- 搜索框检索的字段：`id`, `title`, `owner`
 - 在概览中求和：`effort`
 - 不再计为未完成的条件：`r.status === 'done'`
 - 标红的条件：`r.status !== 'done' && r.due && r.due < today()`

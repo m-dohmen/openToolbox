@@ -45,7 +45,6 @@ export const SCHEMA = {
   subField: 'location',
   list: ['name', 'kind', 'location', 'lastTest', 'due', 'daysLeft', 'result'],
   facets: ['kind', 'location', 'result'],
-  search: ['id', 'name', 'serial', 'tester', 'note'],
   totalField: null,
   fields: [
     { key: 'name', label: 'Gerät', type: 'text', required: true },

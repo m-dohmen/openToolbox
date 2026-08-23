@@ -44,7 +44,6 @@ export const ENTITIES = {
       subField: 'category',
       list: ['name', 'category', 'articles', 'weight', 'recyclate', 'docStatus', 'deadline'],
       facets: ['category', 'docStatus'],
-      search: ['id', 'name', 'articles', 'note'],
       totalField: null,
       fields: [
         { key: 'name', label: 'Verpackung', type: 'text', required: true },
@@ -168,7 +167,6 @@ export const ENTITIES = {
       subField: null,
       list: ['name', 'packagingId', 'material', 'weight', 'recycled', 'grade', 'source'],
       facets: ['material', 'grade'],
-      search: ['id', 'name', 'supplier'],
       totalField: 'weight',
       fields: [
         { key: 'name', label: 'Bestandteil', type: 'text', required: true },

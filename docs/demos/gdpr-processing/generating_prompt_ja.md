@@ -48,7 +48,6 @@ GDPR 第 30 条により、ほぼすべての企業が処理活動の記録を�
 - 主列の下に置く 2 行目：`area`
 - 表の列（この順）：`name`, `area`, `basis`, `subjects`, `retention`, `age`, `status`
 - サイドバーの絞り込み：`area`, `status`, `risk`
-- 検索対象のフィールド：`id`, `name`, `system`, `purpose`, `contact`
 - 未完了として数えなくなる条件：`r.status === 'freigegeben'`
 - 赤で強調する条件：`!r.reviewed || r.reviewed < iso(-365)`
 

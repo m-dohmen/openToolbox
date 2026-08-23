@@ -46,7 +46,6 @@
 - 主列下方的第二行：`location`
 - 表格列，按此顺序：`name`, `kind`, `location`, `lastTest`, `due`, `daysLeft`, `result`
 - 侧栏筛选：`kind`, `location`, `result`
-- 搜索框检索的字段：`id`, `name`, `serial`, `tester`, `note`
 - 不再计为未完成的条件：`() => false`
 - 标红的条件：`{ if (r.result === 'nicht bestanden') return true const d = dueDate(r) return !d || d < iso(0) }`
 

@@ -43,7 +43,6 @@
 - 主列の下に置く 2 行目：`category`
 - 表の列（この順）：`name`, `category`, `articles`, `weight`, `recyclate`, `docStatus`, `deadline`
 - サイドバーの絞り込み：`category`, `docStatus`
-- 検索対象のフィールド：`id`, `name`, `articles`, `note`
 - 未完了として数えなくなる条件：`r.docStatus === 'Erklärung erstellt'`
 - 赤で強調する条件：`r.docStatus !== 'Erklärung erstellt' && r.deadline && r.deadline < today()`
 
@@ -106,7 +105,6 @@
 - 主列：`name`
 - 表の列（この順）：`name`, `packagingId`, `material`, `weight`, `recycled`, `grade`, `source`
 - サイドバーの絞り込み：`material`, `grade`
-- 検索対象のフィールド：`id`, `name`, `supplier`
 - 概要で合計する：`weight`
 - 未完了として数えなくなる条件：`() => false`
 - 赤で強調する条件：`r.source === 'fehlt noch'`

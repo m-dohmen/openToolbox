@@ -45,7 +45,6 @@ Un registro es **Kind**, varios son **Kinder**.
 - Segunda línea debajo: `guardian`
 - Columnas de la tabla, en este orden: `name`, `guardian`, `consent`, `payment`, `paid`, `open`, `swim`
 - Filtros de la barra lateral: `consent`, `payment`, `swim`
-- Campos que busca el buscador: `id`, `name`, `guardian`, `phone`, `note`
 - Sumado en el resumen: `paid`
 - Deja de contar como abierto cuando: `r.consent === 'verweigert' || (r.consent === 'liegt vor' && (r.payment === 'vollständig' || r.payment === 'erlassen'))`
 - Se marca en rojo cuando: `!isDone(r)`

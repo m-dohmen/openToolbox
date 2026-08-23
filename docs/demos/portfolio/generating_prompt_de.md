@@ -43,7 +43,6 @@ Entitätsschlüssel `projects` — ein Datensatz ist **project**, mehrere sind *
 - Zweite Zeile darunter: `client`
 - Tabellenspalten, in dieser Reihenfolge: `name`, `lead`, `phase`, `risk`, `budget`, `variance`, `end`
 - Filter in der Seitenleiste: `phase`, `risk`
-- Vom Suchfeld durchsucht: `id`, `name`, `client`, `lead`
 - In der Übersicht summiert: `budget`
 - Zählt nicht mehr als offen, wenn: `r.phase === 'Closed'`
 - Rot markiert, wenn: `r.phase !== 'Closed' && r.end && r.end < today()`
@@ -85,7 +84,6 @@ Entitätsschlüssel `milestones` — ein Datensatz ist **milestone**, mehrere si
 - Führende Spalte: `title`
 - Tabellenspalten, in dieser Reihenfolge: `title`, `projectId`, `owner`, `due`, `daysLeft`, `status`, `effort`
 - Filter in der Seitenleiste: `status`
-- Vom Suchfeld durchsucht: `id`, `title`, `owner`
 - In der Übersicht summiert: `effort`
 - Zählt nicht mehr als offen, wenn: `r.status === 'done'`
 - Rot markiert, wenn: `r.status !== 'done' && r.due && r.due < today()`
