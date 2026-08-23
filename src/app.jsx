@@ -1902,7 +1902,6 @@ function FieldFilter({ field: f, spec, tr, onChange }) {
  */
 function Hi({ text, q }) {
   const parts = highlightParts(text, q)
-  if (parts.length === 1) return <>{parts[0].text}</>
   return <>{parts.map((p, i) => (p.hit ? <mark key={i}>{p.text}</mark> : p.text))}</>
 }
 
