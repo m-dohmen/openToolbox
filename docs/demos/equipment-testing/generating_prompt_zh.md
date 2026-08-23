@@ -133,6 +133,10 @@ genau eine Frage stellt: **wann wurde dieses Gerät zuletzt geprüft?**
 
 ## Was diese Demo zeigt
 
+- **Sortierbare Spalten** — ein Klick auf den Spaltenkopf ordnet: Zahlen nach Größe („Tage"
+  reicht von deutlich überfällig bis weit in die Zukunft), Daten chronologisch („Geprüft" spannt
+  zwei Jahre), Text alphabetisch; der dritte Klick stellt die Reihenfolge des Datenblocks wieder
+  her, leere Werte bleiben unten.
 - **Nichts wird summiert, alles gerechnet**: die Fälligkeit ergibt sich aus letzter Prüfung und
   Intervall, die Restzeit daraus, die rote Markierung wieder daraus.
 - **Regeln, die dem Ernstfall standhalten** — ein Ergebnis ohne Datum und Prüfer lässt sich nicht
@@ -144,7 +148,7 @@ genau eine Frage stellt: **wann wurde dieses Gerät zuletzt geprüft?**
 
 ## 示例数据
 
-添加 12 条真实感的示例记录，使文件初次打开时不为空。按上面的字段风格自行编写；它们只是示例，不是用户的数据。告诉用户，他自己的数据通过 **Import CSV → replace all** 导入。
+添加 13 条真实感的示例记录，使文件初次打开时不为空。按上面的字段风格自行编写；它们只是示例，不是用户的数据。告诉用户，他自己的数据通过 **Import CSV → replace all** 导入。
 
 ## 完成的标准
 
