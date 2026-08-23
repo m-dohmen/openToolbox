@@ -92,6 +92,10 @@ s'impriment en un PDF propre.
   résultats sur chaque onglet et les correspondances surlignées ; filtres par type de champ dans
   la barre latérale, avec puces amovibles — pour la session uniquement, rien n'est enregistré
   dans le fichier.
+- **Colonnes triables dans chaque liste d'entités** : un clic trie croissant, un second
+  décroissant, un troisième rend l'ordre du bloc de données ; la comparaison suit le type de
+  champ (nombres numériquement, dates chronologiquement), les valeurs vides restent toujours en
+  bas.
 
 ## Démarrage rapide
 

@@ -86,6 +86,9 @@ larguras em CSS e o anel é um único círculo SVG. As duas visões imprimem com
 - **Busca global em todos os campos de todas as entidades**, ao vivo, com contagem de resultados
   em cada aba e correspondências destacadas; além de filtros por tipo de campo na barra lateral,
   com etiquetas removíveis — apenas para a sessão, nada é gravado no arquivo.
+- **Colunas ordenáveis em cada lista de entidades**: um clique ordena crescente, outro decrescente
+  e um terceiro devolve a ordem do bloco de dados; a comparação segue o tipo de campo (números
+  numericamente, datas cronologicamente) e os valores vazios ficam sempre no final.
 
 ## Início rápido
 

@@ -164,6 +164,10 @@ Dashboard · CSV-Import · Änderungsprotokoll · Versionsnummern.**
   Hervorhebung in der Tabelle, dazu Feldfilter je Feldtyp im Seitenbereich mit entfernbaren Chips
   darüber — nur für die Sitzung, nichts davon landet in der Datei — siehe
   [Suchen und Filtern](#suchen-und-filtern).
+- **Sortierbare Spalten in jeder Entitätsliste** — ein Klick auf den Kopf sortiert aufsteigend,
+  noch einer absteigend, ein dritter gibt die Ordnung an den Datenblock zurück; der Vergleich folgt
+  dem Feldtyp, und Leerwerte stehen in beide Richtungen unten — siehe
+  [Listen sortieren](#listen-sortieren).
 
 ## Schnellstart
 
@@ -329,6 +333,34 @@ Das ist gewollt: Browserspeicher ist unter `file://` unzuverlässig, der eingebe
 ist der einzige Speicher, und nichts von „welche Teilmenge habe ich angesehen" gehört in Daten,
 die jemand anderes öffnet. Eine gespeicherte Datei trägt nie einen Filter in sich — die Kopie,
 die man weiterschickt, zeigt alles, genau wie ihre Druckansicht.
+
+## Listen sortieren
+
+Jeder Spaltenkopf einer Entitätsliste ist anklickbar. Der erste Klick sortiert aufsteigend, der
+zweite absteigend, der dritte gibt die Ordnung an den Datenblock zurück — kein vierter Zustand,
+und eine Spalte merkt sich ihre Richtung nicht über den Gebrauch hinaus. Der Wechsel auf eine
+andere Spalte beginnt ebenfalls von vorn, aufsteigend. Solange eine Spalte sortiert, trägt ihr
+Kopf einen Pfeil; für Screenreader meldet er die Richtung als `ascending`/`descending`.
+
+Der Vergleich folgt dem Feldtyp, nicht den Zeichen auf dem Schirm: Zahlen vergleichen numerisch
+(10 steht hinter 9), Daten chronologisch — ihre ISO-Schreibweise vergleicht als Zeichenkette,
+und genau das ist bei Daten die chronologische Ordnung —, Text und Aufzählungen als lokalisierter
+Textvergleich in der aktuellen Oberflächensprache, wobei der Wert einer Aufzählung zugleich ihre
+Beschriftung ist. Eine Reference-Spalte ordnet nach dem Titel des Datensatzes, auf den sie zeigt,
+nicht nach der Kennung dahinter (sortiert wird das, was man sieht), ein Anhang nach seinem
+Dateinamen, ein berechnetes Feld nach dem Wert, den es liefert — numerisch, wenn dieser Wert eine
+Zahl ist.
+
+Datensätze ohne Wert in der sortierten Spalte stehen unten — in beiden Richtungen. Ein fehlender
+Wert ist keine kleine Zahl und kein frühes Datum; dem Vergleich überlassen, würde er absteigend
+nach oben rutschen, wo niemand „nichts" sucht. Gleichstand behält die Datenblock-Reihenfolge,
+damit Gleiche nicht zwischen zwei Plätzen flackern.
+
+Suche und Feldfilter schneiden zuerst, die Sortierung ordnet, was übrig bleibt — sortieren kann
+nie zurückholen, was die Filter entfernt haben. Und wie alles, was nur die Ansicht betrifft, lebt
+der Sortierzustand nur in der Sitzung: Datei neu laden, und die Datenblock-Reihenfolge ist wieder
+da; in die Datei geschrieben wird nie eine Sortierung. Die Kopie, die man weitergibt, öffnet so,
+wie die Daten stehen.
 
 ## Daten hineinbekommen
 
