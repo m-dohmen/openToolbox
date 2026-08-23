@@ -164,6 +164,10 @@ Dashboard · CSV-Import · Änderungsprotokoll · Versionsnummern.**
   Hervorhebung in der Tabelle, dazu Feldfilter je Feldtyp im Seitenbereich mit entfernbaren Chips
   darüber — nur für die Sitzung, nichts davon landet in der Datei — siehe
   [Suchen und Filtern](#suchen-und-filtern).
+- **Massenpflege mit Mehrfachauswahl** — Zeile für Zeile, als Bereich per Umschalt-Klick oder alle
+  sichtbaren Zeilen auf einmal — und eine Aktionsleiste, die einen Aufzählwert setzt oder mit
+  gezählter Rückfrage löscht; ein Protokolleintrag und ein Strg+Z je Aktion — siehe
+  [Massenpflege](#massenpflege).
 
 ## Schnellstart
 
@@ -573,6 +577,43 @@ bewusste Grenze: das ist ein Rückgängig *innerhalb der laufenden Sitzung*, kei
 der Datei. Wer in einem Textfeld tippt, hat weiterhin das bordeigene Rückgängig des Feldes — das
 Tastenkürzel übernimmt erst, wenn der Fokus außerhalb eines Feldes liegt, damit sich beide nie um
 denselben Tastendruck streiten.
+
+## Massenpflege
+
+Dreißig Maßnahmen auf „erledigt“, eine Ladung veralteter Kontakte entfernen, ein Status für eine
+ganze Risikogruppe — dafür ist die Auswahlspalte in jeder Tabelle da. Zeilen einzeln anhaken, per
+**Umschalt-Klick** einen Bereich ab der zuletzt gehakten Zeile, oder das Kontrollkästchen im Kopf
+nehmen für alle **sichtbaren** Zeilen auf einmal (und nochmal, um sie wieder freizugeben). Solange
+nur ein Teil der Seite gewählt ist, zeigt der Kopfhaken seinen gemischten Zustand.
+
+Alles-auswählen meint bewusst genau das: die sichtbare Seite, nicht jeden Treffer, der sich hinter
+dem Filter verbirgt. Eine Massenänderung darf keine Zeilen erreichen, die niemand ansieht — und wer
+die Liste mit einem [Filter](#suchen-und-filtern) verkleinert, verkleinert damit das Ziel der
+nächsten Sammelaktion mit. Beim Umsortieren bleibt die Auswahl erhalten: sortiert werden Ids um,
+nicht weggeworfen. Die Auswahl selbst lebt nur in der Sitzung — der Wechsel auf einen anderen
+Entitäts-Reiter räumt sie ab, ein Neuladen beginnt leer (bewusst ohne `localStorage` — der
+eingebettete Datenblock ist der einzige Speicher, den es gibt).
+
+Sobald etwas gewählt ist, blendet sich über der Tabelle eine Aktionsleiste ein — „N ausgewählt“ —
+mit drei Aktionen:
+
+- **Wert setzen** wirkt auf Aufzählfelder und wird nur angeboten, wenn die Entität eines hat; bei
+  mehreren kommt ein Feld-Auswahlmenü davor, bei genau einem geht es direkt zu dessen Werten.
+  Datensätze, die den Zielwert schon tragen, bleiben außen vor und zählen nicht als geändert.
+- **Ausgewählte löschen** fragt immer nach, mit Anzahl. Ab 50 Datensätzen muss die Anzahl eingetippt
+  werden — bei dieser Größenordnung genügt ein einzelner Mausklick als Bestätigung nicht.
+  Datensätze, auf die noch von anderer Stelle aus verwiesen wird, werden aus dem Löschen ausgespart
+  und beim Namen genannt: Der Referenzschutz (siehe
+  [Mehrere Entitäten und Beziehungen](#mehrere-entitäten-und-beziehungen)) gilt hier wie überall.
+  Ein Abbruch der Rückfrage ändert nichts und lässt die Auswahl stehen.
+- **Auswahl aufheben**.
+
+Jede Sammelaktion läuft über denselben Schreibweg wie ein Einzelschritt — Typprüfung, Schema-Regeln
+und Beanstandungen inklusive. Ein regelwidriger Datensatz unter den Gewählten wird übersprungen und
+beim Namen genannt, seine Nachbarn werden regulär gesetzt. Die ganze Aktion landet als **ein**
+Eintrag im Änderungsprotokoll (siehe
+[Versionen und Änderungsprotokoll](#versionen-und-änderungsprotokoll)) und ist mit **einem** Strg+Z
+zurück — dreißig Korrekturen sind ein Verlaufsschritt, nicht dreißig.
 
 ## Grenzen, die man kennen sollte
 

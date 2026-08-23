@@ -92,6 +92,9 @@ s'impriment en un PDF propre.
   résultats sur chaque onglet et les correspondances surlignées ; filtres par type de champ dans
   la barre latérale, avec puces amovibles — pour la session uniquement, rien n'est enregistré
   dans le fichier.
+- **Entretien en masse avec sélection multiple** : ligne par ligne, par plage avec Maj+clic ou
+  toutes les lignes visibles d'un coup ; barre d'actions pour fixer une valeur d'énumération ou
+  supprimer avec confirmation comptée — une entrée de journal et un Ctrl+Z par action.
 
 ## Démarrage rapide
 

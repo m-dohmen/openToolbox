@@ -87,6 +87,9 @@ son anchuras CSS y el anillo es un único círculo SVG. Ambas vistas se imprimen
 - **Búsqueda global en todos los campos de todas las entidades**, en vivo, con el número de
   resultados en cada pestaña y coincidencias resaltadas; además filtros por tipo de campo en la
   barra lateral con etiquetas extraíbles — solo para la sesión, nada se guarda en el archivo.
+- **Mantenimiento masivo con selección múltiple**: por fila, por rango con Mayús+clic o todas las
+  filas visibles de una vez; barra de acciones para fijar un valor de enumeración o borrar con
+  confirmación contada — una entrada en el registro y un Ctrl+Z por acción.
 
 ## Inicio rápido
 

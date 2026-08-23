@@ -86,6 +86,9 @@ larguras em CSS e o anel é um único círculo SVG. As duas visões imprimem com
 - **Busca global em todos os campos de todas as entidades**, ao vivo, com contagem de resultados
   em cada aba e correspondências destacadas; além de filtros por tipo de campo na barra lateral,
   com etiquetas removíveis — apenas para a sessão, nada é gravado no arquivo.
+- **Manutenção em massa com seleção múltipla**: linha a linha, por intervalo com Shift+clique ou
+  todas as linhas visíveis de uma vez; barra de ações para definir um valor de enumeração ou excluir
+  com confirmação com contagem — uma entrada no registro e um Ctrl+Z por ação.
 
 ## Início rápido
 
