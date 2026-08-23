@@ -177,6 +177,10 @@ steht die Frage, die jeder Bauherr zu spät stellt: **sind wir noch im Budget?**
 
 ## Was diese Demo zeigt
 
+- **Duplizieren** — Angebote je Gewerk wiederholen sich: das nächste entsteht als Kopie eines
+  vorhandenen (Aktion im Zeilenmenü oder im offenen Datensatz), Gewerk-Verweis und Bindefrist
+  bleiben stehen, geändert werden nur Firma, Kontakt und Summe. Die Kopie erscheint im
+  Änderungsprotokoll und lässt sich mit Strg+Z wieder entfernen.
 - **Zwei Datenarten**: ein Angebot ohne sein Gewerk hat keine Aussage, ein Gewerk bekommt seine
   Zahl erst durch die Angebote.
 - **Die Auftragssumme wird nicht getippt**, sie steht im beauftragten Angebot und wird von dort
@@ -189,7 +193,7 @@ steht die Frage, die jeder Bauherr zu spät stellt: **sind wir noch im Budget?**
 
 ## 示例数据
 
-添加 Gewerke: 10, Angebote: 11 条真实感的示例记录，使文件初次打开时不为空。按上面的字段风格自行编写；它们只是示例，不是用户的数据。告诉用户，他自己的数据通过 **Import CSV → replace all** 导入。
+添加 Gewerke: 10, Angebote: 12 条真实感的示例记录，使文件初次打开时不为空。按上面的字段风格自行编写；它们只是示例，不是用户的数据。告诉用户，他自己的数据通过 **Import CSV → replace all** 导入。
 
 ## 完成的标准
 
