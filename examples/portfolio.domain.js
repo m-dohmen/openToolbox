@@ -13,6 +13,8 @@
  *   - overdue logic that differs per entity
  *   - a dashboard reporting across both entities
  *   - a `dueDate` declaration on milestones, feeding the due-date widget
+ *   - `metrics` on both entities — count with criterion, sum and avg,
+ *     computed at render time and shown as tiles above the dashboard
  *
  * Copy it over src/domain.js and run `npm run build` to see it. A real tool
  * would normally use rather less than this — most need one entity and no
@@ -43,6 +45,14 @@ export const ENTITIES = {
       facets: ['phase', 'risk'],
       search: ['id', 'name', 'client', 'lead'],
       totalField: 'budget',
+      /* Kennzahl-Kacheln: die Zahlen, die ein Lenkungskreis zuerst sehen will.
+         count mit Kriterium, Summe und Mittelwert - gerechnet beim Rendern,
+         nicht gespeichert. Alle Formen des geschlossenen Katalogs kommen vor. */
+      metrics: [
+        { op: 'count', filter: (r) => r.phase !== 'Closed', label: 'Running projects', caption: 'not yet closed' },
+        { op: 'sum', field: 'spent', label: 'Spent so far', caption: 'kEUR, all projects' },
+        { op: 'avg', field: 'budget', label: 'Average budget', caption: 'kEUR per project' },
+      ],
       fields: [
         { key: 'name', label: 'Project', type: 'text', required: true },
         { key: 'client', label: 'Client', type: 'text' },
@@ -130,6 +140,12 @@ export const ENTITIES = {
       search: ['id', 'title', 'owner'],
       totalField: 'effort',
       dueDate: 'due',
+      /* Dieselben drei Formen, zweite Entität: wie viel Arbeit liegt auf den
+         Meilensteinen, und wie viel davon läuft gerade. */
+      metrics: [
+        { op: 'count', filter: (r) => r.status === 'in progress', label: 'Milestones in progress' },
+        { op: 'avg', field: 'effort', label: 'Average effort', caption: 'days per milestone' },
+      ],
       fields: [
         { key: 'title', label: 'Milestone', type: 'text', required: true },
         { key: 'projectId', label: 'Project', type: 'reference', entity: 'projects', required: true },

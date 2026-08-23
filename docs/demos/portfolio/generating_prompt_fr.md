@@ -164,7 +164,8 @@ stands. Everything you see comes out of one file, `src/domain.js`.
 
 - **List** — two record types that reference each other, calculated columns, filters that count
 - **Dashboard** — the same data as tiles, drawn without a charting library, plus a due-date widget
-  grouping milestones into overdue, this week and the next 30 days
+  grouping milestones into overdue, this week and the next 30 days, and metric tiles — running
+  projects, spend, averages — computed from the data rather than typed
 - **Guided entry** — a short wizard that creates an engagement and its first milestone in one run
 - **Merge a file** — reconcile a copy that came back from someone else
 
