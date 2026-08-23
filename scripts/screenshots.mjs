@@ -64,6 +64,22 @@ await setPrompts(false)
 
 await shot(page, 'list')
 
+/* Suche und Feldfilter in einem Bild: der Begriff trifft die Kunden-Spalte
+   mehrerer Projekte (und keinen einzigen Meilenstein - der Tab-Zaehler
+   zeigt es), die beiden Filter verengen auf zwei Zeilen. Chips, Treffer-
+   markierung und Zaehler im Toolbar-Text gehoeren deshalb alle ins Bild. */
+await page.locator('.globalsearch .search').fill('bank')
+await page.getByLabel('Budget in kEUR from').fill('800')
+await page.getByLabel('Start from').fill('2026-02-01')
+await page.waitForTimeout(300)
+await page.evaluate(() => document.activeElement && document.activeElement.blur())
+await page.waitForTimeout(100)
+await shot(page, 'search')
+await page.locator('.chips--filters .chip button').first().click()
+await page.locator('.chips--filters .chip button').last().click()
+await page.locator('.globalsearch .search').fill('')
+await page.waitForTimeout(200)
+
 await page.getByRole('tab', { name: 'Dashboard' }).click()
 await page.waitForSelector('.dashboard')
 await page.waitForTimeout(250)
