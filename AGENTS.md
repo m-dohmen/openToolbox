@@ -58,7 +58,6 @@ export const SCHEMA = {
   subField: 'category',        // second line under the title, or null
   list: ['name', 'owner', 'review', 'likelihood', 'impact'],   // table columns, in order
   facets: ['likelihood', 'category'],   // enum fields that become sidebar filters
-  search: ['id', 'name', 'owner'],      // fields the search box looks at
   totalField: 'impact',                 // number summed in the overview, or null
   fields: [
     { key: 'name', label: 'Risk', type: 'text', required: true },
@@ -74,6 +73,23 @@ export const SCHEMA = {
 form. Field types are enforced when the AI proposes changes — an enum value outside `values` is
 rejected and reported, so keep `values` accurate.
 
+### Search and field filters come free
+
+The search box above the entity tabs reads **every field of every entity** — case-insensitive,
+live, with the hit count on each tab and the matches highlighted in the table. Attachments count
+by file name only, reference fields by the resolved title, computed fields and the record id like
+any other value. There is nothing to configure, and that is deliberate: a tool where "where does X
+stand" is the most common question must not fail because a new field was never added to a search
+list. A `search:` entry left over from an older schema is tolerated but **no longer read** — drop
+it when you touch the file anyway.
+
+Below the facet groups, the sidebar gains one field filter per `text`, `enum`, `number` and `date`
+field that is not already a facet: contains, multi-select, from/to. Fields listed in `facets`
+stay quick filters with their counts and do not appear twice. Active filters show as removable
+chips above the table; an entity without filterable field types gets neither filter area nor
+chips. All of it lives in the session only — none of it enters the payload, and a reload starts
+clean (deliberately without `localStorage`, see the rules below).
+
 ### Calculated fields
 
 Anything derived from other fields belongs in a `computed` field rather than in a number field the
@@ -85,7 +101,7 @@ user has to keep up to date by hand:
 
 `compute(record)` runs on every render. The value is **never written into the record** — a stored
 derivation goes stale the moment one of its inputs changes and nobody notices. It behaves like any
-other field in the table, in sorting, in `search`, in `totalField` and in the CSV export; it shows
+other field in the table, in sorting, in search, in `totalField` and in the CSV export; it shows
 read-only in the form; and both the user and the AI are prevented from setting it (the AI is told
 it is read-only and a write is rejected by name).
 

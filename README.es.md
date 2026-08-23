@@ -84,6 +84,9 @@ son anchuras CSS y el anillo es un único círculo SVG. Ambas vistas se imprimen
 - **Una página de inicio editable**, para que el archivo se explique antes de mostrar una tabla.
 - **Deshacer/rehacer para la sesión**, para cada creación, edición y borrado, con Ctrl/Cmd+Z y
   Ctrl/Cmd+Y o los dos botones de la barra del archivo.
+- **Búsqueda global en todos los campos de todas las entidades**, en vivo, con el número de
+  resultados en cada pestaña y coincidencias resaltadas; además filtros por tipo de campo en la
+  barra lateral con etiquetas extraíbles — solo para la sesión, nada se guarda en el archivo.
 
 ## Inicio rápido
 

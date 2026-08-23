@@ -88,6 +88,10 @@ s'impriment en un PDF propre.
 - **Une page d'accueil modifiable**, pour que le fichier s'explique avant d'afficher un tableau.
 - **Annuler/rétablir pour la session**, pour chaque création, modification et suppression, avec
   Ctrl/Cmd+Z et Ctrl/Cmd+Y ou les deux boutons dans la barre du fichier.
+- **Recherche globale sur tous les champs de toutes les entités**, en direct, avec le nombre de
+  résultats sur chaque onglet et les correspondances surlignées ; filtres par type de champ dans
+  la barre latérale, avec puces amovibles — pour la session uniquement, rien n'est enregistré
+  dans le fichier.
 
 ## Démarrage rapide
 

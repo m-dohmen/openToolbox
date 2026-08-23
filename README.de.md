@@ -160,6 +160,10 @@ Dashboard · CSV-Import · Änderungsprotokoll · Versionsnummern.**
 - **Rückgängig/Wiederholen für die Sitzung**, für jedes Anlegen, Ändern und Löschen, Strg/Cmd+Z und
   Strg/Cmd+Y oder die zwei Knöpfe in der Dateizeile — siehe
   [Rückgängig und Wiederholen](#rückgängig-und-wiederholen).
+- **Globale Suche über alle Felder aller Entitäten**, live, mit Trefferzahl am jeweiligen Reiter und
+  Hervorhebung in der Tabelle, dazu Feldfilter je Feldtyp im Seitenbereich mit entfernbaren Chips
+  darüber — nur für die Sitzung, nichts davon landet in der Datei — siehe
+  [Suchen und Filtern](#suchen-und-filtern).
 
 ## Schnellstart
 
@@ -294,6 +298,37 @@ anderen Kopie fehlt, sieht genauso aus, ob er dort gelöscht wurde oder die Kopi
 zu übernehmen ist der Grund, aus dem man den Dialog öffnet.
 
 Der Abgleich ändert den Arbeitsstand; gespeichert werden muss die Datei danach noch.
+
+## Suchen und Filtern
+
+Das Suchfeld steht über den Entitäts-Reitern und liest **jedes Feld jedes Datensatzes** — keine
+konfigurierte Auswahl. Ein Begriff eingeben, und die Tabelle engt sich live ein, während jeder
+Entitäts-Reiter zeigt, wie viele seiner Datensätze treffen; in der Tabelle selbst sind die Treffer
+hervorgehoben. Gesucht wird case-insensitive, und gefunden wird, was man sieht, nicht was
+gespeichert ist: Anhänge zählen nur mit ihrem Dateinamen (das eingebettete base64 ist Rauschen,
+kein Text), Reference-Felder mit dem Titel des Datensatzes, auf den sie zeigen, berechnete Felder
+wie alle anderen — und die Kennung zählt mit.
+
+Unter den Facettengruppen bekommt die Seitenleiste einen Filter je Feld, das sich filtern lässt,
+geformt nach seinem Typ: Text sucht auf *enthält*, eine Aufzählung bietet Mehrfachauswahl, Zahlen
+und Daten nehmen einen von/bis-Bereich. Felder, die schon als Facette laufen, bleiben
+Schnellfilter mit ihren Stückzahlen — sie machen weiter das, was sie gut können, und der
+Filterbereich ergänzt, was sie nicht können: Bereiche, enthält-Suche, Mehrfachauswahl für
+Aufzählungen ohne eigene Facettengruppe. Eine Entität ohne filterbare Feldtypen bekommt weder
+Filterbereich noch Chips — nichts erscheint, was nichts täte.
+
+Aktive Filter sammeln sich als entfernbare Chips über der Tabelle, daneben ein *Alles löschen*,
+sobald es mehr als einen gibt. Mehrere Filter wirken zusammen (UND); innerhalb eines Filters sind
+die gewählten Werte Alternativen (ODER) — zwei angehakte Aufzählungswerte meinen *dieser oder
+jener*. Suche und Feldfilter sind bewusst unabhängig: Die Suche sagt, **wo** etwas über alle
+Entitäten hinweg steht, die Filter schneiden die gerade angesehene Liste weiter — deshalb
+ignorieren die Reiterzahlen die Filter.
+
+Keines davon überlebt die Sitzung. Datei neu laden, und Suche, Filter und Facettenwahl sind weg.
+Das ist gewollt: Browserspeicher ist unter `file://` unzuverlässig, der eingebettete Datenblock
+ist der einzige Speicher, und nichts von „welche Teilmenge habe ich angesehen" gehört in Daten,
+die jemand anderes öffnet. Eine gespeicherte Datei trägt nie einen Filter in sich — die Kopie,
+die man weiterschickt, zeigt alles, genau wie ihre Druckansicht.
 
 ## Daten hineinbekommen
 
