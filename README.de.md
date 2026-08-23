@@ -309,6 +309,12 @@ gespeichert ist: Anhänge zählen nur mit ihrem Dateinamen (das eingebettete bas
 kein Text), Reference-Felder mit dem Titel des Datensatzes, auf den sie zeigen, berechnete Felder
 wie alle anderen — und die Kennung zählt mit.
 
+![Globale Suche und Feldfilter](docs/screenshots/search.png)
+
+Ein Bild mit dem ganzen Mechanismus auf einmal: Ein Begriff, dessen Treffer in zwei Entitäten
+liegen, zwei Feldfilter, die die Liste auf zwei Zeilen verengen — und über der Tabelle die Chips,
+die jeden Filter tragen, daneben ein *Alles löschen*.
+
 Unter den Facettengruppen bekommt die Seitenleiste einen Filter je Feld, das sich filtern lässt,
 geformt nach seinem Typ: Text sucht auf *enthält*, eine Aufzählung bietet Mehrfachauswahl, Zahlen
 und Daten nehmen einen von/bis-Bereich. Felder, die schon als Facette laufen, bleiben
