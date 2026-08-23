@@ -744,6 +744,35 @@ const savedPayload = readFileSync(saved, 'utf8').match(
 console.log('3a) "daysLeft" im gespeicherten Datenblock:', (savedPayload.match(/daysLeft/g) ?? []).length, 'mal')
 if (savedPayload.includes('daysLeft')) fail('Berechnetes Feld wurde in die Datei geschrieben')
 
+/*
+ * Duplizieren und Protokoll (OPEN-20): eine Kopie, die den Speichertermin
+ * erlebt, muss im Änderungsprotokoll als Anlegen-Ereignis stehen - abgeleitet
+ * gegen den letzten Stand, nicht eingetippt. Danach wird sie zurückgenommen
+ * und neu gespeichert, damit der weitere Ablauf wieder vom alten Datenstand
+ * ausgeht und keine der folgenden Zeilenzählungen kippt.
+ */
+await page.locator('tr:has-text("Smoke test entry") .cell-action button').click()
+await page.waitForSelector('.drawer')
+const loggedCopyId = await page.locator('.drawer__head .cell-id').innerText()
+await page.keyboard.press('Escape')
+await saveTo(page, saved, 'Kopie fuer das Protokoll')
+const savedLog = JSON.parse(
+  readFileSync(saved, 'utf8').match(/<script id="sb-payload"[^>]*>([\s\S]*?)<\/script>/)[1],
+)
+const copyCreated = (savedLog.data?.log ?? [])
+  .flatMap((entry) => entry.changes ?? [])
+  .filter((c) => c.op === 'created' && String(c.id) === String(loggedCopyId))
+console.log('3b) Protokoll: Anlegen-Ereignis der Kopie:', copyCreated.length ? copyCreated[0].title : 'fehlt')
+if (copyCreated.length !== 1) fail('Die Kopie fehlt als Anlegen-Ereignis im Änderungsprotokoll')
+if (copyCreated[0].title !== 'Smoke test entry (Copy)') {
+  fail('Anlegen-Ereignis trägt nicht den Titel der Kopie')
+}
+
+await page.keyboard.press('Control+z')
+const rowsAfterLogUndo = await page.locator('table tbody tr').count()
+if (rowsAfterLogUndo !== 12) fail('Ruecknahme der Protokoll-Kopie hat nicht gegriffen')
+await saveTo(page, saved, 'Kopie zurueckgenommen')
+
 // Wiederöffnen: kommt der Datenstand zurück?
 const page2 = await ctx.newPage()
 page2.on('pageerror', (e) => errors.push(String(e)))
