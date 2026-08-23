@@ -691,7 +691,10 @@ Every column heading in an entity list is clickable. The first click sorts ascen
 descending, and the third hands the order back to the data block — no fourth state, and a column
 does not remember its direction once you have moved on. Switching to another column also starts
 fresh at ascending. While a column sorts, its heading carries an arrow; it announces the direction
-as `ascending`/`descending` for screen readers as well.
+as `ascending`/`descending` for screen readers as well. One thing to know upfront: when the file
+opens, every list already stands sorted ascending by its first column — that is the house default,
+not the data block. The third click therefore lands on the raw data-block order, which can look
+different from what you saw when you opened the file.
 
 The comparison follows the field type, not the characters on screen: numbers compare numerically
 (10 sorts after 9), dates chronologically — their ISO spelling compares lexically, which for dates

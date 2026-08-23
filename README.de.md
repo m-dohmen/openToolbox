@@ -340,7 +340,11 @@ Jeder Spaltenkopf einer Entitätsliste ist anklickbar. Der erste Klick sortiert 
 zweite absteigend, der dritte gibt die Ordnung an den Datenblock zurück — kein vierter Zustand,
 und eine Spalte merkt sich ihre Richtung nicht über den Gebrauch hinaus. Der Wechsel auf eine
 andere Spalte beginnt ebenfalls von vorn, aufsteigend. Solange eine Spalte sortiert, trägt ihr
-Kopf einen Pfeil; für Screenreader meldet er die Richtung als `ascending`/`descending`.
+Kopf einen Pfeil; für Screenreader meldet er die Richtung als `ascending`/`descending`. Eines
+weiß man vorher: Beim Öffnen der Datei steht jede Liste bereits aufsteigend nach ihrer ersten
+Spalte sortiert — das ist die Voreinstellung des Hauses, nicht die Datenblock-Reihenfolge. Der
+dritte Klick landet deshalb auf der rohen Datenblock-Reihenfolge, die anders aussehen kann als
+der Stand beim Öffnen.
 
 Der Vergleich folgt dem Feldtyp, nicht den Zeichen auf dem Schirm: Zahlen vergleichen numerisch
 (10 steht hinter 9), Daten chronologisch — ihre ISO-Schreibweise vergleicht als Zeichenkette,
