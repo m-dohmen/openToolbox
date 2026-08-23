@@ -141,6 +141,9 @@ export const seed = () =>
     ['BM-1010', 'Akkuladegerät 18 V', 'Ladegerät', 'W-0501', 'ausgeliehen', 'D. Ahrens', '12', -365, 'S. Behrens', 'bestanden', '', 'Seit dem Umbau bei D. Ahrens im Wagen.'],
     ['BM-1011', 'Baustrahler LED', 'Handmaschine', 'W-0480', 'Baustellenwagen', 'M. Voss', '6', null, '', 'noch nicht geprüft', '', 'Neu beschafft, Erstprüfung steht aus.'],
     ['BM-1012', 'Standbohrmaschine', 'Ortsfest', 'W-0100', 'Werkstatt', '', '24', -560, 'externer Dienstleister', 'bestanden', '', ''],
+    // Sortier-Demo: gestern geprüft — oben, sobald man nach Datum oder Tagen sortiert;
+    // im Textsortierlauf stellt es sich neben die andere Verlängerung.
+    ['BM-1013', 'Verlängerung 10 m gelb', 'Verlängerung/Leitung', 'K-077', 'Lager', '', '6', -1, 'S. Behrens', 'bestanden', '', ''],
   ].map(([id, name, kind, serial, location, holder, interval, days, tester, result, defect, note]) => ({
     id,
     name,
