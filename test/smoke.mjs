@@ -655,6 +655,156 @@ const redoneRow = await page.locator('tr:has-text("Smoke test entry")').innerTex
 console.log('    Editieren wiederholt — Zeile:', redoneRow.replace(/\s+/g, ' '))
 if (!redoneRow.includes('New owner after undo')) fail('Wiederholen hat den neuen Feldwert nicht zurueckgebracht')
 
+/*
+ * Mehrfachauswahl und Sammelaktionen (OPEN-19). Der Zustandsstand wird je
+ * Schritt ueber die Id-Zelle eingesammelt, nicht ueber die Position - die
+ * Reihenfolge in der Tabelle haengt an der laufenden Sortierung, eine Id nicht.
+ */
+const statusMap = async () =>
+  Object.fromEntries(
+    await Promise.all(
+      (await page.locator('table tbody tr').all()).map(async (tr) => [
+        (await tr.locator('.cell-id').innerText()).trim(),
+        (await tr.locator('.pill').innerText()).trim(),
+      ]),
+    ),
+  )
+const bulkCounter = () => page.locator('.bulk-bar__count').innerText()
+
+// Ohne Auswahl gibt es keine Aktionsleiste - sie blendet sich zu.
+if (await page.locator('.bulk-bar').count()) {
+  fail('Aktionsleiste steht, ohne dass etwas ausgewaehlt ist')
+}
+
+// 2h) Bereichsauswahl: erster Klick setzt den Anker, Umschalt-Klick den Bereich.
+const rowCheck = (i) => page.locator('table tbody tr').nth(i).locator('.td-check input')
+await rowCheck(0).click()
+let bulkShown = await bulkCounter()
+console.log('2h) Erste Auswahl:', bulkShown)
+if (!bulkShown.startsWith('1')) fail('Zaehler zeigt nach dem ersten Klick nicht 1')
+
+await rowCheck(3).click({ modifiers: ['Shift'] })
+bulkShown = await bulkCounter()
+console.log('    Umschalt-Klick auf Zeile 4:', bulkShown)
+if (!bulkShown.startsWith('4')) fail('Bereichsauswahl hat nicht genau die Zeilen 1 bis 4 erfasst')
+
+const headCheck = page.locator('.th-check input')
+if (!(await headCheck.evaluate((el) => el.indeterminate))) {
+  fail('Kopfkontrollkaestchen zeigt bei Teilauswahl keinen unbestimmten Zustand')
+}
+
+// Alles-auswählen trifft genau die sichtbare Seite, derselbe Schalter hebt ab.
+await headCheck.click()
+const visibleCount = await page.locator('table tbody tr').count()
+bulkShown = await bulkCounter()
+console.log(`    Alles auswaehlen (${visibleCount} sichtbar):`, bulkShown)
+if (!bulkShown.startsWith(String(visibleCount))) fail('Alles-auswaehlen hat nicht alle sichtbaren Zeilen erfasst')
+await headCheck.click()
+if (await page.locator('.bulk-bar').count()) fail('Auswahl aufheben ueber den Kopf hat nicht geleert')
+
+// 2i) Sammelaktion: Wert setzen. EIN Strg+Z stellt alle vorherigen Werte her.
+const SET_ROWS = ['Review interface error returns', 'Start Q3 access recertification']
+for (const title of SET_ROWS) {
+  await page.locator(`tr:has-text("${title}") .td-check input`).click()
+}
+const beforeBulk = await statusMap()
+await page.locator('.bulk-bar select').nth(0).selectOption({ label: 'Status' })
+await page.locator('.bulk-bar select').nth(1).selectOption('done')
+await page.getByRole('button', { name: 'Set value' }).click()
+await page.waitForSelector('.toast')
+const bulkToast = await page.locator('.toast').innerText()
+console.log('2i) Sammelaktion:', bulkToast)
+if (!/^2 /.test(bulkToast)) fail('Sammelaktion meldet nicht genau 2 aktualisierte Datensaetze')
+for (const title of SET_ROWS) {
+  const pill = (await page.locator(`tr:has-text("${title}") .pill`).innerText()).trim()
+  if (pill !== 'done') fail(`"${title}" wurde nicht auf done gesetzt`)
+}
+await page.keyboard.press('Control+z')
+const restoredBulk = await statusMap()
+console.log(
+  '    Nach einem Strg+Z identisch zum Ausgangsstand:',
+  JSON.stringify(restoredBulk) === JSON.stringify(beforeBulk),
+)
+if (JSON.stringify(restoredBulk) !== JSON.stringify(beforeBulk)) {
+  fail('Ein Strg+Z hat die Sammelaktion nicht vollstaendig rueckgaengig gemacht')
+}
+
+// 2j) Abbruch der Rueckfrage: Daten unangetastet, Auswahl bleibt stehen.
+await page.locator(`tr:has-text("${SET_ROWS[0]}") .td-check input`).click()
+await page.getByRole('button', { name: 'Delete selected' }).click()
+await page.waitForSelector('.modal')
+const cancelBody = await page.locator('.modal').innerText()
+console.log('2j) Rueckfrage nennt Anzahl:', cancelBody.includes('1 record will be removed'))
+if (!cancelBody.includes('1 record will be removed')) fail('Die Rueckfrage nennt die Anzahl nicht')
+await page.locator('.modal .btn--quiet').click()
+const rowsAfterCancel = await page.locator('table tbody tr').count()
+if (rowsAfterCancel !== 12) fail('Abbruch hat doch etwas geloescht')
+if (!(await page.locator('.bulk-bar').count())) fail('Abbruch hat die Auswahl mit weggeworfen')
+
+// Der dritte Balken-Knopf: Auswahl aufheben.
+await page.getByRole('button', { name: 'Clear selection' }).click()
+if (await page.locator('.bulk-bar').count()) fail('Auswahl aufheben hat nicht geleert')
+
+// 2k) Sammel-Loeschen mit Bestätigung; ein Strg+Z bringt beide zurück.
+const DELETE_TITLES = ['Refresh chapter 4 of the continuity handbook', 'Recalibrate monitoring thresholds']
+const deletedIds = []
+for (const title of DELETE_TITLES) {
+  deletedIds.push((await page.locator(`tr:has-text("${title}") .cell-id`).innerText()).trim())
+  await page.locator(`tr:has-text("${title}") .td-check input`).click()
+}
+await page.getByRole('button', { name: 'Delete selected' }).click()
+await page.waitForSelector('.modal')
+await page.locator('.modal .btn--danger').click()
+await page.waitForSelector('.toast')
+const deleteToast = await page.locator('.toast').innerText()
+const rowsAfterBulkDelete = await page.locator('table tbody tr').count()
+console.log('2k) Sammel-Loeschen:', deleteToast, '| Zeilen:', rowsAfterBulkDelete)
+if (!/^2 /.test(deleteToast)) fail('Loeschmeldung zaehlt nicht genau 2 Datensaetze')
+if (rowsAfterBulkDelete !== 10) fail('Sammel-Loeschen hat nicht genau 2 Zeilen entfernt')
+for (const id of deletedIds) {
+  if (await page.locator(`td.cell-id:text-is("${id}")`).count()) {
+    fail(`Datensatz ${id} wurde nicht geloescht`)
+  }
+}
+await page.keyboard.press('Control+z')
+const rowsAfterUndoBulkDelete = await page.locator('table tbody tr').count()
+const bothBack = await Promise.all(
+  deletedIds.map((id) => page.locator(`td.cell-id:text-is("${id}")`).count()),
+)
+console.log('    Ein Strg+Z danach — Zeilen:', rowsAfterUndoBulkDelete, '| beide zurueck:', bothBack.every((n) => n === 1))
+if (rowsAfterUndoBulkDelete !== 12 || !bothBack.every((n) => n === 1)) {
+  fail('Ein Strg+Z hat das Sammel-Loeschen nicht vollstaendig rueckgaengig gemacht')
+}
+
+// 2l) Schema-Regeln gelten fuer die Sammelaktion genauso: ohne Verantwortlicher
+// kein "in progress" - der Datensatz wird benannt und uebersprungen, der
+// Nachbar daneben wird regulär gesetzt.
+await page.getByRole('button', { name: 'New action item' }).first().click()
+await page.locator('#f-title').fill('Bulk rule probe')
+await page.getByRole('button', { name: 'Apply' }).click()
+await page.locator('tr:has-text("Bulk rule probe") .td-check input').click()
+await page.locator('tr:has-text("Consolidate the process map") .td-check input').click()
+await page.locator('.bulk-bar select').nth(0).selectOption({ label: 'Status' })
+await page.locator('.bulk-bar select').nth(1).selectOption('in progress')
+await page.getByRole('button', { name: 'Set value' }).click()
+await page.waitForSelector('.toast')
+const ruleToast = await page.locator('.toast').innerText()
+console.log('2l) Regel-Beanstandung:', ruleToast)
+if (!ruleToast.includes('1 not changed') || !ruleToast.includes('needs an owner')) {
+  fail('Der regelwidrige Datensatz wurde nicht benannt und uebersprungen')
+}
+const neighborPill = (await page.locator('tr:has-text("Consolidate the process map") .pill').innerText()).trim()
+const probePill = (await page.locator('tr:has-text("Bulk rule probe") .pill').innerText()).trim()
+if (neighborPill !== 'in progress') fail('Der zulässige Nachbar wurde nicht mitgesetzt')
+if (probePill !== 'open') fail('Der regelwidrige Datensatz wurde trotzdem geändert')
+
+// Aufräumen über denselben Verlauf: zwei Schritte, Ausgangszustand für die
+// Speicher-Prüfungen unten.
+await page.keyboard.press('Control+z')
+await page.keyboard.press('Control+z')
+const rowsCleanedUp = await page.locator('table tbody tr').count()
+if (rowsCleanedUp !== 12) fail('Aufraeumen hat nicht den Ausgangszustand wiederhergestellt')
+
 // Speichern (ohne File System Access API -> Download-Pfad)
 const saved = resolve(tmp, 'runde1.html')
 const dl = await saveTo(page, saved, 'Testeintrag angelegt')
