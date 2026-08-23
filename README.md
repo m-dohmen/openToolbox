@@ -141,6 +141,10 @@ dashboard · CSV import · change log · version numbers.**
   [Merging a copy that came back](#merging-a-copy-that-came-back).
 - **Session undo/redo** for every create, edit and delete, Ctrl/Cmd+Z and Ctrl/Cmd+Y or the two
   buttons in the file bar — see [Undo and redo](#undo-and-redo).
+- **Global search across every field of every entity**, live, with the hit count on each tab and
+  highlighted matches in the table, plus typed field filters in the sidebar with removable chips
+  above it — session-only, none of it saved into the file — see
+  [Searching and filtering](#searching-and-filtering).
 
 ## Quick start
 
@@ -648,6 +652,35 @@ readings destroys data. Everything else is ticked, because taking the changes is
 opened the dialog.
 
 Merging changes the working set; the file still has to be saved afterwards.
+
+## Searching and filtering
+
+The search box sits above the entity tabs and reads **every field of every record** — not a
+configured subset. Type, and the table narrows live while each entity tab shows how many of its
+records match; in the table itself, the matches are highlighted. Searching is case-insensitive,
+and it finds what you can see rather than what is stored: attachments count by their file name
+only (the embedded base64 is noise, not text), reference fields by the title of the record they
+point at, calculated fields like any other — and the record id counts too.
+
+Below the facet groups, the sidebar gains one filter per field worth filtering, shaped by its
+type: text matches on *contains*, an enum offers multi-select, numbers and dates take a from/to
+range. Fields that already run as facets stay quick filters with their counts — they keep doing
+what they do well, and the filter area adds what they cannot: ranges, contains, multi-select for
+enums without a facet group of their own. An entity with no filterable field types gets neither a
+filter area nor chips, so nothing appears that would do nothing.
+
+Active filters collect as removable chips above the table, with a *clear all* next to them once
+there is more than one. Several filters apply together (AND); within one filter the chosen values
+are alternatives (OR) — two ticked enum values mean *this one or that one*. Search and field
+filters are independent on purpose: the search tells you **where** something is across all
+entities, the filters narrow the list you are looking at — which is why the tab counts ignore the
+filters.
+
+None of this outlives the session. Reload the file and search, filters and facet picks are gone.
+That is deliberate: browser storage is unreliable under `file://`, the embedded data block is the
+only storage there is, and nothing about "which subset was I looking at" belongs in data someone
+else will open. A saved file never carries a filter inside it, so the copy you send on shows
+everything — exactly like its print view.
 
 ## Getting data in
 

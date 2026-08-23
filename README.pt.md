@@ -83,6 +83,9 @@ larguras em CSS e o anel é um único círculo SVG. As duas visões imprimem com
 - **Uma página inicial editável**, para que o arquivo se explique antes de mostrar uma tabela.
 - **Desfazer/refazer para a sessão**, para cada criação, edição e exclusão, com Ctrl/Cmd+Z e
   Ctrl/Cmd+Y ou os dois botões na barra do arquivo.
+- **Busca global em todos os campos de todas as entidades**, ao vivo, com contagem de resultados
+  em cada aba e correspondências destacadas; além de filtros por tipo de campo na barra lateral,
+  com etiquetas removíveis — apenas para a sessão, nada é gravado no arquivo.
 
 ## Início rápido
 
