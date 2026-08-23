@@ -45,7 +45,6 @@ Un enregistrement est **Kind**, plusieurs sont **Kinder**.
 - Deuxième ligne en dessous : `guardian`
 - Colonnes du tableau, dans cet ordre : `name`, `guardian`, `consent`, `payment`, `paid`, `open`, `swim`
 - Filtres de la barre latérale : `consent`, `payment`, `swim`
-- Champs interrogés par la recherche : `id`, `name`, `guardian`, `phone`, `note`
 - Totalisé dans l’aperçu : `paid`
 - Ne compte plus comme ouvert quand : `r.consent === 'verweigert' || (r.consent === 'liegt vor' && (r.payment === 'vollständig' || r.payment === 'erlassen'))`
 - Signalé en rouge quand : `!isDone(r)`

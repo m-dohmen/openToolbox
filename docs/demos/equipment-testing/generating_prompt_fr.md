@@ -46,7 +46,6 @@ Un enregistrement est **Betriebsmittel**, plusieurs sont **Betriebsmittel**.
 - Deuxième ligne en dessous : `location`
 - Colonnes du tableau, dans cet ordre : `name`, `kind`, `location`, `lastTest`, `due`, `daysLeft`, `result`
 - Filtres de la barre latérale : `kind`, `location`, `result`
-- Champs interrogés par la recherche : `id`, `name`, `serial`, `tester`, `note`
 - Ne compte plus comme ouvert quand : `() => false`
 - Signalé en rouge quand : `{ if (r.result === 'nicht bestanden') return true const d = dueDate(r) return !d || d < iso(0) }`
 

@@ -41,7 +41,6 @@ export const ENTITIES = {
       subField: 'client',
       list: ['name', 'lead', 'phase', 'risk', 'budget', 'variance', 'end'],
       facets: ['phase', 'risk'],
-      search: ['id', 'name', 'client', 'lead'],
       totalField: 'budget',
       fields: [
         { key: 'name', label: 'Project', type: 'text', required: true },
@@ -131,7 +130,6 @@ export const ENTITIES = {
       subField: null,
       list: ['title', 'projectId', 'owner', 'due', 'daysLeft', 'status', 'effort'],
       facets: ['status'],
-      search: ['id', 'title', 'owner'],
       totalField: 'effort',
       dueDate: 'due',
       fields: [

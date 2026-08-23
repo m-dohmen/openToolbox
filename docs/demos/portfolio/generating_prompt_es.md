@@ -43,7 +43,6 @@ Clave de entidad `projects` — un registro es **project**, varios son **project
 - Segunda línea debajo: `client`
 - Columnas de la tabla, en este orden: `name`, `lead`, `phase`, `risk`, `budget`, `variance`, `end`
 - Filtros de la barra lateral: `phase`, `risk`
-- Campos que busca el buscador: `id`, `name`, `client`, `lead`
 - Sumado en el resumen: `budget`
 - Deja de contar como abierto cuando: `r.phase === 'Closed'`
 - Se marca en rojo cuando: `r.phase !== 'Closed' && r.end && r.end < today()`
@@ -85,7 +84,6 @@ Clave de entidad `milestones` — un registro es **milestone**, varios son **mil
 - Columna principal: `title`
 - Columnas de la tabla, en este orden: `title`, `projectId`, `owner`, `due`, `daysLeft`, `status`, `effort`
 - Filtros de la barra lateral: `status`
-- Campos que busca el buscador: `id`, `title`, `owner`
 - Sumado en el resumen: `effort`
 - Deja de contar como abierto cuando: `r.status === 'done'`
 - Se marca en rojo cuando: `r.status !== 'done' && r.due && r.due < today()`

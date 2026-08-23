@@ -46,7 +46,6 @@
 - 主列の下に置く 2 行目：`location`
 - 表の列（この順）：`name`, `kind`, `location`, `lastTest`, `due`, `daysLeft`, `result`
 - サイドバーの絞り込み：`kind`, `location`, `result`
-- 検索対象のフィールド：`id`, `name`, `serial`, `tester`, `note`
 - 未完了として数えなくなる条件：`() => false`
 - 赤で強調する条件：`{ if (r.result === 'nicht bestanden') return true const d = dueDate(r) return !d || d < iso(0) }`
 

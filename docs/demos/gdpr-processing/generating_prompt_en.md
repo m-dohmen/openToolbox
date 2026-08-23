@@ -48,7 +48,6 @@ One record is a **Verarbeitung**, several are **Verarbeitungen**.
 - Second line under the headline: `area`
 - Table columns, in this order: `name`, `area`, `basis`, `subjects`, `retention`, `age`, `status`
 - Sidebar filters: `area`, `status`, `risk`
-- Searched by the search box: `id`, `name`, `system`, `purpose`, `contact`
 - No longer counts as open when: `r.status === 'freigegeben'`
 - Flagged red when: `!r.reviewed || r.reviewed < iso(-365)`
 

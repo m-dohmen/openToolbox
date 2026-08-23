@@ -48,7 +48,6 @@ Um registro é **Verarbeitung**, vários são **Verarbeitungen**.
 - Segunda linha abaixo: `area`
 - Colunas da tabela, nesta ordem: `name`, `area`, `basis`, `subjects`, `retention`, `age`, `status`
 - Filtros da barra lateral: `area`, `status`, `risk`
-- Campos usados pela busca: `id`, `name`, `system`, `purpose`, `contact`
 - Deixa de contar como aberto quando: `r.status === 'freigegeben'`
 - Marcado em vermelho quando: `!r.reviewed || r.reviewed < iso(-365)`
 

@@ -43,7 +43,6 @@
 - 主列の下に置く 2 行目：`trade`
 - 表の列（この順）：`name`, `trade`, `phase`, `budget`, `awarded`, `variance`, `start`
 - サイドバーの絞り込み：`trade`, `phase`
-- 検索対象のフィールド：`id`, `name`, `note`
 - 概要で合計する：`budget`
 - 未完了として数えなくなる条件：`r.phase === 'abgenommen'`
 - 赤で強調する条件：`r.phase === 'noch nicht angefragt' && r.start && r.start < iso(30)`
@@ -100,7 +99,6 @@
 - 主列：`company`
 - 表の列（この順）：`company`, `tradeId`, `amount`, `perBudget`, `received`, `validUntil`, `state`
 - サイドバーの絞り込み：`state`
-- 検索対象のフィールド：`id`, `company`, `contact`, `note`
 - 概要で合計する：`amount`
 - 未完了として数えなくなる条件：`r.state === 'beauftragt' || r.state === 'abgelehnt'`
 - 赤で強調する条件：`r.state !== 'abgelehnt' && r.state !== 'beauftragt' && r.validUntil && r.validUntil < iso(0)`

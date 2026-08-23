@@ -43,7 +43,6 @@ Clé d’entité `packagings` — un enregistrement est **Verpackung**, plusieur
 - Deuxième ligne en dessous : `category`
 - Colonnes du tableau, dans cet ordre : `name`, `category`, `articles`, `weight`, `recyclate`, `docStatus`, `deadline`
 - Filtres de la barre latérale : `category`, `docStatus`
-- Champs interrogés par la recherche : `id`, `name`, `articles`, `note`
 - Ne compte plus comme ouvert quand : `r.docStatus === 'Erklärung erstellt'`
 - Signalé en rouge quand : `r.docStatus !== 'Erklärung erstellt' && r.deadline && r.deadline < today()`
 
@@ -106,7 +105,6 @@ Clé d’entité `components` — un enregistrement est **Bestandteil**, plusieu
 - Colonne principale : `name`
 - Colonnes du tableau, dans cet ordre : `name`, `packagingId`, `material`, `weight`, `recycled`, `grade`, `source`
 - Filtres de la barre latérale : `material`, `grade`
-- Champs interrogés par la recherche : `id`, `name`, `supplier`
 - Totalisé dans l’aperçu : `weight`
 - Ne compte plus comme ouvert quand : `() => false`
 - Signalé en rouge quand : `r.source === 'fehlt noch'`

@@ -36,7 +36,6 @@ export const ENTITIES = {
       subField: 'trade',
       list: ['name', 'trade', 'phase', 'budget', 'awarded', 'variance', 'start'],
       facets: ['trade', 'phase'],
-      search: ['id', 'name', 'note'],
       totalField: 'budget',
       fields: [
         { key: 'name', label: 'Gewerk', type: 'text', required: true },
@@ -146,7 +145,6 @@ export const ENTITIES = {
       subField: null,
       list: ['company', 'tradeId', 'amount', 'perBudget', 'received', 'validUntil', 'state'],
       facets: ['state'],
-      search: ['id', 'company', 'contact', 'note'],
       totalField: 'amount',
       fields: [
         { key: 'company', label: 'Firma', type: 'text', required: true },

@@ -43,7 +43,6 @@
 - 主列の下に置く 2 行目：`client`
 - 表の列（この順）：`name`, `lead`, `phase`, `risk`, `budget`, `variance`, `end`
 - サイドバーの絞り込み：`phase`, `risk`
-- 検索対象のフィールド：`id`, `name`, `client`, `lead`
 - 概要で合計する：`budget`
 - 未完了として数えなくなる条件：`r.phase === 'Closed'`
 - 赤で強調する条件：`r.phase !== 'Closed' && r.end && r.end < today()`
@@ -85,7 +84,6 @@
 - 主列：`title`
 - 表の列（この順）：`title`, `projectId`, `owner`, `due`, `daysLeft`, `status`, `effort`
 - サイドバーの絞り込み：`status`
-- 検索対象のフィールド：`id`, `title`, `owner`
 - 概要で合計する：`effort`
 - 未完了として数えなくなる条件：`r.status === 'done'`
 - 赤で強調する条件：`r.status !== 'done' && r.due && r.due < today()`

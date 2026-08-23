@@ -43,7 +43,6 @@
 - 主列下方的第二行：`trade`
 - 表格列，按此顺序：`name`, `trade`, `phase`, `budget`, `awarded`, `variance`, `start`
 - 侧栏筛选：`trade`, `phase`
-- 搜索框检索的字段：`id`, `name`, `note`
 - 在概览中求和：`budget`
 - 不再计为未完成的条件：`r.phase === 'abgenommen'`
 - 标红的条件：`r.phase === 'noch nicht angefragt' && r.start && r.start < iso(30)`
@@ -100,7 +99,6 @@
 - 主列：`company`
 - 表格列，按此顺序：`company`, `tradeId`, `amount`, `perBudget`, `received`, `validUntil`, `state`
 - 侧栏筛选：`state`
-- 搜索框检索的字段：`id`, `company`, `contact`, `note`
 - 在概览中求和：`amount`
 - 不再计为未完成的条件：`r.state === 'beauftragt' || r.state === 'abgelehnt'`
 - 标红的条件：`r.state !== 'abgelehnt' && r.state !== 'beauftragt' && r.validUntil && r.validUntil < iso(0)`

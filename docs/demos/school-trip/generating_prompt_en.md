@@ -45,7 +45,6 @@ One record is a **Kind**, several are **Kinder**.
 - Second line under the headline: `guardian`
 - Table columns, in this order: `name`, `guardian`, `consent`, `payment`, `paid`, `open`, `swim`
 - Sidebar filters: `consent`, `payment`, `swim`
-- Searched by the search box: `id`, `name`, `guardian`, `phone`, `note`
 - Summed in the overview: `paid`
 - No longer counts as open when: `r.consent === 'verweigert' || (r.consent === 'liegt vor' && (r.payment === 'vollständig' || r.payment === 'erlassen'))`
 - Flagged red when: `!isDone(r)`

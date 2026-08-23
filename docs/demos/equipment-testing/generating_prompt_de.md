@@ -46,7 +46,6 @@ Ein Datensatz ist **Betriebsmittel**, mehrere sind **Betriebsmittel**.
 - Zweite Zeile darunter: `location`
 - Tabellenspalten, in dieser Reihenfolge: `name`, `kind`, `location`, `lastTest`, `due`, `daysLeft`, `result`
 - Filter in der Seitenleiste: `kind`, `location`, `result`
-- Vom Suchfeld durchsucht: `id`, `name`, `serial`, `tester`, `note`
 - Zählt nicht mehr als offen, wenn: `() => false`
 - Rot markiert, wenn: `{ if (r.result === 'nicht bestanden') return true const d = dueDate(r) return !d || d < iso(0) }`
 

@@ -48,7 +48,6 @@ Un enregistrement est **Verarbeitung**, plusieurs sont **Verarbeitungen**.
 - Deuxième ligne en dessous : `area`
 - Colonnes du tableau, dans cet ordre : `name`, `area`, `basis`, `subjects`, `retention`, `age`, `status`
 - Filtres de la barre latérale : `area`, `status`, `risk`
-- Champs interrogés par la recherche : `id`, `name`, `system`, `purpose`, `contact`
 - Ne compte plus comme ouvert quand : `r.status === 'freigegeben'`
 - Signalé en rouge quand : `!r.reviewed || r.reviewed < iso(-365)`
 

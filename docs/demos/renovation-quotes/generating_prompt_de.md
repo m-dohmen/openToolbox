@@ -43,7 +43,6 @@ Entitätsschlüssel `trades` — ein Datensatz ist **Gewerk**, mehrere sind **Ge
 - Zweite Zeile darunter: `trade`
 - Tabellenspalten, in dieser Reihenfolge: `name`, `trade`, `phase`, `budget`, `awarded`, `variance`, `start`
 - Filter in der Seitenleiste: `trade`, `phase`
-- Vom Suchfeld durchsucht: `id`, `name`, `note`
 - In der Übersicht summiert: `budget`
 - Zählt nicht mehr als offen, wenn: `r.phase === 'abgenommen'`
 - Rot markiert, wenn: `r.phase === 'noch nicht angefragt' && r.start && r.start < iso(30)`
@@ -100,7 +99,6 @@ Entitätsschlüssel `offers` — ein Datensatz ist **Angebot**, mehrere sind **A
 - Führende Spalte: `company`
 - Tabellenspalten, in dieser Reihenfolge: `company`, `tradeId`, `amount`, `perBudget`, `received`, `validUntil`, `state`
 - Filter in der Seitenleiste: `state`
-- Vom Suchfeld durchsucht: `id`, `company`, `contact`, `note`
 - In der Übersicht summiert: `amount`
 - Zählt nicht mehr als offen, wenn: `r.state === 'beauftragt' || r.state === 'abgelehnt'`
 - Rot markiert, wenn: `r.state !== 'abgelehnt' && r.state !== 'beauftragt' && r.validUntil && r.validUntil < iso(0)`

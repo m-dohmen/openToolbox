@@ -48,7 +48,6 @@
 - 主列下方的第二行：`area`
 - 表格列，按此顺序：`name`, `area`, `basis`, `subjects`, `retention`, `age`, `status`
 - 侧栏筛选：`area`, `status`, `risk`
-- 搜索框检索的字段：`id`, `name`, `system`, `purpose`, `contact`
 - 不再计为未完成的条件：`r.status === 'freigegeben'`
 - 标红的条件：`!r.reviewed || r.reviewed < iso(-365)`
 

@@ -36,7 +36,6 @@ export const SCHEMA = {
   subField: 'guardian',
   list: ['name', 'guardian', 'consent', 'payment', 'paid', 'open', 'swim'],
   facets: ['consent', 'payment', 'swim'],
-  search: ['id', 'name', 'guardian', 'phone', 'note'],
   totalField: 'paid',
   fields: [
     { key: 'name', label: 'Kind', type: 'text', required: true },

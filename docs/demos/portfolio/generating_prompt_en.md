@@ -43,7 +43,6 @@ Entity key `projects` — one record is a **project**, several are **projects**.
 - Second line under the headline: `client`
 - Table columns, in this order: `name`, `lead`, `phase`, `risk`, `budget`, `variance`, `end`
 - Sidebar filters: `phase`, `risk`
-- Searched by the search box: `id`, `name`, `client`, `lead`
 - Summed in the overview: `budget`
 - No longer counts as open when: `r.phase === 'Closed'`
 - Flagged red when: `r.phase !== 'Closed' && r.end && r.end < today()`
@@ -85,7 +84,6 @@ Entity key `milestones` — one record is a **milestone**, several are **milesto
 - Headline column: `title`
 - Table columns, in this order: `title`, `projectId`, `owner`, `due`, `daysLeft`, `status`, `effort`
 - Sidebar filters: `status`
-- Searched by the search box: `id`, `title`, `owner`
 - Summed in the overview: `effort`
 - No longer counts as open when: `r.status === 'done'`
 - Flagged red when: `r.status !== 'done' && r.due && r.due < today()`

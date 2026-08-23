@@ -45,7 +45,6 @@
 - 主列の下に置く 2 行目：`guardian`
 - 表の列（この順）：`name`, `guardian`, `consent`, `payment`, `paid`, `open`, `swim`
 - サイドバーの絞り込み：`consent`, `payment`, `swim`
-- 検索対象のフィールド：`id`, `name`, `guardian`, `phone`, `note`
 - 概要で合計する：`paid`
 - 未完了として数えなくなる条件：`r.consent === 'verweigert' || (r.consent === 'liegt vor' && (r.payment === 'vollständig' || r.payment === 'erlassen'))`
 - 赤で強調する条件：`!isDone(r)`

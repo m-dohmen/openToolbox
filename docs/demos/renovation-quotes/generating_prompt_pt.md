@@ -43,7 +43,6 @@ Chave de entidade `trades` — um registro é **Gewerk**, vários são **Gewerke
 - Segunda linha abaixo: `trade`
 - Colunas da tabela, nesta ordem: `name`, `trade`, `phase`, `budget`, `awarded`, `variance`, `start`
 - Filtros da barra lateral: `trade`, `phase`
-- Campos usados pela busca: `id`, `name`, `note`
 - Somado no resumo: `budget`
 - Deixa de contar como aberto quando: `r.phase === 'abgenommen'`
 - Marcado em vermelho quando: `r.phase === 'noch nicht angefragt' && r.start && r.start < iso(30)`
@@ -100,7 +99,6 @@ Chave de entidade `offers` — um registro é **Angebot**, vários são **Angebo
 - Coluna principal: `company`
 - Colunas da tabela, nesta ordem: `company`, `tradeId`, `amount`, `perBudget`, `received`, `validUntil`, `state`
 - Filtros da barra lateral: `state`
-- Campos usados pela busca: `id`, `company`, `contact`, `note`
 - Somado no resumo: `amount`
 - Deixa de contar como aberto quando: `r.state === 'beauftragt' || r.state === 'abgelehnt'`
 - Marcado em vermelho quando: `r.state !== 'abgelehnt' && r.state !== 'beauftragt' && r.validUntil && r.validUntil < iso(0)`

@@ -45,7 +45,6 @@
 - 主列下方的第二行：`guardian`
 - 表格列，按此顺序：`name`, `guardian`, `consent`, `payment`, `paid`, `open`, `swim`
 - 侧栏筛选：`consent`, `payment`, `swim`
-- 搜索框检索的字段：`id`, `name`, `guardian`, `phone`, `note`
 - 在概览中求和：`paid`
 - 不再计为未完成的条件：`r.consent === 'verweigert' || (r.consent === 'liegt vor' && (r.payment === 'vollständig' || r.payment === 'erlassen'))`
 - 标红的条件：`!isDone(r)`

@@ -43,7 +43,6 @@ Clave de entidad `packagings` — un registro es **Verpackung**, varios son **Ve
 - Segunda línea debajo: `category`
 - Columnas de la tabla, en este orden: `name`, `category`, `articles`, `weight`, `recyclate`, `docStatus`, `deadline`
 - Filtros de la barra lateral: `category`, `docStatus`
-- Campos que busca el buscador: `id`, `name`, `articles`, `note`
 - Deja de contar como abierto cuando: `r.docStatus === 'Erklärung erstellt'`
 - Se marca en rojo cuando: `r.docStatus !== 'Erklärung erstellt' && r.deadline && r.deadline < today()`
 
@@ -106,7 +105,6 @@ Clave de entidad `components` — un registro es **Bestandteil**, varios son **B
 - Columna principal: `name`
 - Columnas de la tabla, en este orden: `name`, `packagingId`, `material`, `weight`, `recycled`, `grade`, `source`
 - Filtros de la barra lateral: `material`, `grade`
-- Campos que busca el buscador: `id`, `name`, `supplier`
 - Sumado en el resumen: `weight`
 - Deja de contar como abierto cuando: `() => false`
 - Se marca en rojo cuando: `r.source === 'fehlt noch'`

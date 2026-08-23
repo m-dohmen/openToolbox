@@ -29,7 +29,6 @@ export const ENTITIES = {
       subField: 'category',
       list: ['name', 'category', 'contact'],
       facets: ['category'],
-      search: ['id', 'name', 'contact'],
       totalField: null,
       fields: [
         { key: 'name', label: 'Name', type: 'text', required: true },
@@ -60,7 +59,6 @@ export const ENTITIES = {
       subField: null,
       list: ['title', 'supplierId', 'type', 'expiry', 'owner'],
       facets: ['type'],
-      search: ['id', 'title', 'owner'],
       totalField: null,
       fields: [
         { key: 'title', label: 'Title', type: 'text', required: true },

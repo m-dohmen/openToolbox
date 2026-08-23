@@ -45,7 +45,6 @@ Ein Datensatz ist **Kind**, mehrere sind **Kinder**.
 - Zweite Zeile darunter: `guardian`
 - Tabellenspalten, in dieser Reihenfolge: `name`, `guardian`, `consent`, `payment`, `paid`, `open`, `swim`
 - Filter in der Seitenleiste: `consent`, `payment`, `swim`
-- Vom Suchfeld durchsucht: `id`, `name`, `guardian`, `phone`, `note`
 - In der Übersicht summiert: `paid`
 - Zählt nicht mehr als offen, wenn: `r.consent === 'verweigert' || (r.consent === 'liegt vor' && (r.payment === 'vollständig' || r.payment === 'erlassen'))`
 - Rot markiert, wenn: `!isDone(r)`

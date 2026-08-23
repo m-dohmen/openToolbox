@@ -46,7 +46,6 @@ One record is a **Betriebsmittel**, several are **Betriebsmittel**.
 - Second line under the headline: `location`
 - Table columns, in this order: `name`, `kind`, `location`, `lastTest`, `due`, `daysLeft`, `result`
 - Sidebar filters: `kind`, `location`, `result`
-- Searched by the search box: `id`, `name`, `serial`, `tester`, `note`
 - No longer counts as open when: `() => false`
 - Flagged red when: `{ if (r.result === 'nicht bestanden') return true const d = dueDate(r) return !d || d < iso(0) }`
 

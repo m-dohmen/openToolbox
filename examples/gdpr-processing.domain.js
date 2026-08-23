@@ -47,7 +47,6 @@ export const SCHEMA = {
   subField: 'area',
   list: ['name', 'area', 'basis', 'subjects', 'retention', 'age', 'status'],
   facets: ['area', 'status', 'risk'],
-  search: ['id', 'name', 'system', 'purpose', 'contact'],
   totalField: null,
   fields: [
     { key: 'name', label: 'Verarbeitungstätigkeit', type: 'text', required: true },

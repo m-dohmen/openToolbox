@@ -43,7 +43,6 @@ Clé d’entité `projects` — un enregistrement est **project**, plusieurs son
 - Deuxième ligne en dessous : `client`
 - Colonnes du tableau, dans cet ordre : `name`, `lead`, `phase`, `risk`, `budget`, `variance`, `end`
 - Filtres de la barre latérale : `phase`, `risk`
-- Champs interrogés par la recherche : `id`, `name`, `client`, `lead`
 - Totalisé dans l’aperçu : `budget`
 - Ne compte plus comme ouvert quand : `r.phase === 'Closed'`
 - Signalé en rouge quand : `r.phase !== 'Closed' && r.end && r.end < today()`
@@ -85,7 +84,6 @@ Clé d’entité `milestones` — un enregistrement est **milestone**, plusieurs
 - Colonne principale : `title`
 - Colonnes du tableau, dans cet ordre : `title`, `projectId`, `owner`, `due`, `daysLeft`, `status`, `effort`
 - Filtres de la barre latérale : `status`
-- Champs interrogés par la recherche : `id`, `title`, `owner`
 - Totalisé dans l’aperçu : `effort`
 - Ne compte plus comme ouvert quand : `r.status === 'done'`
 - Signalé en rouge quand : `r.status !== 'done' && r.due && r.due < today()`

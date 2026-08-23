@@ -43,7 +43,6 @@ Clé d’entité `trades` — un enregistrement est **Gewerk**, plusieurs sont *
 - Deuxième ligne en dessous : `trade`
 - Colonnes du tableau, dans cet ordre : `name`, `trade`, `phase`, `budget`, `awarded`, `variance`, `start`
 - Filtres de la barre latérale : `trade`, `phase`
-- Champs interrogés par la recherche : `id`, `name`, `note`
 - Totalisé dans l’aperçu : `budget`
 - Ne compte plus comme ouvert quand : `r.phase === 'abgenommen'`
 - Signalé en rouge quand : `r.phase === 'noch nicht angefragt' && r.start && r.start < iso(30)`
@@ -100,7 +99,6 @@ Clé d’entité `offers` — un enregistrement est **Angebot**, plusieurs sont 
 - Colonne principale : `company`
 - Colonnes du tableau, dans cet ordre : `company`, `tradeId`, `amount`, `perBudget`, `received`, `validUntil`, `state`
 - Filtres de la barre latérale : `state`
-- Champs interrogés par la recherche : `id`, `company`, `contact`, `note`
 - Totalisé dans l’aperçu : `amount`
 - Ne compte plus comme ouvert quand : `r.state === 'beauftragt' || r.state === 'abgelehnt'`
 - Signalé en rouge quand : `r.state !== 'abgelehnt' && r.state !== 'beauftragt' && r.validUntil && r.validUntil < iso(0)`

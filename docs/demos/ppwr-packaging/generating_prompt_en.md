@@ -43,7 +43,6 @@ Entity key `packagings` — one record is a **Verpackung**, several are **Verpac
 - Second line under the headline: `category`
 - Table columns, in this order: `name`, `category`, `articles`, `weight`, `recyclate`, `docStatus`, `deadline`
 - Sidebar filters: `category`, `docStatus`
-- Searched by the search box: `id`, `name`, `articles`, `note`
 - No longer counts as open when: `r.docStatus === 'Erklärung erstellt'`
 - Flagged red when: `r.docStatus !== 'Erklärung erstellt' && r.deadline && r.deadline < today()`
 
@@ -106,7 +105,6 @@ Entity key `components` — one record is a **Bestandteil**, several are **Besta
 - Headline column: `name`
 - Table columns, in this order: `name`, `packagingId`, `material`, `weight`, `recycled`, `grade`, `source`
 - Sidebar filters: `material`, `grade`
-- Searched by the search box: `id`, `name`, `supplier`
 - Summed in the overview: `weight`
 - No longer counts as open when: `() => false`
 - Flagged red when: `r.source === 'fehlt noch'`
