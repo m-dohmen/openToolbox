@@ -29,6 +29,15 @@ import {
   writableFields,
   validateRecord,
 } from './lib/entities.js'
+import {
+  matchesSearch,
+  matchesFilters,
+  filterableFields,
+  activeFilters,
+  emptyFilterSpec,
+  filterChipLabel,
+  highlightParts,
+} from './lib/search.js'
 import { Wordmark } from './brand.jsx'
 import { paletteVariables } from './lib/color.js'
 import { IconSave, IconSettings, IconLink, IconPaperclipSmall, IconUndo, IconRedo } from './icons.jsx'
@@ -387,6 +396,10 @@ function Workbench({
   const [lastSaved, setLastSaved] = useState(savedAt)
   const [query, setQuery] = useState('')
   const [facet, setFacet] = useState({})
+  /* Feldfilter je Entität und Feldschlüssel. Leben nur im Sitzungsspeicher -
+     kein localStorage, kein Eintrag im Datenblock; beim Neuladen ist alles
+     weg, und das ist gewollt. */
+  const [filtersByEntity, setFiltersByEntity] = useState({})
   const [sort, setSort] = useState({ key: ENTITIES[DEFAULT_ENTITY_KEY].schema.list[0], dir: 1 })
   const [draft, setDraft] = useState(null)
   const [showKey, setShowKey] = useState(false)
@@ -474,13 +487,15 @@ function Workbench({
   undoRef.current = undo
   redoRef.current = redo
 
-  /* Tabs zwischen Entitäten wechseln Filter/Sortierung/Entwurf zurück -
-     die sind pro Schema, ein Übertrag zwischen unterschiedlichen Feldern
-     ergäbe keinen Sinn. */
+  /* Der Wechsel zwischen Entitäten räumt Facetten, Feldfilter, Sortierung und
+     Entwurf ab - die sind pro Schema, ein Übertrag zwischen unterschiedlichen
+     Feldern ergäbe keinen Sinn. Die globale Suche bleibt dagegen stehen: sie
+     läuft ja über alle Entitäten hinweg, und die Trefferzahlen an den
+     Reitern leben genau davon. */
   const switchEntity = (key) => {
     setActiveKey(key)
-    setQuery('')
     setFacet({})
+    setFiltersByEntity((all) => ({ ...all, [key]: {} }))
     setSort({ key: ENTITIES[key].schema.list[0], dir: 1 })
     setDraft(null)
   }
@@ -666,20 +681,30 @@ function Workbench({
 
   const counts = useMemo(() => computeCounts(entity, records), [records, activeKey])
 
-  /* Suche und Sortierung gehen über fieldValue, damit berechnete Felder sich
-     verhalten wie alle anderen - man kann nach ihnen sortieren und in ihnen
-     suchen, ohne dass sie je im Datensatz stünden. */
+  const filters = filtersByEntity[activeKey] ?? {}
+
+  const setFilter = (key, spec) =>
+    setFiltersByEntity((all) => ({ ...all, [activeKey]: { ...(all[activeKey] ?? {}), [key]: spec } }))
+
+  const clearFilter = (key) =>
+    setFiltersByEntity((all) => {
+      const next = { ...(all[activeKey] ?? {}) }
+      delete next[key]
+      return { ...all, [activeKey]: next }
+    })
+
+  /** Suchkontext für Reference-Auflösung - die Suche trifft Titel, nicht Ids. */
+  const searchCtx = { entities: ENTITIES, recordsByEntity }
+
+  /* Suche, Facetten und Feldfilter laufen über fieldValue bzw. lib/search.js,
+     damit berechnete Felder sich wie alle anderen verhalten - gesucht,
+     gefiltert und sortiert wird in ihnen genauso. */
   const visible = useMemo(() => {
-    const q = query.trim().toLowerCase()
     const out = records.filter(
       (r) =>
         schema.facets.every((key) => !facet[key] || r[key] === facet[key]) &&
-        (!q ||
-          schema.search
-            .map((k) => fieldValue(entity, r, k))
-            .join(' ')
-            .toLowerCase()
-            .includes(q)),
+        matchesSearch(entity, r, query, searchCtx) &&
+        matchesFilters(entity, r, filters),
     )
     return out.sort((a, b) => {
       const x = fieldValue(entity, a, sort.key) ?? ''
@@ -687,7 +712,27 @@ function Workbench({
       if (typeof x === 'number' && typeof y === 'number') return (x - y) * sort.dir
       return String(x).localeCompare(String(y), settings.locale) * sort.dir
     })
-  }, [records, query, facet, sort, settings.locale, activeKey])
+  }, [records, query, facet, filters, sort, settings.locale, activeKey, recordsByEntity])
+
+  /* Trefferzahl je Entität für die Reiter - null heißt: keine aktive Suche.
+     Bewusst unabhängig von den Feldfiltern rechnen: die Suche sagt, WO etwas
+     steht, die Filter schneiden die jeweilige Liste weiter. */
+  const hitsByEntity = useMemo(() => {
+    if (!query.trim()) return null
+    return Object.fromEntries(
+      ENTITY_KEYS.map((key) => [
+        key,
+        (recordsByEntity[key] ?? []).filter((r) => matchesSearch(ENTITIES[key], r, query, searchCtx))
+          .length,
+      ]),
+    )
+  }, [query, recordsByEntity])
+
+  /* Aktive Filter als entfernbare Chips über der Tabelle. */
+  const chips = activeFilters(schema, filters).map((key) => ({
+    key,
+    label: filterChipLabel(schema, key, filters[key]),
+  }))
 
   const payloadSize = useMemo(() => JSON.stringify(recordsByEntity).length, [recordsByEntity])
 
@@ -1038,6 +1083,22 @@ function Workbench({
         </div>
       </header>
 
+      {/* Globale Suche im Kopfbereich: ein Begriff, Volltext über alle Felder
+          aller Entitäten, live gefiltert. Die Trefferzahlen je Entität hängen
+          an den Reitern darunter. */}
+      {view === 'list' && (
+        <div class="globalsearch">
+          <input
+            class="search"
+            type="search"
+            placeholder={tr('search.placeholder')}
+            aria-label={tr('search.placeholder')}
+            value={query}
+            onInput={(e) => setQuery(e.currentTarget.value)}
+          />
+        </div>
+      )}
+
       {view !== 'settings' && view !== 'wizard' && view !== 'home' && (
         <Hint show={showHints} id="header" tr={tr} />
       )}
@@ -1096,6 +1157,7 @@ function Workbench({
                 }}
               >
                 {ENTITIES[key].schema.plural}
+                {hitsByEntity && <span class="tabcount">{hitsByEntity[key]}</span>}
               </button>
             ))}
           {(SHOW_DASHBOARD_VIEW || settings.auditLog || WIZARD || homeText) && (
@@ -1245,6 +1307,21 @@ function Workbench({
             </section>
           ))}
 
+          {filterableFields(schema).length > 0 && (
+            <section>
+              <p class="label">{tr('sidebar.filters')}</p>
+              {filterableFields(schema).map((f) => (
+                <FieldFilter
+                  key={f.key}
+                  field={f}
+                  spec={filters[f.key]}
+                  tr={tr}
+                  onChange={(spec) => setFilter(f.key, spec)}
+                />
+              ))}
+            </section>
+          )}
+
           <Hint show={showHints} id="filters" tr={tr} />
 
           <section>
@@ -1262,14 +1339,31 @@ function Workbench({
         <main class="main">
           <Hint show={showHints} id="columns" tr={tr} />
           <div class="toolbar">
-            <input
-              class="search"
-              type="search"
-              placeholder={tr('search.placeholder')}
-              value={query}
-              onInput={(e) => setQuery(e.currentTarget.value)}
-            />
             <span class="counter">{tr('search.counter', visible.length, records.length)}</span>
+            {chips.length > 0 && (
+              <div class="chips chips--filters">
+                {chips.map((chip) => (
+                  <span class="chip" key={chip.key}>
+                    <em>{chip.label}</em>
+                    <button
+                      title={tr('filters.remove')}
+                      aria-label={`${tr('filters.remove')}: ${chip.label}`}
+                      onClick={() => clearFilter(chip.key)}
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))}
+                {chips.length > 1 && (
+                  <button
+                    class="chips__clear"
+                    onClick={() => setFiltersByEntity((all) => ({ ...all, [activeKey]: {} }))}
+                  >
+                    {tr('filters.clearAll')}
+                  </button>
+                )}
+              </div>
+            )}
           </div>
 
           {visible.length === 0 ? (
@@ -1319,6 +1413,7 @@ function Workbench({
                           recordsByEntity={recordsByEntity}
                           entity={entity}
                           onNavigateReference={navigateReference}
+                          q={query}
                         />
                       ))}
                     </tr>
@@ -1733,19 +1828,93 @@ const FilterButton = ({ active, onClick, count, children }) => (
 )
 
 /**
+ * Ein Filtermuster je Feldtyp im Seitenbereich: Text als enthält-Suche,
+ * Aufzählung als Mehrfachauswahl, Zahl und Datum als von/bis-Bereich. Das
+ * Muster lebt beim Aufrufer; hier steht nur die passende Eingabe dazu.
+ */
+function FieldFilter({ field: f, spec, tr, onChange }) {
+  const s = { ...emptyFilterSpec(), ...(spec ?? {}) }
+  const set = (patch) => onChange({ ...s, ...patch })
+
+  if (f.type === 'enum') {
+    const toggle = (v) =>
+      set({ values: s.values.includes(v) ? s.values.filter((x) => x !== v) : [...s.values, v] })
+    return (
+      <div class="fieldfilter">
+        <span class="fieldfilter__name">{f.label}</span>
+        <div class="filter">
+          {f.values.map((v) => (
+            <button key={v} aria-pressed={String(s.values.includes(v))} onClick={() => toggle(v)}>
+              {v}
+            </button>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
+  if (f.type === 'number' || f.type === 'date') {
+    return (
+      <div class="fieldfilter">
+        <span class="fieldfilter__name">{f.label}</span>
+        <div class="range">
+          <input
+            type={f.type}
+            value={s.from}
+            aria-label={`${f.label} ${tr('filters.from')}`}
+            onInput={(e) => set({ from: e.currentTarget.value })}
+          />
+          <span>–</span>
+          <input
+            type={f.type}
+            value={s.to}
+            aria-label={`${f.label} ${tr('filters.to')}`}
+            onInput={(e) => set({ to: e.currentTarget.value })}
+          />
+        </div>
+      </div>
+    )
+  }
+
+  return (
+    <div class="fieldfilter">
+      <span class="fieldfilter__name">{f.label}</span>
+      <input
+        type="search"
+        placeholder={tr('filters.contains')}
+        aria-label={`${f.label} ${tr('filters.contains')}`}
+        value={s.v}
+        onInput={(e) => set({ v: e.currentTarget.value })}
+      />
+    </div>
+  )
+}
+
+/**
+ * Umhüllt Treffer des Suchbegriffs mit <mark>. Ohne Begriff oder ohne Treffer
+ * bleibt der Text unangetastet - die Zellen merken von der Suche nichts.
+ */
+function Hi({ text, q }) {
+  const parts = highlightParts(text, q)
+  if (parts.length === 1) return <>{parts[0].text}</>
+  return <>{parts.map((p, i) => (p.hit ? <mark key={i}>{p.text}</mark> : p.text))}</>
+}
+
+/**
  * Eine Tabellenzelle nach Feldtyp. Der Titel bekommt die Zweitzeile aus
  * schema.subField, Aufzählungen werden zu Pillen, Datumsangaben rot bei
  * Überfälligkeit, Reference-Felder zu einem klickbaren Chip mit dem Titel
  * des Zieldatensatzes. Damit reicht das Schema aus, um die Liste zu erzeugen.
+ * Der aktive Suchbegriff wird in den Textzellen hervorgehoben.
  */
-function Cell({ record, field, schema, entities, recordsByEntity, entity, onNavigateReference }) {
+function Cell({ record, field, schema, entities, recordsByEntity, entity, onNavigateReference, q }) {
   const value = fieldValue(entity, record, field.key)
 
   if (field.key === schema.titleField) {
     return (
       <td class="cell-title">
-        {value}
-        {schema.subField && <small>{record[schema.subField]}</small>}
+        <Hi text={value} q={q} />
+        {schema.subField && <small><Hi text={record[schema.subField]} q={q} /></small>}
       </td>
     )
   }
@@ -1753,7 +1922,9 @@ function Cell({ record, field, schema, entities, recordsByEntity, entity, onNavi
   if (field.type === 'enum') {
     return (
       <td>
-        <span class={'pill pill--' + String(value).replace(/\s/g, '').toLowerCase()}>{value}</span>
+        <span class={'pill pill--' + String(value).replace(/\s/g, '').toLowerCase()}>
+          <Hi text={value} q={q} />
+        </span>
       </td>
     )
   }
@@ -1770,7 +1941,7 @@ function Cell({ record, field, schema, entities, recordsByEntity, entity, onNavi
               onNavigateReference(field.entity, value)
             }}
           >
-            {title}
+            <Hi text={title} q={q} />
           </button>
         ) : (
           <span class="cell-num">—</span>
@@ -1803,7 +1974,7 @@ function Cell({ record, field, schema, entities, recordsByEntity, entity, onNavi
     )
   }
 
-  return <td>{value || '—'}</td>
+  return <td>{value ? <Hi text={value} q={q} /> : '—'}</td>
 }
 
 const Th = ({ sort, k, onSort, align, children }) => (
