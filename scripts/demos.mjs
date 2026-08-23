@@ -42,6 +42,9 @@ stands. Everything you see comes out of one file, \`src/domain.js\`.
 ## What to try
 
 - **List** — two record types that reference each other, calculated columns, filters that count
+- **Search and filter** — the box in the header searches every field of both record types at once,
+  and the sidebar narrows by contained text and by number and date ranges; active filters appear
+  as removable chips above the table
 - **Dashboard** — the same data as tiles, drawn without a charting library, plus a due-date widget
   grouping milestones into overdue, this week and the next 30 days
 - **Guided entry** — a short wizard that creates an engagement and its first milestone in one run
