@@ -36,7 +36,7 @@ Diese fünf Punkte brechen weder Termindruck noch Reviewkompromiss:
 | Zweck | Befehl |
 |---|---|
 | Bauen | `npm run build` → `dist/index.html` |
-| Prüfen | `npm test` (sechs Suiten: prompts-metrics, actions-delete-guard, timezone, smoke, multi-entity, demos) |
+| Prüfen | `npm test` (sieben Suiten: prompts-metrics, actions-delete-guard, timezone, timezone-examples, smoke, multi-entity, demos) |
 | Demos + Prompts neu bauen | `npm run build:demo` |
 | Nur Prompts | `npm run prompts` |
 | Bilder für README/Wiki | `npm run screenshots` |
@@ -47,7 +47,7 @@ Diese fünf Punkte brechen weder Termindruck noch Reviewkompromiss:
 - die eingecheckten Demos unter `docs/demo` und `docs/demos` sind aktuell
 - `CLAUDE.md` ist identisch mit `AGENTS.md`
 - Plugin-Manifeste und `SKILL.md`-Frontmatter sind gültig
-- alle sechs Testsuiten laufen durch
+- alle sieben Testsuiten laufen durch
 
 ### Artefakte, die zusammen gepflegt werden müssen
 
