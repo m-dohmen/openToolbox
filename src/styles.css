@@ -463,6 +463,9 @@ button, input, select, textarea { font-family: var(--font); font-size: inherit; 
   .rail,
   .toolbar,
   .globalsearch,
+  .bulk-bar,
+  .th-check,
+  .td-check,
   .chat,
   .watermark,
   .head__actions,
@@ -610,6 +613,36 @@ button, input, select, textarea { font-family: var(--font); font-size: inherit; 
   border-radius: var(--r);
   background: var(--panel);
 }
+
+/* ── Mehrfachauswahl ──────────────────────────────────────────── */
+
+/* Aktionsleiste der Auswahl. Die Akzentfärbung sagt: alles darunter gilt
+   genau dieser Auswahl, nicht der ganzen Liste. */
+.bulk-bar {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  flex-wrap: wrap;
+  margin-bottom: 14px;
+  padding: 8px 12px;
+  border: 1px solid var(--tone-accent-light);
+  border-radius: var(--r);
+  background: var(--accent-soft);
+}
+.bulk-bar__count {
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: var(--tone-weight-bold);
+  color: var(--accent-text);
+  white-space: nowrap;
+}
+.bulk-bar select {
+  padding: 6px 8px;
+  border: 1px solid var(--line);
+  border-radius: var(--r);
+  background: var(--panel);
+}
+
 .fieldfilter input:focus { border-color: var(--accent); outline: none; }
 .range { display: flex; gap: 6px; align-items: center; color: var(--muted); }
 .range input { flex: 1; }
@@ -635,6 +668,14 @@ td mark {
   border-radius: 2px;
   padding: 0 1px;
 }
+
+/* Auswahlspalte: kein Sortierkopf, kein Hover-Effekt - die Zelle wählt aus,
+   sie ordnet nichts. Gewählte Zeilen tragen denselben Akzentton wie eine
+   geöffnete, bleiben aber auch ohne Drawer sichtbar markiert. */
+.th-check, .td-check { width: 34px; text-align: center; cursor: default; }
+.th-check:hover { background: none; }
+.th-check input, .td-check input { accent-color: var(--accent); cursor: pointer; vertical-align: middle; }
+tbody tr[data-checked="true"] td { background: var(--accent-soft); }
 
 .btn {
   display: inline-flex;
