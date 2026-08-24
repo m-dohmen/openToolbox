@@ -515,7 +515,7 @@ summiert werden; `filter(record)` schränkt vorher ein; bei mehreren Entitäten 
 
 Gezeichnet **ohne Diagrammbibliothek**: Die Balken sind CSS-Breiten, der Ring ist ein einzelner
 SVG-Kreis mit `stroke-dasharray`. Eine Diagrammbibliothek würde eine Datei, die per Mail durchkommen
-muss, um ein Vielfaches aufblähen — für vier Kacheltypen. Die Kategoriefarben leiten sich aus der
+muss, um ein Vielfaches aufblähen — für drei Kacheltypen. Die Kategoriefarben leiten sich aus der
 Akzentfarbe des Werkzeugs ab, ein umgebrandetes Werkzeug färbt sein Dashboard also selbst um.
 
 ### Fälligkeiten
@@ -768,9 +768,16 @@ zurück — dreißig Korrekturen sind ein Verlaufsschritt, nicht dreißig.
 npm test
 ```
 
-Fährt zwei Testläufe gegen einen echten Headless-Chromium: den Einzel-Entitäts-Pfad gegen die
-gebaute `dist/index.html` und den `ENTITIES`-Pfad gegen einen eigens gebauten Zwei-Entitäten-Build.
-Rund 55 Zusicherungen.
+Fährt vier Testsuiten — drei davon gegen einen echten Headless-Chromium:
+
+- `test/prompts-metrics.mjs` — reiner Knoten-Test ohne Browser: der Kennzahlen-Abschnitt, den
+  `scripts/build-prompts.mjs` erzeugt, muss jede deklarierte Kennzahl so beschreiben, dass ein Agent,
+  der nur den Prompt liest, dieselben Kacheln baut wie die Demo sie zeigt.
+- `test/smoke.mjs` — der Einzel-Entitäts-Pfad gegen die gebaute `dist/index.html`. Rund 300
+  Zusicherungen.
+- `test/multi-entity.mjs` — der `ENTITIES`-Pfad gegen einen eigens gebauten Zwei-Entitäten-Build.
+  Rund 60 Zusicherungen.
+- `test/demos.mjs` — öffnet jede gebaute Demo einmal; die Beispiele verrotten sonst still.
 
 ## Mitwirken
 

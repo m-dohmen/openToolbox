@@ -36,9 +36,11 @@ field types, calculated fields, multiple entities, dashboards, and the rules tha
 single-file build if ignored. Read it in full. This skill covers the **procedure** and does not
 repeat that knowledge — where the two ever disagree, `AGENTS.md` wins.
 
-`examples/` holds two complete working domains: `risk-register.domain.js` (single entity) and
-`suppliers-certificates.domain.js` (two entities with a reference between them). Read whichever is
-closer to the request before writing your own.
+`examples/` holds eight complete domains — from a plain single-entity risk register to multi-entity
+domains with references and computed aggregates (`portfolio`, `ppwr-packaging`, `renovation-quotes`,
+`suppliers-certificates`). Six of them are published as live demos under
+[`docs/demos/`](https://m-dohmen.github.io/openToolbox/demos/). Read whichever is closest to the
+request before writing your own.
 
 ## 3. Interview the user — one round, then build
 
@@ -71,7 +73,7 @@ Three things to raise yourself, because users rarely ask for them and all three 
 
 If they have a spreadsheet of real data, ask for a few header rows: naming the fields the way their
 columns are named makes the built-in CSV import map them correctly on the first try. Do **not** paste
-their data into `seed()` — `seed()` is 8–12 demo records, and their data goes in through
+their data into `seed()` — `seed()` holds demo records, and their data goes in through
 `Import CSV → replace all`.
 
 ## 4. Write the domain and the defaults
