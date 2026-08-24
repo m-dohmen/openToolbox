@@ -97,6 +97,10 @@ son anchuras CSS y el anillo es un único círculo SVG. Ambas vistas se imprimen
 - **Mantenimiento masivo con selección múltiple**: por fila, por rango con Mayús+clic o todas las
   filas visibles de una vez; barra de acciones para fijar un valor de enumeración o borrar con
   confirmación contada — una entrada en el registro y un Ctrl+Z por acción.
+- **Tarjetas de métricas en el panel**: el esquema declara `metrics` y cada entrada se vuelve una
+  tarjeta — `count` (con filtro opcional), `sum(campo)` o `avg(campo)` sobre campos numéricos;
+  cálculo local al renderizar, nada entra en los datos; un clic salta a la lista de la entidad;
+  las declaraciones inválidas se rechazan nombrándolas, no en silencio.
 
 ## Inicio rápido
 

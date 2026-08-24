@@ -103,6 +103,10 @@ s'impriment en un PDF propre.
 - **Entretien en masse avec sélection multiple** : ligne par ligne, par plage avec Maj+clic ou
   toutes les lignes visibles d'un coup ; barre d'actions pour fixer une valeur d'énumération ou
   supprimer avec confirmation comptée — une entrée de journal et un Ctrl+Z par action.
+- **Tuiles d'indicateurs dans le tableau de bord** : le schéma déclare `metrics` et chaque entrée
+  devient une tuile — `count` (avec filtre optionnel), `sum(champ)` ou `avg(champ)` sur des champs
+  numériques ; calcul local au rendu, rien n'entre dans les données ; un clic saute à la liste de
+  l'entité ; les déclarations invalides sont rejetées nommément, pas en silence.
 
 ## Démarrage rapide
 

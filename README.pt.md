@@ -95,6 +95,10 @@ larguras em CSS e o anel é um único círculo SVG. As duas visões imprimem com
 - **Manutenção em massa com seleção múltipla**: linha a linha, por intervalo com Shift+clique ou
   todas as linhas visíveis de uma vez; barra de ações para definir um valor de enumeração ou excluir
   com confirmação com contagem — uma entrada no registro e um Ctrl+Z por ação.
+- **Cartões de métricas no painel**: o esquema declara `metrics` e cada entrada vira um cartão —
+  `count` (com filtro opcional), `sum(campo)` ou `avg(campo)` sobre campos numéricos; cálculo local
+  na renderização, nada entra nos dados; um clique salta para a lista da entidade; declarações
+  inválidas são rejeitadas com o motivo nomeado, não em silêncio.
 
 ## Início rápido
 
