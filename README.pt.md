@@ -89,6 +89,9 @@ larguras em CSS e o anel é um único círculo SVG. As duas visões imprimem com
 - **Colunas ordenáveis em cada lista de entidades**: um clique ordena crescente, outro decrescente
   e um terceiro devolve a ordem do bloco de dados; a comparação segue o tipo de campo (números
   numericamente, datas cronologicamente) e os valores vazios ficam sempre no final.
+- **Duplicar um registro** pela linha da tabela ou pelo formulário aberto: todos os valores são
+  copiados, o título recebe o sufixo localizado e a cópia ganha seu próprio identificador; mesmo
+  caminho de um registro manual — desfazer, registro de alterações e gravação apenas ao salvar.
 
 ## Início rápido
 

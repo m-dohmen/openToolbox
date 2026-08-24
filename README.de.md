@@ -130,7 +130,7 @@ Dashboard · CSV-Import · Änderungsprotokoll · Versionsnummern.**
   [Daten hineinbekommen](#daten-hineinbekommen).
 - **Zwei Oberflächensprachen ab Werk** (Englisch, Deutsch), eine Einstellung, die mit der Datei
   reist. Eine dritte zu ergänzen ist eine kleine, mechanische Änderung — siehe
-  [Oberflächensprachen](#oberflächensprachen).
+  [Interface languages](README.md#interface-languages).
 - **Mehrere Entitäten und Beziehungen**, wenn ein Datensatztyp nicht reicht — siehe
   [Mehrere Entitäten](#mehrere-entitäten-und-beziehungen).
 - **Dashboard-Kacheln und ein Druck-Stylesheet**, weil Analyse meistens in einer Folie oder einer
@@ -168,6 +168,10 @@ Dashboard · CSV-Import · Änderungsprotokoll · Versionsnummern.**
   noch einer absteigend, ein dritter gibt die Ordnung an den Datenblock zurück; der Vergleich folgt
   dem Feldtyp, und Leerwerte stehen in beide Richtungen unten — siehe
   [Listen sortieren](#listen-sortieren).
+- **Datensatz duplizieren**, aus der Tabellenzeile oder dem offenen Formular — alle Werte kommen
+  mit, der Titel bekommt einen lokalisierten Zusatz, die Kopie eine eigene Kennung, und es läuft
+  über denselben Weg wie ein manueller Eintrag: Undo-Stapel und Änderungsprotokoll eingeschlossen —
+  siehe [Datensatz duplizieren](#datensatz-duplizieren).
 
 ## Schnellstart
 
@@ -371,6 +375,40 @@ nie zurückholen, was die Filter entfernt haben. Und wie alles, was nur die Ansi
 der Sortierzustand nur in der Sitzung: Datei neu laden, und die Datenblock-Reihenfolge ist wieder
 da; in die Datei geschrieben wird nie eine Sortierung. Die Kopie, die man weitergibt, öffnet so,
 wie die Daten stehen.
+
+## Datensatz duplizieren
+
+Beratungsdaten wiederholen sich: dieselbe Maßnahme an drei Standorten, ein Risiko je Baustein, ein
+Kontakt je Rolle. Jeden **gespeicherten** Datensatz gibt es deshalb zum Duplizieren statt zum
+Neutippen. Die Aktion liegt an zwei Stellen: ein Kopier-Symbol am Ende jeder Tabellenzeile (es
+erscheint, wenn man mit der Maus über die Zeile fährt oder sie per Tab ansteuert — eine
+Dauerleiste aus Symbolen würde die Tabelle lauter machen, als eine einzelne Aktion es verdient)
+und ein Knopf im Fuß des geöffneten Formulars neben dem Löschen. Ein nie übernommener Entwurf hat
+beides nicht: Es gibt keinen gespeicherten Inhalt, den eine Kopie tragen könnte.
+
+Die Kopie übernimmt jeden Feldwert aus dem gespeicherten Stand, nicht aus einem halb ausgefüllten
+Formular, das zufällig offen steht — nicht übernommene Eingaben gehören zur nächsten Sicherung des
+Originals, nicht in eine Kopie; Reference-Felder zeigen weiter auf dieselben Ziele. Zwei Dinge
+unterscheiden die Kopie vom Original: Das Titelfeld bekommt einen lokalisierten Zusatz („(Kopie)"
+auf Deutsch, „(Copy)" auf Englisch, je nach Oberflächensprache), und die Kopie erhält eine eigene
+Kennung mit dem Präfix ihrer Entität. Am Original ändert sich nichts.
+
+Angelegt wird die Kopie über denselben Änderungsweg wie ein manuell übernommener Datensatz — und
+dieser eine Satz trägt das meiste Verhalten, das man kennen sollte:
+
+- Sie liegt auf dem [Undo-Stapel](#rückgängig-und-wiederholen) — ein `Strg`/`Cmd`+`Z` nimmt die
+  ganze Kopie zurück.
+- Der amberfarbene Punkt erscheint; in eine neue HTML-Datei landet die Kopie erst mit der nächsten
+  Sicherung, und eine ungespeicherte Kopie überlebt kein Neuladen — wie jeder andere neue
+  Datensatz auch.
+- Das [Änderungsprotokoll](#versionen-und-änderungsprotokoll) leitet beim Speichern sein eigenes
+  Anlegen-Ereignis für die Kopie ab, gegen den letzten gespeicherten Stand — nichts davon wird
+  abgefragt oder eingetippt.
+
+Direkt nach dem Duplizieren steht das Formular der Kopie offen — die kleinen Änderungen, derentwegen
+man dupliziert, sind also der aller nächste Schritt. Eine Grenze gehört genannt: Eine Kopie mit
+Anhängen verdoppelt deren Anteil am [Anhangsbudget](#anhänge), und die Prüfung, die einen zu
+großen Upload ablehnt, schlägt hier sofort zu — nicht erst bei der nächsten Sicherung.
 
 ## Daten hineinbekommen
 

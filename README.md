@@ -148,6 +148,9 @@ dashboard · CSV import · change log · version numbers.**
 - **Sortable columns in every entity list** — click a heading to sort ascending, again for
   descending, a third time back to the data-block order; comparisons follow the field type, and
   empty values stay at the bottom either way — see [Sorting the lists](#sorting-the-lists).
+- **Duplicating a record** from the table row or the open form — every value carried over, the
+  title suffixed `(Copy)`, an own identifier for the copy, and the same write path as a manual
+  entry: undo stack and change log included — see [Duplicating a record](#duplicating-a-record).
 
 ## Quick start
 
@@ -718,6 +721,36 @@ Search and field filters cut first, sorting then orders what remains — sorting
 back what the filters removed. And like everything view-related, the sort state lives only in the
 session: reload the file and the data-block order is back, and no sort is ever written into it.
 The copy you pass on opens the way the data stands.
+
+## Duplicating a record
+
+Consulting data repeats itself: the same measure at three sites, one risk per building block, a
+contact per role. Every **saved** record can therefore be duplicated instead of retyped. The
+action lives in two places: a copy icon at the end of each table row (it appears when you point at
+the row or tab into it — a permanent column of symbols would make the table louder than one
+action deserves) and a button in the footer of the open form, next to Delete. A draft that has
+never been applied has neither: there is no saved content for a copy to carry.
+
+The copy takes every field value from the saved record, not from any half-filled form you may have
+open on it — unapplied edits belong to the original's next save, not to a copy, and reference
+fields keep pointing at the same targets. Two things differ from the original: the title field
+gets a localized suffix (`(Copy)` in English, `(Kopie)` in German, following the interface
+language), and the copy receives its own identifier with its entity's prefix. The original stays
+untouched.
+
+The duplicate is created through the same write path as a manually applied record, and that one
+sentence carries most of the behaviour worth knowing:
+
+- It sits on the [undo stack](#undo-and-redo) — one `Ctrl`/`Cmd`+`Z` removes the whole copy again.
+- The amber dot appears; the copy only lands in a new HTML file with the next save, and an unsaved
+  copy does not survive a reload, exactly like any other new record.
+- The [change log](#version-numbers-and-change-log) derives its own *created* event for the copy
+  at that save, worked out against the last saved state — nothing about it is asked or typed in.
+
+Right after duplicating, the copy's own form opens, so the small changes that were the point of
+duplicating are the very next step. One boundary to know: a copy carrying attachments doubles
+their share of the [attachment budget](#attachments), and the check that refuses an oversized
+upload refuses the copy right away rather than letting the next save discover it.
 
 ## Getting data in
 

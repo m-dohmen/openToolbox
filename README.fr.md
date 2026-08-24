@@ -96,6 +96,10 @@ s'impriment en un PDF propre.
   décroissant, un troisième rend l'ordre du bloc de données ; la comparaison suit le type de
   champ (nombres numériquement, dates chronologiquement), les valeurs vides restent toujours en
   bas.
+- **Dupliquer un enregistrement** depuis la ligne du tableau ou depuis le formulaire ouvert : toutes
+  les valeurs sont reprises, le titre reçoit le suffixe localisé et la copie obtient son propre
+  identifiant ; même chemin qu'une saisie manuelle — annulation, journal des modifications,
+  écriture uniquement à l'enregistrement.
 
 ## Démarrage rapide
 
