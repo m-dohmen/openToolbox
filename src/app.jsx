@@ -2342,7 +2342,10 @@ function Cell({ record, field, schema, entities, recordsByEntity, entity, onNavi
     )
   }
 
-  if (field.type === 'number') return <td class="cell-num">{value || '—'}</td>
+  /* Eine gespeicherte 0 ist eine echte Antwort - dieselbe Doktrin wie bei
+     `require` (AGENTS.md). Nur wirklich Leeres bekommt den Platzhalter,
+     deshalb die explizite Pruefung statt truthiness. */
+  if (field.type === 'number') return <td class="cell-num">{value == null || value === '' ? '—' : value}</td>
 
   /* In der Tabelle steht nur der Dateiname - der Inhalt gehoert ins Formular,
      wo er auch heruntergeladen werden kann. */
