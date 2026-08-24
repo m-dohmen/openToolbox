@@ -25,6 +25,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url'
 import { DEMOS } from './demos.mjs'
 import { LANGS, strings } from './prompts/strings.mjs'
 import { PROBLEMS } from './prompts/problems.mjs'
+import { validateMetrics } from '../src/lib/metrics.js'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const REPO = 'https://github.com/m-dohmen/openToolbox'
@@ -71,6 +72,33 @@ function fieldRow(field, t) {
   if (field.long) detail.push(t.longText)
   if (field.short) detail.push(fill(t.shortHead, field.short))
   return `| \`${field.key}\` | ${field.label} | ${field.type ?? 'text'} | ${detail.join(', ') || '—'} |`
+}
+
+/**
+ * Der Metrik-Abschnitt einer Entität. Die Prüfung läuft über dasselbe
+ * validateMetrics wie die Anwendung - der Prompt beschreibt genau die
+ * Kennzahlen, die auch als Kacheln erscheinen, nicht eine davon abweichende
+ * Zweitinterpretation. Kriterium und Feld werden wörtlich übernommen, damit
+ * ein Agent, der nur den Prompt liest, dieselben Kacheln baut wie die Demo
+ * sie zeigt.
+ */
+export function metricsLines(schema, t) {
+  const { metrics } = validateMetrics(schema)
+  if (!metrics.length) return []
+  const out = [`**${t.metrics}**`, '', t.metricsIntro, '']
+  for (const m of metrics) {
+    let line
+    if (m.op === 'count') {
+      line = `- **${m.label}** — ${t.metricCount}`
+    } else {
+      const fieldLabel = schema.fields.find((f) => f.key === m.field)?.label ?? m.field
+      line = `- **${m.label}** — ${fill(m.op === 'sum' ? t.metricSum : t.metricAvg, `\`${m.field}\` (${fieldLabel})`)}`
+    }
+    if (m.filter) line += `${t.tileFiltered}: \`${source(m.filter)}\``
+    if (m.caption) line += ` · „${m.caption}“`
+    out.push(line)
+  }
+  return [...out, '']
 }
 
 function entitySection(key, entity, t, single, multi) {
@@ -123,6 +151,8 @@ function entitySection(key, entity, t, single, multi) {
     }
     out.push('')
   }
+
+  out.push(...metricsLines(s, t))
 
   if (multi) out.push('---', '')
   return out
@@ -235,15 +265,20 @@ function build(demo, lang) {
   return out.join('\n')
 }
 
-let written = 0
-for (const demo of DEMOS) {
-  demo.module = await import(pathToFileURL(resolve(root, 'examples', demo.example)).href)
-  for (const lang of LANGS) {
-    const file = resolve(root, 'docs/demos', demo.slug, `generating_prompt_${lang}.md`)
-    writeFileSync(file, build(demo, lang))
-    written++
+/* Nur beim direkten Aufruf schreiben. Importiert das Modul - der Test für den
+   Metrik-Abschnitt tut genau das - soll es nur seine Funktionen liefern und
+   nichts unter docs/demos anfassen. */
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  let written = 0
+  for (const demo of DEMOS) {
+    demo.module = await import(pathToFileURL(resolve(root, 'examples', demo.example)).href)
+    for (const lang of LANGS) {
+      const file = resolve(root, 'docs/demos', demo.slug, `generating_prompt_${lang}.md`)
+      writeFileSync(file, build(demo, lang))
+      written++
+    }
+    console.log(`${demo.slug.padEnd(20)} ${LANGS.length} prompts`)
   }
-  console.log(`${demo.slug.padEnd(20)} ${LANGS.length} prompts`)
-}
 
-console.log(`\n${written} prompts written under docs/demos/.`)
+  console.log(`\n${written} prompts written under docs/demos/.`)
+}
