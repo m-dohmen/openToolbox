@@ -819,7 +819,18 @@ console.log('2m) Dupliziert (Zeilenaktion) — Zeilen:', rowsAfterDuplicate)
 if (rowsAfterDuplicate !== 13) fail('Duplizieren hat keinen Datensatz angelegt')
 
 const copyRow = page.locator('tr:has-text("Smoke test entry (Copy)")')
-if ((await copyRow.count()) !== 1) fail('Kopie fehlt oder liegt doppelt')
+if ((await copyRow.count()) !== 1) {
+  const dump = await page.evaluate(() => ({
+    zeilen: [...document.querySelectorAll('table tbody tr')].map((tr) =>
+      tr.innerText.replace(/\s+/g, ' ').trim().slice(0, 100),
+    ),
+    bulkBar: !!document.querySelector('.bulk-bar'),
+    toast: document.querySelector('.toast')?.textContent ?? null,
+    drawerTitel: document.querySelector('.drawer input, .drawer output, .drawer h2')?.textContent ?? null,
+    suche: document.querySelector('.search input, input[type="search"]')?.value ?? null,
+  }))
+  fail(`Kopie fehlt oder liegt doppelt — copyCount=${await copyRow.count()} zustand=${JSON.stringify(dump)}`)
+}
 const copyValues = await copyRow.innerText()
 if (!copyValues.includes('New owner after undo')) fail('Kopie hat die Feldwerte des Originals nicht uebernommen')
 const copyId = await copyRow.locator('.cell-id').innerText()
