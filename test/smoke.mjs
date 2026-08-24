@@ -63,6 +63,17 @@ async function openList(page, file) {
   await page.waitForSelector('table tbody tr', { timeout: 5000 })
 }
 
+/**
+ * Wartet, bis der Startfokus des Formulars gezogen hat. Er wird beim Montieren
+ * gesetzt; greift er erst NACH dem element.focus() der Pruefkette, steht der
+ * Caret im Titelfeld am Ende und die naechste Eingabe haengt sich an den
+ * vorhandenen Titel an - genau das war die Ursache des CI-Flakys um Schritt
+ * 2m (OPEN-43). Jedes Ausfuellen nach dieser Wartezeit ist davon getrennt.
+ */
+async function formFocused(page) {
+  await page.waitForFunction(() => !!document.querySelector('.drawer')?.contains(document.activeElement), undefined, { timeout: 5000 })
+}
+
 const fail = (m) => {
   console.error('FEHLER: ' + m)
   process.exitCode = 1
@@ -566,6 +577,8 @@ await headLeft.click()
 
 // Neuen Datensatz anlegen
 await page.getByRole('button', { name: 'New action item' }).first().click()
+await page.waitForSelector('.drawer')
+await formFocused(page)
 await page.locator('#f-title').fill('Smoke test entry')
 await page.locator('#f-owner').fill('QA')
 await page.locator('#f-due').fill('2026-12-01')
@@ -635,11 +648,23 @@ if (await page.locator('.filebar__history-btn').nth(1).isDisabled()) {
  */
 await page.locator('tr:has-text("Smoke test entry")').locator('.cell-id').click()
 await page.waitForSelector('.drawer')
+await formFocused(page)
 await page.locator('#f-owner').fill('New owner after undo')
+// Negativfall des Fokus-Rennens (OPEN-43): Die Eingabe darf nur im
+// Verantwortlichen-Feld gelandet sein - klebte sie am Titelfeld, trüge der
+// Datensatz fortan einen verunstalteten Titel und Schritt 2m suchte eine
+// Kopie, die so nie existierte. Diese Zusicherung schlaegt am Ort der
+// Ursache an, nicht sechs Schritte spaeter.
+if ((await page.locator('#f-title').inputValue()) !== 'Smoke test entry') {
+  fail('Der Startfokus hat dem Ausfuellen in das Titelfeld geschrieben')
+}
 await page.getByRole('button', { name: 'Apply' }).click()
 const editedRow = await page.locator('tr:has-text("Smoke test entry")').innerText()
 console.log('2f) Editiert — Zeile:', editedRow.replace(/\s+/g, ' '))
 if (!editedRow.includes('New owner after undo')) fail('Editieren hat nicht gegriffen')
+if (!editedRow.replace(/\s+/g, ' ').includes('Smoke test entry ')) {
+  fail('Editieren hat den Titel des Datensatzes angefasst')
+}
 if (!(await page.locator('.filebar__history-btn').nth(1).isDisabled())) {
   fail('Eine neue Aenderung haette den Redo-Verlauf leeren muessen')
 }

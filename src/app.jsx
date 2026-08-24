@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: Apache-2.0
-import { useEffect, useMemo, useRef, useState } from 'preact/hooks'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'preact/hooks'
 import {
   readPayload,
   buildDocument,
@@ -2470,7 +2470,13 @@ function RecordDrawer({ record, schema, singular, entity, entities, recordsByEnt
   // oben - kein Abgleich bei Id-Wechsel per Effekt. Genau der lief bisher
   // der ersten Eingabe hinterher: er feuerte nach dem Mount und setzte `r`
   // auf den veralteten record-Prop zurück, was schnelle Eingaben verschluckte.
-  useEffect(() => first.current?.focus(), [])
+  // Layout-Effekt statt Effekt: Der Startfokus muss gesetzt sein, BEVOR das
+  // Formular gemalt wird - ein asynchroner Fokus ist mit Playwrights fill
+  // verlustreich verheiratet. Fokussiert der Effekt erst nach dessen
+  // element.focus(), landet dessen insertText im Titelfeld (Caret steht am
+  // Ende) und hängt sich an den vorhandenen Titel an; auf CI traf genau das
+  // den Smoke-Schritt 2f und ließ 2m eine Kopie suchen, die nie so hieß.
+  useLayoutEffect(() => first.current?.focus(), [])
 
   const change = (key, value) => {
     setTouched((s) => ({ ...s, [key]: true }))
