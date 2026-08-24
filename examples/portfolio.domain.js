@@ -25,10 +25,26 @@ const PHASES = ['Initiation', 'Delivery', 'Rollout', 'Closed']
 const RISKS = ['low', 'medium', 'high']
 const STATUS = ['open', 'in progress', 'waiting', 'done']
 
+/**
+ * A date field holds a calendar day like "2026-08-20", not an instant.
+ * Parsing it as UTC midnight (`new Date('2026-08-20')`) shifts it to the
+ * previous day west of Greenwich, so every due-date comparison would run one
+ * day early there. Same logic as lib/dueDate.js, duplicated because this file
+ * is the swappable domain and deliberately imports nothing.
+ */
+const localDateFromIso = (value) => {
+  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(value ?? ''))
+  if (!match) return null
+  const [, y, m, d] = match
+  return new Date(Number(y), Number(m) - 1, Number(d))
+}
+
+/** Today (offset by whole days) as a local calendar day, not the UTC date. */
 const iso = (offsetDays) => {
   const d = new Date()
   d.setDate(d.getDate() + offsetDays)
-  return d.toISOString().slice(0, 10)
+  const pad = (n) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
 }
 
 const today = () => iso(0)
@@ -162,7 +178,18 @@ export const ENTITIES = {
           type: 'computed',
           compute: (r) => {
             if (!r.due || r.status === 'done') return ''
-            return Math.round((new Date(r.due) - new Date().setHours(0, 0, 0, 0)) / 86400000)
+            const due = localDateFromIso(r.due)
+            if (!due) return ''
+            // Both sides as whole local calendar days: Date.UTC on the day
+            // components keeps the difference an exact day count, free of the
+            // daylight-saving hours that break a plain millisecond division -
+            // and of mixing a UTC-midnight constructor with local midnight.
+            const now = new Date()
+            const days =
+              (Date.UTC(due.getFullYear(), due.getMonth(), due.getDate()) -
+                Date.UTC(now.getFullYear(), now.getMonth(), now.getDate())) /
+              86400000
+            return days
           },
         },
         { key: 'note', label: 'Note', type: 'text', long: true },

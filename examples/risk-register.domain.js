@@ -34,5 +34,13 @@ export const seed = () => [
   { id: 'R-009', name: 'Training records incomplete', category: 'Legal', owner: 'T. Krueger', review: '2026-07-01', likelihood: 'low', impact: 3, mitigation: '' },
 ]
 export const isDone = () => false
-export const isOverdue = (r) => r.review && r.review < new Date().toISOString().slice(0, 10)
+// Today as a local calendar day - the UTC date would flag items one day
+// too early west of Greenwich.
+const iso = (offsetDays) => {
+  const d = new Date()
+  d.setDate(d.getDate() + offsetDays)
+  const pad = (n) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+}
+export const isOverdue = (r) => r.review && r.review < iso(0)
 export const formatDate = (s) => (s ? `${s.slice(5, 7)}/${s.slice(8, 10)}/${s.slice(0, 4)}` : '—')

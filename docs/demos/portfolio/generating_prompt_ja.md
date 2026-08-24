@@ -106,7 +106,18 @@
 
   ```js
   if (!r.due || r.status === 'done') return ''
-  return Math.round((new Date(r.due) - new Date().setHours(0, 0, 0, 0)) / 86400000)
+  const due = localDateFromIso(r.due)
+  if (!due) return ''
+  // Both sides as whole local calendar days: Date.UTC on the day
+  // components keeps the difference an exact day count, free of the
+  // daylight-saving hours that break a plain millisecond division -
+  // and of mixing a UTC-midnight constructor with local midnight.
+  const now = new Date()
+  const days =
+    (Date.UTC(due.getFullYear(), due.getMonth(), due.getDate()) -
+      Date.UTC(now.getFullYear(), now.getMonth(), now.getDate())) /
+    86400000
+  return days
   ```
 
 **検証ルール**

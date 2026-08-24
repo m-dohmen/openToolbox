@@ -13,10 +13,13 @@
 const CATEGORIES = ['Software', 'Hardware', 'Services', 'Consulting']
 const CERT_TYPES = ['ISO 27001', 'SOC 2', 'PCI-DSS', 'Other']
 
+// Today (offset by whole days) as a local calendar day, not the UTC date -
+// the UTC date would expire certificates one day early west of Greenwich.
 const iso = (offsetDays) => {
   const d = new Date()
   d.setDate(d.getDate() + offsetDays)
-  return d.toISOString().slice(0, 10)
+  const pad = (n) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
 }
 
 export const ENTITIES = {
