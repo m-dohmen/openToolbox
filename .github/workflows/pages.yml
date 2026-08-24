@@ -1,5 +1,9 @@
 # Publishes the built single file as a live demo on GitHub Pages.
 # Enable Pages once under Settings → Pages → Source: GitHub Actions.
+#
+# Two jobs on purpose: the deploy runs only after the same commit has built
+# cleanly (needs: build), so a red main is never published. Before this gate
+# existed, Pages published independently of the build workflow.
 name: demo
 
 on:
@@ -17,10 +21,7 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+  build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -33,19 +34,32 @@ jobs:
       # Alle Schaudemos, frisch gebaut, damit die veroeffentlichte Fassung nie
       # hinter dem eingecheckten Stand zurueckfaellt.
       - run: npm run build:demo
-      - name: Copy the demos into the site
+      - name: Check everything shipped is self-contained
+        run: node scripts/check-self-contained.mjs dist/index.html docs/demo docs/demos
+      - name: Check the committed demos are current
         run: |
-          cp -r docs/demos dist/demos
-          # /demo/ ist der alte Einzelpfad. Bestehende Verweise in READMEs,
-          # Wiki und aelteren Releases zeigen dorthin und sollen nicht ins
-          # Leere laufen.
-          cp -r docs/demo dist/demo
-          # Die Uebersichtsseite bindet ../logo.svg ein, also /logo.svg.
-          cp docs/logo.svg dist/logo.svg
-          test -f dist/demos/index.html
-          test -f dist/demos/ppwr-packaging/index.html
-          test -f dist/demo/index.html
-          test -f dist/logo.svg
+          if ! git diff --quiet -- docs/demo docs/demos; then
+            echo "The built demos are out of date — run 'npm run build:demo' and commit the result."
+            git --no-pager diff --stat -- docs/demo docs/demos
+            exit 1
+          fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: site
+          path: dist
+
+  deploy:
+    needs: build
+    if: success()
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          name: site
+          path: dist
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist
