@@ -113,6 +113,11 @@ const STRINGS = {
     'dashboard.dueDate.thisWeek': 'This week',
     'dashboard.dueDate.upcoming': 'Next 30 days',
 
+    'dashboard.metrics.rejected': (plural) => `Rejected metric declarations for ${plural}`,
+    'dashboard.metrics.unknownOp': (op) => `Unknown operation "${op}" — allowed are count, sum, avg.`,
+    'dashboard.metrics.fieldMissing': (field) => `Names no existing field (got "${field}").`,
+    'dashboard.metrics.notNumeric': (label) => `"${label}" is not a numeric field — sum and avg need one.`,
+
     'log.title': 'Change log',
     'log.lead':
       'One entry per save. Kept inside the file, and inside the encrypted part of it when the file ' +
@@ -735,6 +740,11 @@ const STRINGS = {
     'dashboard.dueDate.overdue': 'Überfällig',
     'dashboard.dueDate.thisWeek': 'Diese Woche',
     'dashboard.dueDate.upcoming': 'Nächste 30 Tage',
+
+    'dashboard.metrics.rejected': (plural) => `Verworfene Kennzahlen für ${plural}`,
+    'dashboard.metrics.unknownOp': (op) => `Unbekannte Operation „${op}“ — erlaubt sind count, sum, avg.`,
+    'dashboard.metrics.fieldMissing': (field) => `Nennt kein vorhandenes Feld („${field}“).`,
+    'dashboard.metrics.notNumeric': (label) => `„${label}“ ist kein Zahlenfeld — sum und avg brauchen eines.`,
 
     'log.title': 'Änderungsprotokoll',
     'log.lead':
