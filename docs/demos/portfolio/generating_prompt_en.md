@@ -66,6 +66,8 @@ Conditions between fields. They must be enforced in one place so that the edit f
 
 Declared on this entity from a closed catalog — count, sum and average over numeric fields. Computed at render time, never stored.
 
+*The framework formats averages with two decimals in the interface language’s decimal notation, rejects invalid declarations by name when the file loads instead of hiding them, and a tile click jumps to that entity’s list — unfiltered in this version.*
+
 - **Running projects** — the number of records (only records matching a filter): `r.phase !== 'Closed'` · „not yet closed“
 - **Spent so far** — the sum of `spent` (Spent in kEUR) · „kEUR, all projects“
 - **Average budget** — the average of `budget` (Budget in kEUR) · „kEUR per project“
@@ -117,6 +119,8 @@ Conditions between fields. They must be enforced in one place so that the edit f
 **Metric tiles**
 
 Declared on this entity from a closed catalog — count, sum and average over numeric fields. Computed at render time, never stored.
+
+*The framework formats averages with two decimals in the interface language’s decimal notation, rejects invalid declarations by name when the file loads instead of hiding them, and a tile click jumps to that entity’s list — unfiltered in this version.*
 
 - **Milestones in progress** — the number of records (only records matching a filter): `r.status === 'in progress'`
 - **Average effort** — the average of `effort` (Effort in days) · „days per milestone“

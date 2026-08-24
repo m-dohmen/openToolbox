@@ -66,6 +66,8 @@ Conditions entre champs. Elles doivent s’appliquer en un seul endroit, afin qu
 
 Déclarées sur cette entité à partir d’un catalogue fermé : comptage, somme et moyenne sur des champs numériques. Calculées au rendu, jamais stockées.
 
+*Le cadre formate les moyennes avec deux décimales dans la notation décimale de la langue de l’interface, rejette les déclarations invalides en les nommant au chargement au lieu de les masquer, et un clic sur une tuile mène à la liste de cette entité, sans filtre dans cette version.*
+
 - **Running projects** — le nombre d’enregistrements (uniquement les enregistrements correspondant à un filtre): `r.phase !== 'Closed'` · „not yet closed“
 - **Spent so far** — la somme de `spent` (Spent in kEUR) · „kEUR, all projects“
 - **Average budget** — la moyenne de `budget` (Budget in kEUR) · „kEUR per project“
@@ -117,6 +119,8 @@ Conditions entre champs. Elles doivent s’appliquer en un seul endroit, afin qu
 **Mesures**
 
 Déclarées sur cette entité à partir d’un catalogue fermé : comptage, somme et moyenne sur des champs numériques. Calculées au rendu, jamais stockées.
+
+*Le cadre formate les moyennes avec deux décimales dans la notation décimale de la langue de l’interface, rejette les déclarations invalides en les nommant au chargement au lieu de les masquer, et un clic sur une tuile mène à la liste de cette entité, sans filtre dans cette version.*
 
 - **Milestones in progress** — le nombre d’enregistrements (uniquement les enregistrements correspondant à un filtre): `r.status === 'in progress'`
 - **Average effort** — la moyenne de `effort` (Effort in days) · „days per milestone“

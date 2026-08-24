@@ -85,7 +85,7 @@ function fieldRow(field, t) {
 export function metricsLines(schema, t) {
   const { metrics } = validateMetrics(schema)
   if (!metrics.length) return []
-  const out = [`**${t.metrics}**`, '', t.metricsIntro, '']
+  const out = [`**${t.metrics}**`, '', t.metricsIntro, '', `*${t.metricsNote}*`, '']
   for (const m of metrics) {
     let line
     if (m.op === 'count') {

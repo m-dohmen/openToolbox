@@ -42,6 +42,15 @@ for (const [code, lang] of Object.entries(strings)) {
       lines.filter((l) => l.startsWith('- ')).length === METRICS_SCHEMA.metrics.length &&
       !lines.join('\n').includes('undefined'),
   )
+  /* Rahmenverhalten aus dem Duplikat OPEN-45: Formatierung, Ablehnung,
+     Klickverhalten gehören in den Prompt, sonst beschreibt er eine Demo,
+     die sich anders verhält, als der Agent denkt. */
+  check(
+    `Sprache ${code}: Hinweis zu Formatierung/Ablehnung/Klick`,
+    typeof lang.metricsNote === 'string' &&
+      lang.metricsNote.length > 40 &&
+      lines.join('\n').includes(lang.metricsNote),
+  )
 }
 
 /* count ohne Kriterium, mit Beschriftung und Hinweistext. */

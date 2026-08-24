@@ -66,6 +66,8 @@ Condições entre campos. Precisam valer em um único lugar, para que o formulá
 
 Declaradas nesta entidade a partir de um catálogo fechado: contagem, soma e média sobre campos numéricos. Calculadas ao renderizar, nunca armazenadas.
 
+*O framework formata médias com duas casas decimais na notação decimal do idioma da interface, rejeita declarações inválidas nomeando-as ao carregar em vez de escondê-las, e um clique numa medida leva à lista dessa entidade, sem filtro nesta versão.*
+
 - **Running projects** — a quantidade de registros (apenas registros que atendem a um filtro): `r.phase !== 'Closed'` · „not yet closed“
 - **Spent so far** — a soma de `spent` (Spent in kEUR) · „kEUR, all projects“
 - **Average budget** — a média de `budget` (Budget in kEUR) · „kEUR per project“
@@ -117,6 +119,8 @@ Condições entre campos. Precisam valer em um único lugar, para que o formulá
 **Medidas**
 
 Declaradas nesta entidade a partir de um catálogo fechado: contagem, soma e média sobre campos numéricos. Calculadas ao renderizar, nunca armazenadas.
+
+*O framework formata médias com duas casas decimais na notação decimal do idioma da interface, rejeita declarações inválidas nomeando-as ao carregar em vez de escondê-las, e um clique numa medida leva à lista dessa entidade, sem filtro nesta versão.*
 
 - **Milestones in progress** — a quantidade de registros (apenas registros que atendem a um filtro): `r.status === 'in progress'`
 - **Average effort** — a média de `effort` (Effort in days) · „days per milestone“

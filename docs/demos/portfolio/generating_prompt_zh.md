@@ -66,6 +66,8 @@
 
 在该实体上从封闭目录声明——记录条数、数值字段的求和与平均值。渲染时计算，绝不存储。
 
+*框架以两位小数、按界面语言的小数符号格式化平均值；加载时点名拒绝无效声明，而非静默隐藏；点击卡片会跳转到该实体的列表，本版本中不带筛选。*
+
 - **Running projects** — 记录条数（仅符合筛选条件的记录）: `r.phase !== 'Closed'` · „not yet closed“
 - **Spent so far** — `spent` (Spent in kEUR) 之和 · „kEUR, all projects“
 - **Average budget** — `budget` (Budget in kEUR) 的平均值 · „kEUR per project“
@@ -117,6 +119,8 @@
 **指标卡片**
 
 在该实体上从封闭目录声明——记录条数、数值字段的求和与平均值。渲染时计算，绝不存储。
+
+*框架以两位小数、按界面语言的小数符号格式化平均值；加载时点名拒绝无效声明，而非静默隐藏；点击卡片会跳转到该实体的列表，本版本中不带筛选。*
 
 - **Milestones in progress** — 记录条数（仅符合筛选条件的记录）: `r.status === 'in progress'`
 - **Average effort** — `effort` (Effort in days) 的平均值 · „days per milestone“
