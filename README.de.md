@@ -113,7 +113,7 @@ Dashboard · CSV-Import · Änderungsprotokoll · Versionsnummern.**
 
 ## Was drin ist
 
-- **Eine Datei.** Rund 90 KB, in sich geschlossen. Doppelklick, sie läuft. Netzwerkkabel ziehen, sie
+- **Eine Datei.** Rund 240 KB, in sich geschlossen. Doppelklick, sie läuft. Netzwerkkabel ziehen, sie
   läuft weiter — das Einzige, was ihr dann fehlt, ist der [Aufrufzähler](#der-aufrufzähler), und der
   ist einen sichtbaren Schalter vom Aus entfernt.
 - **Die Datei ist die Datenbank.** Speichern schreibt eine neue HTML-Datei mit eingebetteten
