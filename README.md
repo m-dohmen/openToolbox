@@ -378,6 +378,50 @@ calendar week) and the **next 30 days** after that. A record marked done by `isD
 across every entity that opts in, and clicking an entry jumps straight to that record. A domain that
 never sets `dueDate` sees exactly its previous dashboard.
 
+## Metric tiles
+
+The numbers a steering committee asks first — how many items are open, what do they weigh in total,
+what is the average score — should not have to be counted by hand. A schema declares them directly:
+`metrics` on the schema, one tile per entry, rendered at the top of the dashboard above everything
+else. Like `dueDate`, a `metrics` list unlocks the dashboard view on its own — no `DASHBOARD` export
+needed:
+
+```js
+export const SCHEMA = {
+  // …
+  metrics: [
+    { op: 'count', filter: (r) => !isDone(r), label: 'Open risks' },
+    { op: 'sum',   field: 'impact', label: 'Total impact', caption: 'across all risks' },
+    { op: 'avg',   field: 'impact' },   // default label: "Ø Impact score"
+  ],
+}
+```
+
+The catalog is closed — exactly three operations:
+
+- `count` — the number of records, optionally narrowed by `filter(record)` with the same semantics
+  as the stat tiles above. Without a label it carries the entity's plural.
+- `sum(field)` — the total over one numeric field.
+- `avg(field)` — the mean over one numeric field, fixed at two decimal places so 7 doesn't read as
+  7.333 the moment one record is added; an average of an empty set renders as a dash rather than an
+  invented zero.
+
+Values are computed locally at render time, in the entity's **full** record set — nothing enters the
+records or the embedded data block, and a domain that declares no `metrics` sees exactly its previous
+dashboard.
+
+Clicking a tile switches to that entity's list, keyboard included. In this version **unfiltered** —
+pre-filtering is deliberately left out until search and filtering can carry it, so a tile never
+implies a narrower count than the one it actually performs.
+
+There are deliberately **no formulas**: no free-text expression, nothing that gets evaluated. A
+declaration names one operation from the catalog or it is rejected when the file loads — an unknown
+operation, a missing field or a non-numeric target for `sum`/`avg` shows up as a named rejection
+tile between the valid ones instead of being silently ignored, because a metric that quietly
+switches itself off is only noticed when somebody misses the number. The catalog is closed for the
+same reason the file stays hand-off-able: a declaration that could carry code would make every
+recipient of the file an executor of it.
+
 ## Version numbers and change log
 
 Two small features that matter once a file starts circulating.

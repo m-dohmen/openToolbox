@@ -64,6 +64,10 @@ Three things to raise yourself, because users rarely ask for them and all three 
 - **The due-date widget** (`dueDate` on the schema) whenever the answer to interview question 4 was a
   date that can lapse — overdue items, upcoming reviews, expiring approvals. See `AGENTS.md` for the
   field shape; it shows up on the dashboard on its own, no `DASHBOARD` export required.
+- **Metric tiles** (`metrics` on the schema) whenever the tool is shown to someone who wants the
+  overview numbers first — how many records, what they weigh in total, what averages out. See
+  `AGENTS.md` for the closed catalog; like the due-date widget, a declaration alone unlocks the
+  dashboard view.
 
 If they have a spreadsheet of real data, ask for a few header rows: naming the fields the way their
 columns are named makes the built-in CSV import map them correctly on the first try. Do **not** paste

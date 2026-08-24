@@ -542,6 +542,50 @@ westlich von Greenwich einen Tag zu früh. Bei mehreren Entitäten aggregiert da
 `dueDate` deklarieren, und ein Klick auf einen Eintrag springt direkt zum Datensatz. Eine Domäne ohne
 `dueDate` sieht ihr bisheriges Dashboard unverändert.
 
+## Kennzahl-Kacheln
+
+Die Zahlen, die eine Steuerungsgruppe zuerst fragt — wie viele Datensätze offen sind, was sie
+zusammengenommen wiegen, wie der Durchschnittsscore liegt — muss niemand mehr von Hand auszählen.
+Eine Domäne deklariert sie direkt: `metrics` im Schema, je Eintrag eine Kachel, gerendert oben im
+Dashboard über allem anderen. Wie `dueDate` schaltet eine `metrics`-Liste die Dashboard-Ansicht
+auch allein frei — ein `DASHBOARD`-Export ist nicht nötig:
+
+```js
+export const SCHEMA = {
+  // …
+  metrics: [
+    { op: 'count', filter: (r) => !isDone(r), label: 'Offene Risiken' },
+    { op: 'sum',   field: 'impact', label: 'Gesamtimpact', caption: 'über alle Risiken' },
+    { op: 'avg',   field: 'impact' },   // Vorgabe-Label: „Ø Impact score“
+  ],
+}
+```
+
+Der Katalog ist geschlossen — genau drei Operationen:
+
+- `count` — die Anzahl der Datensätze, optional eingegrenzt per `filter(record)` mit derselben
+  Semantik wie bei den stat-Kacheln oben. Ohne Label trägt sie den Plural der Entität.
+- `sum(feld)` — die Summe über ein Zahlenfeld.
+- `avg(feld)` — der Mittelwert über ein Zahlenfeld, fest auf zwei Nachkommastellen, damit aus 7
+  nicht beim nächsten Datensatz 7,333 wird; der Mittelwert einer leeren Menge erscheint als Strich
+  statt als erdachte Null.
+
+Die Werte werden rein lokal beim Rendern gerechnet, über den **vollen** Bestand der Entität — nichts
+davon landet in den Datensätzen oder im Datenblock, und eine Domäne ohne `metrics` sieht ihr
+bisheriges Dashboard exakt unverändert.
+
+Ein Klick auf eine Kachel springt zur Liste dieser Entität, Tastatur inklusive. In dieser Version
+**ungefiltert** — die Vorfilterung bleibt bewusst zurückgestellt, bis Suche und Filter sie tragen
+können, damit eine Kachel nie eine engere Zahl behauptet als die, die sie tatsächlich rechnet.
+
+Bewusst **keine Formeln**: keinen freien Ausdruck, nichts, was ausgewertet wird. Eine Deklaration
+nennt eine Operation aus dem Katalog, oder sie wird beim Laden zurückgewiesen — eine unbekannte
+Operation, ein fehlendes Feld oder ein nicht-numerisches Ziel für `sum`/`avg` erscheint als benannte
+Verwerfungs-Kachel zwischen den gültigen, statt still übergangen zu werden: Eine Kennzahl, die sich
+stillschweigend abschaltet, fällt erst auf, wenn jemand die Zahl vermisst. Der Katalog ist aus
+demselben Grund geschlossen, aus dem die Datei weitergereicht werden darf — eine Deklaration, die
+Code tragen könnte, würde jeden Empfänger der Datei zum Ausführer machen.
+
 ## Versionen und Änderungsprotokoll
 
 Zwei kleine Funktionen, die zählen, sobald eine Datei zu kursieren beginnt.

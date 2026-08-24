@@ -384,6 +384,50 @@ The widget's clock is a parameter, not a call to `new Date()` buried inside it �
 that can only be exercised against whatever day the test happens to run on is not really tested. You
 will not normally touch this; it matters if you extend the widget yourself.
 
+### Metric tiles from the schema
+
+Overview numbers — how many records, what do they weigh in total, what is the average score — should
+not have to be counted by hand or recomputed in a spreadsheet. A schema can declare them directly:
+`metrics` on the schema, one tile per entry, rendered at the top of the dashboard above every other
+widget. Like `dueDate`, a `metrics` declaration unlocks the dashboard view on its own — no
+`DASHBOARD` export required:
+
+```js
+export const SCHEMA = {
+  // …
+  metrics: [
+    { op: 'count', filter: (r) => !isDone(r), label: 'Open risks' },
+    { op: 'sum',   field: 'impact', label: 'Total impact', caption: 'across all risks' },
+    { op: 'avg',   field: 'impact' },   // default label: "Ø Impact score"
+  ],
+}
+```
+
+The catalog is **closed**: exactly three operations — `count` (optionally narrowed by a
+`filter(record)`, same semantics as the stat tiles), `sum(field)` and `avg(field)` over numeric
+fields. There is deliberately no fourth form — no expression string, nothing that gets evaluated —
+because the output file is passed around by hand, and a declaration that could carry code would make
+every recipient of the file an executor of it. New shapes join the catalog in `src/lib/metrics.js`
+or they don't exist.
+
+Details worth knowing:
+
+- Labels fall back sensibly when omitted: `count` carries the schema's `plural`, `sum` and `avg`
+  prefix the field's label (`Σ`, `Ø`). `caption` is free text.
+- Values are computed locally at render time over the entity's **full** record set — never written
+  into the record or the embedded data block, same posture as computed fields. A domain without any
+  `metrics` declaration renders exactly its previous dashboard.
+- Formatting follows the surface language: integers stay integers, `avg` stands at two decimal
+  places — otherwise 7 would read as 7 one day and 7.333 the next, depending on the stock — and the
+  average of an empty set is a dash rather than an invented zero.
+- Clicking a tile switches to that entity's list (keyboard included). In this version **unfiltered**;
+  pre-filtering is reserved for after search and filtering exist, so a tile never implies a narrower
+  count than the one it actually performs.
+- Invalid declarations are **rejected by name**, not silently skipped. An unknown operation, a
+  missing field or a non-numeric target appears as its own rejection tile between the valid ones,
+  with the reason in the interface language. A metric that quietly switches itself off is noticed
+  only when somebody misses the number.
+
 ## Optional second file
 
 `src/app.jsx` — only if the user needs something the schema cannot express: an extra sidebar
