@@ -28,9 +28,9 @@ d'obligatoire : la phrase ci-dessus fonctionne sans lui.
 
 ## Voir le résultat
 
-[**Ouvrir la démo en ligne**](https://m-dohmen.github.io/openToolbox/demo/) — un portefeuille de
-projets avec deux types d'enregistrements liés. Ou [télécharger `docs/demo/index.html`](docs/demo/index.html)
-et double-cliquer. Le même fichier, sans serveur dans les deux cas.
+[**Ouvrir les démos en ligne**](https://m-dohmen.github.io/openToolbox/demos/) — le même cadre en
+six outils différents, du portefeuille de projets au registre des emballages. Ou téléchargez-en une
+depuis [`docs/demos/`](docs/demos/) et double-cliquez. Le même fichier, sans serveur.
 
 ![La vue liste](docs/screenshots/list.png)
 

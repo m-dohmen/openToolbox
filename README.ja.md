@@ -24,9 +24,9 @@ AI コーディングエージェントにこのリポジトリを指し示す�
 
 ## まず見てみる
 
-[**ライブデモを開く**](https://m-dohmen.github.io/openToolbox/demo/) — 2 種類の連携したレコードを持つ
-プロジェクトポートフォリオです。または [`docs/demo/index.html` をダウンロード](docs/demo/index.html)して
-ダブルクリックしてください。同じファイルで、どちらの場合もサーバーは介在しません。
+[**ライブデモを開く**](https://m-dohmen.github.io/openToolbox/demos/) — 同じフレームワークが 6 つの
+ツールとして動きます。プロジェクトポートフォリオから包装材登録まで。または [`docs/demos/`](docs/demos/)
+から任意のファイルをダウンロードしてダブルクリックしてください。同じファイルで、サーバーは介在しません。
 
 ![一覧ビュー](docs/screenshots/list.png)
 

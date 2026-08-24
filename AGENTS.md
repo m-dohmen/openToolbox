@@ -42,10 +42,15 @@ If the user gave enough detail in the prompt, skip the questions and state the a
 | `SCHEMA` | Field definitions plus presentation hints. Drives the table, the form, the sidebar filters, the CSV columns, the AI instructions and the validation of AI-proposed changes. |
 | `uid()` | Generates a record id. Use a readable prefix. |
 | `emptyRecord()` | A blank record with sensible defaults. |
-| `seed()` | 8–12 realistic demo records so the file is not empty on first open. |
+| `seed()` | Realistic demo records so the file is not empty on first open. Around a dozen for a single record type (the shipped examples carry 9–14); multi-entity domains seed every entity, and the counts may differ per entity. |
 | `isDone(r)` | Record no longer counts towards the open total. |
 | `isOverdue(r)` | Record is flagged in red. Return `false` if the concept does not apply. |
 | `formatDate(s)` | ISO string to display string. |
+
+Seed counts are a judgement call, not a quota: `suppliers-certificates` deliberately ships five
+suppliers because its whole point is the bare reference mechanics, and `renovation-quotes` carries
+seventeen offers because every trade holds three quotes plus rejected ones. What matters is that
+the file opens on something worth reading.
 
 ### SCHEMA shape
 
@@ -149,9 +154,11 @@ recreate type checks — `enum`, `date` and `number` are already enforced.
 
 ### The examples are the fastest way in
 
-`examples/` holds seven complete domains, each built and published under
-[`docs/demos/`](https://m-dohmen.github.io/openToolbox/demos/). Before writing one from scratch,
-open the closest and copy its shape:
+`examples/` holds eight complete domains; six of them are built and published under
+[`docs/demos/`](https://m-dohmen.github.io/openToolbox/demos/). `risk-register.domain.js` and
+`suppliers-certificates.domain.js` ship as examples without a demo — the first is the plainest
+starting point, the second exists to show the reference mechanics alone and doubles as the build
+fixture for the multi-entity test. Before writing one from scratch, open the closest and copy its shape:
 
 | File | Shape worth stealing |
 | --- | --- |
@@ -505,7 +512,7 @@ Two consequences for the schema you write:
   tolerant about case and spacing, but `erledigt` will not match `done`. Either use their wording
   as the enum values, or expect those cells to be reported as objections.
 
-`seed()` stays what it is: 8–12 *demo* records so the file is not empty on first open. Tell the
+`seed()` stays what it is: *demo* records so the file is not empty on first open. Tell the
 user they can replace them via `Import CSV` → *replace all*.
 
 ## Build and deliver

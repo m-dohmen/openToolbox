@@ -28,9 +28,9 @@ frase acima funciona sem ele.
 
 ## Ver funcionando
 
-[**Abrir a demonstração ao vivo**](https://m-dohmen.github.io/openToolbox/demo/) — um portfólio de
-projetos com dois tipos de registro ligados entre si. Ou [baixe `docs/demo/index.html`](docs/demo/index.html)
-e dê um duplo clique. O mesmo arquivo; em nenhum dos casos há servidor envolvido.
+[**Abrir as demonstrações ao vivo**](https://m-dohmen.github.io/openToolbox/demos/) — o mesmo
+arcabouço como seis ferramentas diferentes, de um portfólio de projetos a um registro de embalagens.
+Ou baixe qualquer uma de [`docs/demos/`](docs/demos/) e dê um duplo clique. O mesmo arquivo; sem servidor.
 
 ![A visão de lista](docs/screenshots/list.png)
 
