@@ -771,7 +771,7 @@ zurück — dreißig Korrekturen sind ein Verlaufsschritt, nicht dreißig.
 npm test
 ```
 
-Fährt sechs Testsuiten — drei davon gegen einen echten Headless-Chromium:
+Fährt sieben Testsuiten — drei davon gegen einen echten Headless-Chromium:
 
 - `test/prompts-metrics.mjs` — reiner Knoten-Test ohne Browser: der Kennzahlen-Abschnitt, den
   `scripts/build-prompts.mjs` erzeugt, muss jede deklarierte Kennzahl so beschreiben, dass ein Agent,
@@ -781,6 +781,9 @@ Fährt sechs Testsuiten — drei davon gegen einen echten Headless-Chromium:
 - `test/timezone.mjs` — reiner Knoten-Test: friert die Uhr auf zwei Zeitpunkte ein und lässt die
   Fälligkeitslogik in Kindprozessen mit verschobenen Zeitzonen laufen — eine Fälligkeit folgt dem
   lokalen Kalendertag, nicht dem UTC-Datum.
+- `test/timezone-examples.mjs` — reiner Knoten-Test: dasselbe Uhr-Einfrieren über alle acht
+  Beispieldomänen unter `examples/` — Seeddaten, Resttage und Fälligkeitsgrenzen folgen auch dort
+  dem lokalen Kalendertag.
 - `test/smoke.mjs` — der Einzel-Entitäts-Pfad gegen die gebaute `dist/index.html`. Rund 300
   Zusicherungen.
 - `test/multi-entity.mjs` — der `ENTITIES`-Pfad gegen einen eigens gebauten Zwei-Entitäten-Build.

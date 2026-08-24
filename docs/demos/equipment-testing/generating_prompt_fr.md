@@ -64,9 +64,18 @@ Ils sont dérivés à chaque affichage et jamais écrits dans l’enregistrement
 - `daysLeft` (Tage bis zur Prüfung):
 
   ```js
-  const d = dueDate(r)
+  const d = localDateFromIso(dueDate(r))
   if (!d) return ''
-  return Math.round((new Date(d) - new Date().setHours(0, 0, 0, 0)) / 86400000)
+  // Beide Seiten als ganze lokale Tage: Date.UTC über die Tages-
+  // komponenten hält die Differenz exakt ganzzahlig - ohne die
+  // Rundungsrettung, die ab UTC+12 kippt, und ohne den Mix aus
+  // UTC-Mitternacht und Lokal-Mitternacht.
+  const now = new Date()
+  return (
+    (Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) -
+      Date.UTC(now.getFullYear(), now.getMonth(), now.getDate())) /
+    86400000
+  )
   ```
 
 **Règles de validation**

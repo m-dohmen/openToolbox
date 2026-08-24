@@ -58,8 +58,17 @@ GDPR 第 30 条により、ほぼすべての企業が処理活動の記録を�
 - `age` (Tage seit Prüfung):
 
   ```js
-  if (!r.reviewed) return ''
-  return Math.round((new Date().setHours(0, 0, 0, 0) - new Date(r.reviewed)) / 86400000)
+  const reviewed = localDateFromIso(r.reviewed)
+  if (!reviewed) return ''
+  /* Ganze lokale Tage über die Date.UTC-Differenz der Tageskompo-
+     nenten - exakt ganzzahlig, ohne Rundungsrettung und ohne den
+     Mix aus UTC-Mitternacht und Lokal-Mitternacht. */
+  const now = new Date()
+  return (
+    (Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()) -
+      Date.UTC(reviewed.getFullYear(), reviewed.getMonth(), reviewed.getDate())) /
+    86400000
+  )
   ```
 
 **検証ルール**

@@ -20,12 +20,6 @@ const CONSENT = ['ausstehend', 'liegt vor', 'verweigert']
 const PAYMENT = ['offen', 'teilweise', 'vollständig', 'Zuschuss beantragt', 'erlassen']
 const SWIM = ['ja', 'nein', 'unbekannt']
 
-const iso = (offsetDays) => {
-  const d = new Date()
-  d.setDate(d.getDate() + offsetDays)
-  return d.toISOString().slice(0, 10)
-}
-
 const FEE = 185
 
 export const SCHEMA = {

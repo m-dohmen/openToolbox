@@ -942,6 +942,7 @@ src/lib/color.js       palette derivation and contrast check
 test/prompts-metrics.mjs      pure Node — checks the metric section of the generated build prompts
 test/actions-delete-guard.mjs pure Node — the reference guard holds on AI-proposed deletions too
 test/timezone.mjs             pure Node — due dates follow the local calendar day, not UTC
+test/timezone-examples.mjs    pure Node — the same clock freeze across every example domain under examples/
 test/smoke.mjs                end-to-end test against a real headless browser
 test/multi-entity.mjs         end-to-end test for the ENTITIES/reference-field path
 test/demos.mjs                opens every built demo once — the examples rot silently otherwise
@@ -953,7 +954,7 @@ test/demos.mjs                opens every built demo once — the examples rot s
 npm test
 ```
 
-Runs six suites — three of them against a real headless Chromium:
+Runs seven suites — three of them against a real headless Chromium:
 
 - `test/prompts-metrics.mjs` — pure Node, no browser: the metric section that
   `scripts/build-prompts.mjs` generates must describe every declared metric so an agent reading only
@@ -963,6 +964,9 @@ Runs six suites — three of them against a real headless Chromium:
 - `test/timezone.mjs` — pure Node: freezes the clock at two instants and reruns the due-date logic
   in child processes with shifted timezones — a due date follows the local calendar day, whether
   that day lies ahead of or behind the UTC date.
+- `test/timezone-examples.mjs` — pure Node: the same clock freeze run over all eight example
+  domains under `examples/` — seed dates, remaining-day fields and overdue boundaries follow the
+  local calendar day there too.
 - `test/smoke.mjs` — the single-entity path, against the already-built `dist/index.html`: startup,
   edit, save, reopen, encrypt, wrong passphrase, decrypt, dark mode, settings round-trip, AI dialect
   negotiation against a mock endpoint, attachments, proposed changes with a deliberately invalid one,
