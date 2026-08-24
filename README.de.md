@@ -1012,7 +1012,7 @@ test/demos.mjs                öffnet jede gebaute Demo einmal — sonst verrott
 npm test
 ```
 
-Fährt sieben Testsuiten — drei davon gegen einen echten Headless-Chromium:
+Fährt acht Testsuiten — drei davon gegen einen echten Headless-Chromium:
 
 - `test/prompts-metrics.mjs` — reiner Knoten-Test ohne Browser: der Kennzahlen-Abschnitt, den
   `scripts/build-prompts.mjs` erzeugt, muss jede deklarierte Kennzahl so beschreiben, dass ein Agent,
@@ -1022,6 +1022,11 @@ Fährt sieben Testsuiten — drei davon gegen einen echten Headless-Chromium:
 - `test/timezone.mjs` — reiner Knoten-Test: friert die Uhr auf zwei Zeitpunkte ein und lässt die
   Fälligkeitslogik in Kindprozessen mit verschobenen Zeitzonen laufen — eine Fälligkeit folgt dem
   lokalen Kalendertag, nicht dem UTC-Datum.
+- `test/domain-swap-crash.mjs` — reiner Knoten-Test: killt den Fixture-Austausch hinter den
+  Zusatz-Builds mitten im Lauf, einmal hart (`SIGKILL`) und einmal weich (`SIGTERM`), und lässt
+  danach einen Folgelauf bauen. Ein hart gekillter Lauf hinterlässt keine Fixture in
+  `src/domain.js`, und der Folgelauf stellt das echte Original wieder her, statt die Mutation als
+  sein „Original" zu übernehmen.
 - `test/timezone-examples.mjs` — reiner Knoten-Test: dasselbe Uhr-Einfrieren über alle acht
   Beispieldomänen unter `examples/` — Seeddaten, Resttage und Fälligkeitsgrenzen folgen auch dort
   dem lokalen Kalendertag.

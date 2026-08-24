@@ -942,6 +942,8 @@ src/lib/color.js       palette derivation and contrast check
 test/prompts-metrics.mjs      pure Node — checks the metric section of the generated build prompts
 test/actions-delete-guard.mjs pure Node — the reference guard holds on AI-proposed deletions too
 test/timezone.mjs             pure Node — due dates follow the local calendar day, not UTC
+test/domain-swap.mjs          swaps src/domain.js for a fixture build and restores it — crash-safe
+test/domain-swap-crash.mjs    proves it: a killed run strands no fixture in src/, a follow-up run never adopts one
 test/timezone-examples.mjs    pure Node — the same clock freeze across every example domain under examples/
 test/smoke.mjs                end-to-end test against a real headless browser
 test/multi-entity.mjs         end-to-end test for the ENTITIES/reference-field path
@@ -954,7 +956,7 @@ test/demos.mjs                opens every built demo once — the examples rot s
 npm test
 ```
 
-Runs seven suites — three of them against a real headless Chromium:
+Runs eight suites — three of them against a real headless Chromium:
 
 - `test/prompts-metrics.mjs` — pure Node, no browser: the metric section that
   `scripts/build-prompts.mjs` generates must describe every declared metric so an agent reading only
@@ -964,6 +966,10 @@ Runs seven suites — three of them against a real headless Chromium:
 - `test/timezone.mjs` — pure Node: freezes the clock at two instants and reruns the due-date logic
   in child processes with shifted timezones — a due date follows the local calendar day, whether
   that day lies ahead of or behind the UTC date.
+- `test/domain-swap-crash.mjs` — pure Node: kills the fixture swap behind the extra builds
+  mid-run, once hard (`SIGKILL`) and once softly (`SIGTERM`), and runs a follow-up build after the
+  kill. A hard-killed run strands no fixture in `src/domain.js`, and a follow-up run restores the
+  true original instead of adopting the mutation as its own.
 - `test/timezone-examples.mjs` — pure Node: the same clock freeze run over all eight example
   domains under `examples/` — seed dates, remaining-day fields and overdue boundaries follow the
   local calendar day there too.
