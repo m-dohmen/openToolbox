@@ -36,4 +36,4 @@ if (dirty) {
   process.exit(1)
 }
 
-console.log('\nAlles grün: Build, vier Testsuiten, Demos und Prompts aktuell, Arbeitsbaum sauber.')
+console.log('\nAlles grün: Build, sechs Testsuiten, Demos und Prompts aktuell, Arbeitsbaum sauber.')

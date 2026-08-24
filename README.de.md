@@ -768,11 +768,16 @@ zurück — dreißig Korrekturen sind ein Verlaufsschritt, nicht dreißig.
 npm test
 ```
 
-Fährt vier Testsuiten — drei davon gegen einen echten Headless-Chromium:
+Fährt sechs Testsuiten — drei davon gegen einen echten Headless-Chromium:
 
 - `test/prompts-metrics.mjs` — reiner Knoten-Test ohne Browser: der Kennzahlen-Abschnitt, den
   `scripts/build-prompts.mjs` erzeugt, muss jede deklarierte Kennzahl so beschreiben, dass ein Agent,
   der nur den Prompt liest, dieselben Kacheln baut wie die Demo sie zeigt.
+- `test/actions-delete-guard.mjs` — reiner Knoten-Test: der Referenzschutz greift auf jedem
+  Löschweg, auch bei einem von der KI vorgeschlagenen Löschen eines noch referenzierten Datensatzes.
+- `test/timezone.mjs` — reiner Knoten-Test: friert die Uhr auf zwei Zeitpunkte ein und lässt die
+  Fälligkeitslogik in Kindprozessen mit verschobenen Zeitzonen laufen — eine Fälligkeit folgt dem
+  lokalen Kalendertag, nicht dem UTC-Datum.
 - `test/smoke.mjs` — der Einzel-Entitäts-Pfad gegen die gebaute `dist/index.html`. Rund 300
   Zusicherungen.
 - `test/multi-entity.mjs` — der `ENTITIES`-Pfad gegen einen eigens gebauten Zwei-Entitäten-Build.

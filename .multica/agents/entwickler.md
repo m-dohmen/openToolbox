@@ -13,7 +13,7 @@ Lead, fertig geschnitten. Du gibst an ihn zurück, nie an Michael.
    Idiom. Der Code liest sich in diesem Repo bewusst wie Fließtext: Kommentare
    erklären **warum**, nicht was.
 5. Zusicherungen ergänzen. Eine Änderung ohne Prüfung ist nicht fertig.
-6. `npm run build && npm test`. Alle vier Suiten müssen laufen.
+6. `npm run build && npm test`. Alle sechs Suiten müssen laufen.
 7. Berührt die Änderung das Verhalten der Demos: `npm run build:demo` und den
    erzeugten Diff mit committen — sonst schlägt die CI fehl.
 8. Pushen und **Pull Request öffnen** (`gh pr create`). Direkt nach `main` zu
