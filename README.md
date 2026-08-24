@@ -645,7 +645,7 @@ language is small enough to hand an AI assistant as a single instruction:
 > Add Italian as an interface language.
 
 Everything it needs is right there: `src/i18n.js` documents the pattern in its header comment,
-`LOCALES` and `LOCALE_LABELS` list what Settings offers, and all 467 keys in `STRINGS.en` already
+`LOCALES` and `LOCALE_LABELS` list what Settings offers, and all 474 keys in `STRINGS.en` already
 have a `STRINGS.de` counterpart to translate from. Concretely, the change is:
 
 ```js
