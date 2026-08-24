@@ -599,8 +599,8 @@ on open and offers to switch the integration off instead.
 ## Branding
 
 Product name, logo and five colours are editable in the settings page and travel with the file.
-Uploaded SVGs are sanitised first — scripts, `on…` handlers, `foreignObject` and external references
-are stripped, and you are told what was removed. Export the configuration as JSON (without records,
+Uploaded SVGs are sanitised first — scripts, `on…` handlers, `foreignObject`, `<style>` elements,
+`style` attributes and external references are stripped, and you are told what was removed. Export the configuration as JSON (without records,
 without the API key) and load it into every other tool you build.
 
 ### The dark bar at the top
