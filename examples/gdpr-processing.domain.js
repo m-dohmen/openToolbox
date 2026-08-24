@@ -33,10 +33,24 @@ const SUBJECTS = ['Beschäftigte', 'Bewerberinnen und Bewerber', 'Kundinnen und 
 const RISK = ['gering', 'mittel', 'hoch']
 const STATUS = ['gemeldet', 'in Prüfung', 'freigegeben', 'nachzubessern']
 
+/* Ein Kalendertag wie "2026-08-20" ist kein Zeitpunkt: als UTC-Mitternacht
+   geparst rutscht er westlich von Greenwich auf den Vortag, und jede
+   Rechnung darüber liefe dort einen Tag zu früh. Wie lib/dueDate.js - hier
+   dupliziert, weil diese Datei bewusst nichts importiert. */
+const localDateFromIso = (value) => {
+  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(value ?? ''))
+  if (!match) return null
+  const [, y, m, d] = match
+  return new Date(Number(y), Number(m) - 1, Number(d))
+}
+
+/* Heute (um ganze Tage verschoben) als lokaler Kalendertag, nicht das
+   UTC-Datum. */
 const iso = (offsetDays) => {
   const d = new Date()
   d.setDate(d.getDate() + offsetDays)
-  return d.toISOString().slice(0, 10)
+  const pad = (n) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
 }
 
 export const SCHEMA = {
@@ -72,8 +86,17 @@ export const SCHEMA = {
       short: 'Alter',
       type: 'computed',
       compute: (r) => {
-        if (!r.reviewed) return ''
-        return Math.round((new Date().setHours(0, 0, 0, 0) - new Date(r.reviewed)) / 86400000)
+        const reviewed = localDateFromIso(r.reviewed)
+        if (!reviewed) return ''
+        /* Ganze lokale Tage über die Date.UTC-Differenz der Tageskompo-
+           nenten - exakt ganzzahlig, ohne Rundungsrettung und ohne den
+           Mix aus UTC-Mitternacht und Lokal-Mitternacht. */
+        const now = new Date()
+        return (
+          (Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()) -
+            Date.UTC(reviewed.getFullYear(), reviewed.getMonth(), reviewed.getDate())) /
+          86400000
+        )
       },
     },
   ],

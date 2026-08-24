@@ -26,10 +26,14 @@ const MATERIALS = ['Papier/Karton', 'Kunststoff PE', 'Kunststoff PET', 'Kunststo
 const GRADES = ['A', 'B', 'C', 'D', 'E', 'noch offen']
 const DOC_STATUS = ['nicht begonnen', 'beim Lieferanten angefragt', 'Angaben liegen vor', 'Erklärung erstellt']
 
+/* Heute (um ganze Tage verschoben) als lokaler Kalendertag, nicht das
+   UTC-Datum - sonst rutschen Seeddaten und Fälligkeitsvergleich westlich
+   von Greenwich um einen Tag. */
 const iso = (offsetDays) => {
   const d = new Date()
   d.setDate(d.getDate() + offsetDays)
-  return d.toISOString().slice(0, 10)
+  const pad = (n) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
 }
 
 const today = () => iso(0)

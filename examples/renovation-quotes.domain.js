@@ -25,10 +25,14 @@ const TRADES = ['Rohbau', 'Dach', 'Fenster', 'Elektro', 'Sanitär/Heizung', 'Est
 const PHASES = ['noch nicht angefragt', 'Angebote eingeholt', 'beauftragt', 'in Ausführung', 'abgenommen']
 const OFFER_STATE = ['angefragt', 'liegt vor', 'nachverhandelt', 'abgelehnt', 'beauftragt']
 
+/* Heute (um ganze Tage verschoben) als lokaler Kalendertag, nicht das
+   UTC-Datum - sonst rutschen Seeddaten und Fälligkeitsvergleich westlich
+   von Greenwich um einen Tag. */
 const iso = (offsetDays) => {
   const d = new Date()
   d.setDate(d.getDate() + offsetDays)
-  return d.toISOString().slice(0, 10)
+  const pad = (n) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
 }
 
 export const ENTITIES = {

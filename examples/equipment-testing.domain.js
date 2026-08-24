@@ -23,18 +23,38 @@ const LOCATIONS = ['Werkstatt', 'Baustellenwagen', 'Lager', 'Büro', 'Küche', '
 const RESULTS = ['bestanden', 'bestanden mit Mangel', 'nicht bestanden', 'noch nicht geprüft']
 const INTERVALS = [6, 12, 24]
 
+/**
+ * Ein Datumsfeld hält einen Kalendertag wie "2026-08-20", keinen Zeitpunkt.
+ * Als UTC-Mitternacht geparst (`new Date('2026-08-20')`) rutscht er westlich
+ * von Greenwich auf den Vortag, und jede Rechnung darüber liefe dort einen
+ * Tag zu früh. Wie lib/dueDate.js - hier dupliziert, weil diese Datei die
+ * austauschbare Domäne ist und bewusst nichts importiert.
+ */
+const localDateFromIso = (value) => {
+  const match = /^(\d{4})-(\d{2})-(\d{2})/.exec(String(value ?? ''))
+  if (!match) return null
+  const [, y, m, d] = match
+  return new Date(Number(y), Number(m) - 1, Number(d))
+}
+
+/** Datum als Kalendertag formatieren - aus lokalen Komponenten, nicht aus der UTC-Zeit. */
+const toIso = (d) => {
+  const pad = (n) => String(n).padStart(2, '0')
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`
+}
+
 const iso = (offsetDays) => {
   const d = new Date()
   d.setDate(d.getDate() + offsetDays)
-  return d.toISOString().slice(0, 10)
+  return toIso(d)
 }
 
-/** Fälligkeit: letzte Prüfung plus Intervall in Monaten. */
+/** Fälligkeit: letzte Prüfung plus Intervall in Monaten, im lokalen Kalender. */
 const dueDate = (r) => {
-  if (!r.lastTest) return ''
-  const d = new Date(r.lastTest)
+  const d = localDateFromIso(r.lastTest)
+  if (!d) return ''
   d.setMonth(d.getMonth() + (Number(r.interval) || 12))
-  return d.toISOString().slice(0, 10)
+  return toIso(d)
 }
 
 export const SCHEMA = {
@@ -84,9 +104,18 @@ export const SCHEMA = {
       short: 'Tage',
       type: 'computed',
       compute: (r) => {
-        const d = dueDate(r)
+        const d = localDateFromIso(dueDate(r))
         if (!d) return ''
-        return Math.round((new Date(d) - new Date().setHours(0, 0, 0, 0)) / 86400000)
+        // Beide Seiten als ganze lokale Tage: Date.UTC über die Tages-
+        // komponenten hält die Differenz exakt ganzzahlig - ohne die
+        // Rundungsrettung, die ab UTC+12 kippt, und ohne den Mix aus
+        // UTC-Mitternacht und Lokal-Mitternacht.
+        const now = new Date()
+        return (
+          (Date.UTC(d.getFullYear(), d.getMonth(), d.getDate()) -
+            Date.UTC(now.getFullYear(), now.getMonth(), now.getDate())) /
+          86400000
+        )
       },
     },
   ],
