@@ -34,6 +34,34 @@ const iso = (offsetDays) => {
 
 const today = () => iso(0)
 
+/* Die eine fertige Erklärung im Bestand: V-103 trägt „Erklärung erstellt“, und
+   die Prüfregel verlangt dafür die Datei am Datensatz. Damit der Showpiece-
+   Datensatz beim Bearbeiten nicht an der eigenen Regel scheitert, liegt ihm
+   dieses erfundene Mini-PDF (gut ein Kilobyte) bei; die übrigen Verpackungen
+   haben ihre Unterlagen noch nicht beisammen und deshalb doc: null. */
+const DOC_V103 = {
+  name: 'Konformitätserklärung V-103.pdf',
+  type: 'application/pdf',
+  size: 1089,
+  data:
+    'JVBERi0xLjQKJeLjz9MKMSAwIG9iago8PCAvVHlwZSAvQ2F0YWxvZyAvUGFnZXMgMiAwIFIgPj4KZW5kb2JqCjIgMCBvYmoK' +
+    'PDwgL1R5cGUgL1BhZ2VzIC9LaWRzIFszIDAgUl0gL0NvdW50IDEgPj4KZW5kb2JqCjMgMCBvYmoKPDwgL1R5cGUgL1BhZ2Ug' +
+    'L1BhcmVudCAyIDAgUiAvTWVkaWFCb3ggWzAgMCA1OTUgODQyXSAvUmVzb3VyY2VzIDw8IC9Gb250IDw8IC9GMSA0IDAgUiA+' +
+    'PiA+PiAvQ29udGVudHMgNSAwIFIgPj4KZW5kb2JqCjQgMCBvYmoKPDwgL1R5cGUgL0ZvbnQgL1N1YnR5cGUgL1R5cGUxIC9C' +
+    'YXNlRm9udCAvSGVsdmV0aWNhID4+CmVuZG9iago1IDAgb2JqCjw8IC9MZW5ndGggNTM5ID4+CnN0cmVhbQpCVCAvRjEgMTEg' +
+    'VGYgMTQgVEwgNDAgODAwIFRkCihLb25mb3JtaXRhZXRzZXJrbGFlcnVuZykgVGogVCoKKCkgVGogVCoKKFZlcnBhY2t1bmcg' +
+    'Vi0xMDMgLSBHbGFzZmxhc2NoZSA1MDAgbWwgbWl0IEJ1ZWdlbHZlcnNjaGx1c3MpIFRqIFQqCihBcnRpa2VsOiBTaXJ1cCBI' +
+    'b2x1bmRlciwgU2lydXAgSW5nd2VyKSBUaiBUKgooKSBUaiBUKgooRGllIFZlcnBhY2t1bmcgZW50c3ByaWNodCBkZW4gQW5m' +
+    'b3JkZXJ1bmdlbiBkZXIgUmljaHRsaW5pZSA5NC82Mi9FRykgVGogVCoKKGluIGRlciBGYXNzdW5nLCBkaWUgenVtIFplaXRw' +
+    'dW5rdCBkZXIgQXVzc3RlbGx1bmcgZ2lsdC4pIFRqIFQqCigpIFRqIFQqCihBdXNnZXN0ZWxsdCB2b246IE0uIFZvc3MsIE11' +
+    'c3RlciBNYW51ZmFrdHVyKSBUaiBUKgooKSBUaiBUKgooRXJmdW5kZW5lcyBCZWlzcGllbGRva3VtZW50IGRlciBvcGVuVG9v' +
+    'bGJveC1EZW1vIC0ga2VpbmUgZWNodGUpIFRqIFQqCihLb25mb3JtaXRhZXRzZXJrbGFlcnVuZyB1bmQga2VpbiBLb25mb3Jt' +
+    'aXRhZXRzbmFjaHdlaXMuKSBUaiBUKgpFVAplbmRzdHJlYW0KZW5kb2JqCnhyZWYKMCA2CjAwMDAwMDAwMDAgNjU1MzUgZiAK' +
+    'MDAwMDAwMDAxNSAwMDAwMCBuIAowMDAwMDAwMDY0IDAwMDAwIG4gCjAwMDAwMDAxMjEgMDAwMDAgbiAKMDAwMDAwMDI0NyAw' +
+    'MDAwMCBuIAowMDAwMDAwMzE3IDAwMDAwIG4gCnRyYWlsZXIKPDwgL1NpemUgNiAvUm9vdCAxIDAgUiA+PgpzdGFydHhyZWYK' +
+    'OTA3CiUlRU9G',
+}
+
 export const ENTITIES = {
   packagings: {
     schema: {
@@ -151,7 +179,7 @@ export const ENTITIES = {
       docStatus,
       deadline: iso(days),
       responsible,
-      doc: null,
+      doc: id === 'V-103' ? DOC_V103 : null,
       note: '',
     })),
     isDone: (r) => r.docStatus === 'Erklärung erstellt',
