@@ -25,10 +25,6 @@ jobs:
             echo "Build far too small — the script was probably not inlined."
             exit 1
           fi
-          if grep -qE '<script[^>]+src=|<link[^>]+href="http' dist/index.html; then
-            echo "External reference found in the built file."
-            exit 1
-          fi
       - name: Check the agent instructions and the skill are intact
         run: |
           # CLAUDE.md is a copy of AGENTS.md; a change to one without the other
@@ -58,6 +54,8 @@ jobs:
           '
 
       - run: npm run build:demo
+      - name: Check everything shipped is self-contained
+        run: node scripts/check-self-contained.mjs dist/index.html docs/demo docs/demos
       - name: Check the committed demos are current
         run: |
           if ! git diff --quiet -- docs/demo docs/demos; then

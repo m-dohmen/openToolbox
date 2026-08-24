@@ -19,7 +19,7 @@ import {
 import { readFileSync, writeFileSync, mkdirSync, rmSync } from 'node:fs'
 import { resolve, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { execFileSync } from 'node:child_process'
+import { buildWithDomain, pidSuffix } from './domain-swap.mjs'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const dist = resolve(root, 'dist/index.html')
@@ -149,7 +149,12 @@ const mock = createServer((req, res) => {
     res.end(JSON.stringify({ choices: [{ message: { role: 'assistant', content } }] }))
   })
 })
-await new Promise((r) => mock.listen(8899, '127.0.0.1', r))
+// Port 0 statt 8899: der Kernel vergibt einen freien Port, damit zwei
+// gleichzeitige Laeufe derselben Suite nicht mit EADDRINUSE kollidieren
+// (OPEN-75). Der tatsaechliche Port steht nach dem Listen fest und wird
+// ueber mockBase an alle Stellen verteilt, die den Endpunkt brauchen.
+await new Promise((r) => mock.listen(0, '127.0.0.1', r))
+const mockBase = `http://127.0.0.1:${mock.address().port}`
 
 // Pfadaufbau: die haeufigste Fehlerquelle beim Einrichten
 const urlCases = [
@@ -1064,7 +1069,7 @@ await page5.getByLabel('Settings').click()
 await page5.waitForSelector('.settings')
 await page5.getByText('off', { exact: true }).click()
 await page5.waitForSelector('input[placeholder="https://…/openai/v1"]')
-await page5.locator('input[placeholder="https://…/openai/v1"]').fill('http://127.0.0.1:8899/v1')
+await page5.locator('input[placeholder="https://…/openai/v1"]').fill(mockBase + '/v1')
 await page5.locator('input[placeholder="gpt-4o-mini"]').fill('mock-model')
 await page5.locator('input[type="password"]').fill('test-key')
 
@@ -1146,8 +1151,7 @@ console.log('15) API-Schlüssel ohne Haken in der Datei auffindbar:', keyLeak)
 if (keyLeak) fail('API-Schluessel wurde ungefragt gespeichert')
 console.log('16) Dialekt in der Datei hinterlegt:', klartextSrc.includes('max_completion_tokens'))
 if (!klartextSrc.includes('max_completion_tokens')) fail('Dialekt wurde nicht mitgespeichert')
-const settingsKept =
-  klartextSrc.includes('mock-model') && klartextSrc.includes('127.0.0.1:8899')
+const settingsKept = klartextSrc.includes('mock-model') && klartextSrc.includes(mockBase)
 console.log('    Endpunkt und Modell mitgespeichert:', settingsKept)
 if (!settingsKept) fail('Einstellungen wurden nicht mitgespeichert')
 
@@ -1493,17 +1497,10 @@ await page14.emulateMedia({ media: 'screen' })
  * test/multi-entity.mjs. Die Browser-Uhr wird auf einen festen Montag
  * gestellt, sonst haengt "diese Woche" vom Tag des Testlaufs ab.
  */
-const dueOutDir = resolve(root, 'dist-due-date')
+const dueOutDir = resolve(root, 'dist-due-date' + pidSuffix)
 const dueDist = resolve(dueOutDir, 'index.html')
-const domainPath = resolve(root, 'src/domain.js')
 const dueDomainFixture = resolve(root, 'test/fixtures/due-date.domain.js')
-const originalDomainForDue = readFileSync(domainPath, 'utf8')
-writeFileSync(domainPath, readFileSync(dueDomainFixture, 'utf8'))
-try {
-  execFileSync('npx', ['vite', 'build', '--outDir', 'dist-due-date'], { cwd: root, stdio: 'pipe' })
-} finally {
-  writeFileSync(domainPath, originalDomainForDue)
-}
+buildWithDomain(dueDomainFixture, 'dist-due-date' + pidSuffix)
 console.log('36a) Faelligkeiten-Build erzeugt:', dueDist)
 
 // Eigener Browser-Context statt der gemeinsamen `ctx`: clock.install() friert
@@ -1552,16 +1549,10 @@ rmSync(dueOutDir, { recursive: true, force: true })
  * 6 Datensaetze, davon 5 offen; Summe 26.5; Mittelwert 26.5/6 = 4.416.. -> 4.42;
  * offen: Summe 20.5, Mittelwert 20.5/5 = 4.1 -> "4.10" (zwei Nachkommastellen).
  */
-const metricsOutDir = resolve(root, 'dist-metrics')
+const metricsOutDir = resolve(root, 'dist-metrics' + pidSuffix)
 const metricsDist = resolve(metricsOutDir, 'index.html')
 const metricsFixture = resolve(root, 'test/fixtures/metrics.domain.js')
-const originalDomainForMetrics = readFileSync(domainPath, 'utf8')
-writeFileSync(domainPath, readFileSync(metricsFixture, 'utf8'))
-try {
-  execFileSync('npx', ['vite', 'build', '--outDir', 'dist-metrics'], { cwd: root, stdio: 'pipe' })
-} finally {
-  writeFileSync(domainPath, originalDomainForMetrics)
-}
+buildWithDomain(metricsFixture, 'dist-metrics' + pidSuffix)
 console.log('36e) Kennzahlen-Build erzeugt:', metricsDist)
 
 const metricsCtx = await browser.newContext({ viewport: { width: 1280, height: 850 } })
@@ -1640,14 +1631,9 @@ rmSync(metricsOutDir, { recursive: true, force: true })
  * Summe ueber ein Textfeld, avg ohne Feld. Die gueltige Deklaration muss daneben
  * weiterlaufen, und das Werkzeug selbst bleibt bedienbar.
  */
-const invalidOutDir = resolve(root, 'dist-metrics-invalid')
+const invalidOutDir = resolve(root, 'dist-metrics-invalid' + pidSuffix)
 const invalidDist = resolve(invalidOutDir, 'index.html')
-writeFileSync(domainPath, readFileSync(resolve(root, 'test/fixtures/metrics-invalid.domain.js'), 'utf8'))
-try {
-  execFileSync('npx', ['vite', 'build', '--outDir', 'dist-metrics-invalid'], { cwd: root, stdio: 'pipe' })
-} finally {
-  writeFileSync(domainPath, originalDomainForMetrics)
-}
+buildWithDomain(resolve(root, 'test/fixtures/metrics-invalid.domain.js'), 'dist-metrics-invalid' + pidSuffix)
 console.log('36j) Build mit ungueltigen Deklarationen erzeugt:', invalidDist)
 
 const invalidCtx = await browser.newContext({ viewport: { width: 1280, height: 850 } })

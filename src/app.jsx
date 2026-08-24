@@ -908,8 +908,9 @@ function Workbench({
 
   /**
    * Sammel-Löschen nach bestätigter Rückfrage. Referenzgeschützte
-   * Datensätze werden vorher aussortiert und benannt - sie würden von
-   * applyActions ohnehin gelöscht, denn der Schutz lebt im Formular.
+   * Datensätze werden vorher aussortiert und benannt - applyActions
+   * würde sie ebenfalls zurückweisen, aber je Datensatz einzeln;
+   * das Vorsortieren hält die Meldung auf einen Schlag.
    */
   const runBulkDelete = () => {
     const ids = selectedVisible.map((r) => r[schema.idField])
