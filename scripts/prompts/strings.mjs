@@ -77,6 +77,17 @@ const L = {
     tileDonut: 'A ring per value of `%s`',
     tileFiltered: ' (only records matching a filter)',
     measureCount: 'the record count',
+    metrics: 'Metric tiles',
+    metricsIntro:
+      'Declared on this entity from a closed catalog — count, sum and average over numeric fields. ' +
+      'Computed at render time, never stored.',
+    metricCount: 'the number of records',
+    metricSum: 'the sum of %s',
+    metricAvg: 'the average of %s',
+    metricsNote:
+      'The framework formats averages with two decimals in the interface language’s decimal ' +
+      'notation, rejects invalid declarations by name when the file loads instead of hiding them, ' +
+      'and a tile click jumps to that entity’s list — unfiltered in this version.',
     wizard: 'Guided entry',
     wizardIntro:
       'A short sequence of steps for someone who has to report one thing and does not know the tool. ' +
@@ -195,6 +206,17 @@ const L = {
     tileDonut: 'Ein Ring je Ausprägung von `%s`',
     tileFiltered: ' (nur Datensätze, die einem Filter entsprechen)',
     measureCount: 'der Anzahl',
+    metrics: 'Kennzahl-Kacheln',
+    metricsIntro:
+      'An dieser Entität aus einem geschlossenen Katalog deklariert — count, Summe und Mittelwert ' +
+      'über Zahlenfelder. Gerechnet beim Rendern, nie gespeichert.',
+    metricCount: 'die Anzahl der Datensätze',
+    metricSum: 'die Summe von %s',
+    metricAvg: 'der Mittelwert von %s',
+    metricsNote:
+      'Das Framework formatiert Mittelwerte mit zwei Nachkommastellen im Dezimalzeichen der ' +
+      'Oberflächensprache, weist ungültige Deklarationen beim Laden benannt zurück, statt sie still ' +
+      'zu verbergen, und ein Klick auf eine Kachel springt ungefiltert zur Liste dieser Entität.',
     wizard: 'Geführte Erfassung',
     wizardIntro:
       'Eine kurze Schrittfolge für jemanden, der eine Sache melden soll und das Werkzeug nicht ' +
@@ -321,6 +343,17 @@ L.es = {
   tileDonut: 'Un anillo por valor de `%s`',
   tileFiltered: ' (solo registros que cumplen un filtro)',
   measureCount: 'el número de registros',
+  metrics: 'Métricas',
+  metricsIntro:
+    'Declaradas en esta entidad a partir de un catálogo cerrado: recuento, suma y promedio sobre ' +
+    'campos numéricos. Se calculan al renderizar y nunca se almacenan.',
+  metricCount: 'el número de registros',
+  metricSum: 'la suma de %s',
+  metricAvg: 'el promedio de %s',
+  metricsNote:
+    'El framework formatea los promedios con dos decimales en la notación decimal del idioma de la ' +
+    'interfaz, rechaza las declaraciones inválidas nombrándolas al cargar en lugar de ocultarlas, y ' +
+    'un clic en una tarjeta salta a la lista de esa entidad, sin filtrar en esta versión.',
   wizard: 'Captura guiada',
   wizardIntro:
     'Una secuencia breve de pasos para quien tiene que reportar una cosa y no conoce la ' +
@@ -441,6 +474,17 @@ L.fr = {
   tileDonut: 'Un anneau par valeur de `%s`',
   tileFiltered: ' (uniquement les enregistrements correspondant à un filtre)',
   measureCount: 'le nombre d’enregistrements',
+  metrics: 'Mesures',
+  metricsIntro:
+    'Déclarées sur cette entité à partir d’un catalogue fermé : comptage, somme et moyenne sur ' +
+    'des champs numériques. Calculées au rendu, jamais stockées.',
+  metricCount: 'le nombre d’enregistrements',
+  metricSum: 'la somme de %s',
+  metricAvg: 'la moyenne de %s',
+  metricsNote:
+    'Le cadre formate les moyennes avec deux décimales dans la notation décimale de la langue de ' +
+    'l’interface, rejette les déclarations invalides en les nommant au chargement au lieu de les ' +
+    'masquer, et un clic sur une tuile mène à la liste de cette entité, sans filtre dans cette version.',
   wizard: 'Saisie guidée',
   wizardIntro:
     'Une courte séquence d’étapes pour quelqu’un qui doit signaler une chose et ne connaît pas ' +
@@ -562,6 +606,17 @@ L.pt = {
   tileDonut: 'Um anel por valor de `%s`',
   tileFiltered: ' (apenas registros que atendem a um filtro)',
   measureCount: 'a quantidade de registros',
+  metrics: 'Medidas',
+  metricsIntro:
+    'Declaradas nesta entidade a partir de um catálogo fechado: contagem, soma e média sobre ' +
+    'campos numéricos. Calculadas ao renderizar, nunca armazenadas.',
+  metricCount: 'a quantidade de registros',
+  metricSum: 'a soma de %s',
+  metricAvg: 'a média de %s',
+  metricsNote:
+    'O framework formata médias com duas casas decimais na notação decimal do idioma da interface, ' +
+    'rejeita declarações inválidas nomeando-as ao carregar em vez de escondê-las, e um clique numa ' +
+    'medida leva à lista dessa entidade, sem filtro nesta versão.',
   wizard: 'Captura guiada',
   wizardIntro:
     'Uma sequência curta de passos para quem precisa relatar uma coisa e não conhece a ferramenta. ' +
@@ -673,6 +728,13 @@ L.zh = {
   tileDonut: '按 `%s` 的取值分组的环形图',
   tileFiltered: '（仅符合筛选条件的记录）',
   measureCount: '记录条数',
+  metrics: '指标卡片',
+  metricsIntro: '在该实体上从封闭目录声明——记录条数、数值字段的求和与平均值。渲染时计算，绝不存储。',
+  metricCount: '记录条数',
+  metricSum: '%s 之和',
+  metricAvg: '%s 的平均值',
+  metricsNote:
+    '框架以两位小数、按界面语言的小数符号格式化平均值；加载时点名拒绝无效声明，而非静默隐藏；点击卡片会跳转到该实体的列表，本版本中不带筛选。',
   wizard: '引导式录入',
   wizardIntro:
     '给「只需报告一件事、并不熟悉这个工具」的人用的一串短步骤。在最后一步确认之前不写入任何数据 —— ' +
@@ -784,6 +846,13 @@ L.ja = {
   tileDonut: '`%s` の値ごとのドーナツ',
   tileFiltered: '（フィルタに一致するレコードのみ）',
   measureCount: '件数',
+  metrics: '指標タイル',
+  metricsIntro: 'このエンティティに閉じたカタログから宣言します——件数、数値フィールドの合計と平均。描画時に計算され、保存されません。',
+  metricCount: '件数',
+  metricSum: '%s の合計',
+  metricAvg: '%s の平均',
+  metricsNote:
+    'フレームワークは平均を小数点以下2桁で、インターフェース言語の小数記号により書式化し、無効な宣言は黙って隠さず読み込み時に名前付きで拒否します。タイルをクリックすると、このバージョンでは絞り込みなしでそのエンティティのリストに移動します。',
   wizard: 'ガイド付き入力',
   wizardIntro:
     '1 件だけ報告すればよく、ツールに不慣れな人のための短い手順です。最後の手順を確定するまで何も' +
