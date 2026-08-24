@@ -2715,6 +2715,45 @@ const jsonRow = await page31.locator('tr:has-text("From clean JSON")').innerText
 if (!/\b4\b/.test(jsonRow)) fail('Der Aufwand wurde nicht in eine Zahl ueberfuehrt')
 await page31.close()
 
+/*
+ * Zahlzelle mit gespeicherter 0 (OPEN-79): eigener Build mit
+ * test/fixtures/number-zero.domain.js, deren Seed die beiden Grenzfaelle
+ * nebeneinanderstellt - 0 als echte Antwort und ein tatsaechlich leeres Feld.
+ * Die Zelle muss die 0 zeigen; nur null/undefined/'' duerfen den Platzhalter
+ * bringen. Berechnete Felder sind hier bewusst nicht dabei - sie pruefen
+ * bereits auf explizite Leerwerte.
+ */
+const zeroOutDir = resolve(root, 'dist-number-zero' + pidSuffix)
+const zeroDist = resolve(zeroOutDir, 'index.html')
+buildWithDomain(resolve(root, 'test/fixtures/number-zero.domain.js'), 'dist-number-zero' + pidSuffix)
+console.log('100) Zahlzellen-Build erzeugt:', zeroDist)
+
+const zeroCtx = await browser.newContext({ viewport: { width: 1280, height: 850 } })
+const pageZero = await zeroCtx.newPage()
+pageZero.on('pageerror', (e) => errors.push(String(e)))
+pageZero.on('console', (m) => m.type() === 'error' && errors.push(m.text()))
+await openList(pageZero, zeroDist)
+
+const zeroCell = await pageZero.locator('tr:has-text("Zero budget") td.cell-num').innerText()
+console.log('101) Gespeicherte 0 in der Liste:', JSON.stringify(zeroCell))
+if (zeroCell !== '0') fail('Die Zahlzelle zeigt eine gespeicherte 0 nicht als "0" an')
+
+const emptyCell = await pageZero.locator('tr:has-text("No amount yet") td.cell-num').innerText()
+console.log('102) Leere Zahlzelle:', JSON.stringify(emptyCell))
+if (emptyCell !== '—') fail('Eine leere Zahlzelle soll weiter den Platzhalter zeigen')
+
+// Und das Formular erzählt dieselbe Wahrheit: die 0 steht drin, statt als
+// leer zu erscheinen.
+await pageZero.locator('tr:has-text("Zero budget") .cell-id').click()
+await pageZero.waitForSelector('.drawer')
+const zeroInForm = await pageZero.locator('#f-amount').inputValue()
+console.log('103) 0 im Formular:', JSON.stringify(zeroInForm))
+if (zeroInForm !== '0') fail('Das Formular verliert die gespeicherte 0')
+await pageZero.keyboard.press('Escape')
+
+await zeroCtx.close()
+rmSync(zeroOutDir, { recursive: true, force: true })
+
 // Vorschau im hellen Modus
 await page3.getByLabel('Settings').click()
 await page3.waitForSelector('.settings')
