@@ -48,7 +48,7 @@ s'impriment en un PDF propre.
 
 ## Ce que vous obtenez
 
-- **Un fichier.** Environ 160 Ko, autonome. Double-clic, il fonctionne. Débranchez le réseau, il
+- **Un fichier.** Environ 240 Ko, autonome. Double-clic, il fonctionne. Débranchez le réseau, il
   fonctionne toujours — la seule chose qui lui manquerait est le [compteur d'ouvertures](#le-compteur-douvertures),
   à un interrupteur visible de l'arrêt.
 - **Le fichier est la base de données.** L'enregistrement écrit un nouveau HTML contenant les

@@ -46,7 +46,7 @@ son anchuras CSS y el anillo es un único círculo SVG. Ambas vistas se imprimen
 
 ## Qué incluye
 
-- **Un archivo.** Unos 160 KB, autocontenido. Doble clic y funciona. Desconecta el cable de red y
+- **Un archivo.** Unos 240 KB, autocontenido. Doble clic y funciona. Desconecta el cable de red y
   sigue funcionando; lo único que echaría en falta es el [contador de aperturas](#el-contador-de-aperturas),
   y está a un interruptor visible de quedar apagado.
 - **El archivo es la base de datos.** Guardar escribe un nuevo HTML con los registros incrustados.

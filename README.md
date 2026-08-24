@@ -98,7 +98,7 @@ dashboard · CSV import · change log · version numbers.**
 
 ## What you get
 
-- **One file.** ~90 KB, self-contained. Double-click, it runs. Pull the network cable, it still runs
+- **One file.** ~240 KB, self-contained. Double-click, it runs. Pull the network cable, it still runs
   — the only thing it would miss is the [usage counter](#the-usage-counter), which is one visible
   setting away from off.
 - **The file is the database.** Save writes a new HTML file with the records embedded. No backend,
@@ -216,8 +216,8 @@ zero is usually a real answer.
 
 That schema alone produces the table columns, the edit form, the sidebar filters, the CSV export,
 the instructions sent to the AI model and the validation of anything the model proposes back.
-`examples/` holds **seven complete domains**, each published as a
-[live demo](https://m-dohmen.github.io/openToolbox/demos/). Copy the closest one over
+`examples/` holds **eight complete domains**, six of them published as
+[live demos](https://m-dohmen.github.io/openToolbox/demos/). Copy the closest one over
 `src/domain.js` and rebuild to watch the entire app change — that is usually faster than writing a
 schema from a blank file. `risk-register.domain.js` is the plainest starting point.
 
@@ -859,7 +859,7 @@ src/settings.jsx       settings page
 src/dashboard.jsx      dashboard tiles (stat, bar, donut) — no charting library
 src/hint.jsx           the example-prompt boxes
 plugin/                installable skill for Claude Code and Codex (see plugin/README.md)
-examples/              seven complete domains, ready to copy over src/domain.js
+examples/              eight complete domains, ready to copy over src/domain.js
 docs/demos/            the built demos, committed so they can be linked and downloaded
 scripts/demos.mjs      the demo list: example, colours, start page, blurb
 scripts/build-demo.mjs builds every entry of that list into docs/demos/<slug>/

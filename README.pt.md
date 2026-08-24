@@ -46,7 +46,7 @@ larguras em CSS e o anel é um único círculo SVG. As duas visões imprimem com
 
 ## O que você recebe
 
-- **Um arquivo.** Cerca de 160 KB, autossuficiente. Duplo clique e funciona. Tire o cabo de rede e
+- **Um arquivo.** Cerca de 240 KB, autossuficiente. Duplo clique e funciona. Tire o cabo de rede e
   continua funcionando — a única coisa que faltaria é o [contador de aberturas](#o-contador-de-aberturas),
   e ele está a um interruptor visível de ser desligado.
 - **O arquivo é o banco de dados.** Salvar grava um novo HTML com os registros embutidos. Sem
