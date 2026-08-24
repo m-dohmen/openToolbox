@@ -100,6 +100,9 @@ s'impriment en un PDF propre.
   les valeurs sont reprises, le titre reçoit le suffixe localisé et la copie obtient son propre
   identifiant ; même chemin qu'une saisie manuelle — annulation, journal des modifications,
   écriture uniquement à l'enregistrement.
+- **Entretien en masse avec sélection multiple** : ligne par ligne, par plage avec Maj+clic ou
+  toutes les lignes visibles d'un coup ; barre d'actions pour fixer une valeur d'énumération ou
+  supprimer avec confirmation comptée — une entrée de journal et un Ctrl+Z par action.
 
 ## Démarrage rapide
 

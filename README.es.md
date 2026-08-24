@@ -94,6 +94,9 @@ son anchuras CSS y el anillo es un único círculo SVG. Ambas vistas se imprimen
   se copian, el título recibe el sufijo localizado y la copia obtiene su propio identificador; pasa
   por el mismo camino que un registro manual — deshacer, registro de cambios y escritura solo al
   guardar.
+- **Mantenimiento masivo con selección múltiple**: por fila, por rango con Mayús+clic o todas las
+  filas visibles de una vez; barra de acciones para fijar un valor de enumeración o borrar con
+  confirmación contada — una entrada en el registro y un Ctrl+Z por acción.
 
 ## Inicio rápido
 

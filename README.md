@@ -151,6 +151,9 @@ dashboard · CSV import · change log · version numbers.**
 - **Duplicating a record** from the table row or the open form — every value carried over, the
   title suffixed `(Copy)`, an own identifier for the copy, and the same write path as a manual
   entry: undo stack and change log included — see [Duplicating a record](#duplicating-a-record).
+- **Bulk editing with multi-select** — row by row, by range with Shift-click, or all visible rows at
+  once — and an action bar that sets an enum value or deletes with a counted confirmation; one log
+  entry and one Ctrl+Z per action — see [Mass editing](#mass-editing).
 
 ## Quick start
 
@@ -790,6 +793,47 @@ not clear it and reopening the file does not bring it back — that is a deliber
 a slip *within the current session*, it is not a version history of the file. Typing in a text field
 still gets the browser's own undo for that field; the shortcut only takes over once focus is outside
 one, so the two never fight over the same keystroke.
+
+## Mass editing
+
+Thirty action items to close, a batch of stale contacts to remove, one status for a whole risk
+group — this is what the selection column in every table is for. Tick rows one by one, **Shift-click**
+for a range starting at the last ticked row, or use the header checkbox to take all **visible** rows
+in one go (and again to release them). While only part of the page is selected, the header box shows
+its mixed state.
+
+![Bulk selection and the action bar](docs/screenshots/bulk.png)
+
+One frame with the whole mechanism at work: three rows selected — one click, then a Shift-click
+that takes the row in between — the tinted rows showing what the next action will hit, and above
+the table the bar with the count, the field and value dropdowns for the enum, and the three
+actions.
+
+Select-all means exactly what it says, on purpose: the visible page, not every match hiding behind
+the filter. A mass change must not reach rows nobody is looking at — and whoever narrows the list
+with a [filter](#searching-and-filtering) narrows the target of the next bulk action with it.
+Sorting leaves the selection alone: it reorders ids, it does not drop them. The selection itself
+lives in the session only — switching to another entity tab clears it, and a reload starts clean
+(deliberately without `localStorage`, see [How persistence works](#how-persistence-works)).
+
+As soon as anything is selected, an action bar appears above the table — "N selected" — with three
+actions:
+
+- **Set value** works on enum fields and is offered only when the entity has one; with several enum
+  fields a field dropdown comes first, with exactly one it goes straight to that field's values.
+  Records that already carry the target value are left out rather than counted as changed.
+- **Delete selected** always asks first, naming the count. From 50 records up the count has to be
+  typed back in — at that scale a single mouse click is not confirmation enough. Records still
+  referenced from elsewhere are kept out of the deletion and named instead: reference protection
+  (see [Multiple entities and relationships](#multiple-entities-and-relationships)) applies here
+  like anywhere else. Cancelling the prompt changes nothing and keeps the selection.
+- **Clear selection**.
+
+Every bulk action runs through the same write path as a single edit — type checks, schema rules and
+objections included. A rule-violating record among the selected ones is skipped and named while its
+neighbours are set normally. The whole action lands as **one entry** in the change log (see
+[Version numbers and change log](#version-numbers-and-change-log)) and comes back with **one
+Ctrl+Z** — thirty corrections are one step of history, not thirty.
 
 ## Limits worth knowing
 
