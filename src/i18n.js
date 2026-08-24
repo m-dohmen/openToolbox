@@ -81,9 +81,28 @@ const STRINGS = {
     'drawer.edit': (singular) => `Edit ${singular}`,
     'drawer.delete': 'Delete',
     'drawer.confirmDelete': 'Confirm delete',
+    'drawer.duplicate': 'Duplicate',
+    'drawer.duplicateSuffix': (title) => `${title} (Copy)`,
     'drawer.ariaLabel': 'Edit record',
     'drawer.blockedByReferences': (refs) =>
       `Can't delete — still referenced by: ${refs}.`,
+
+    'bulk.selected': (n) => `${n} selected`,
+    'bulk.selectAll': 'Select all visible rows',
+    'bulk.selectRow': (title) => `Select "${title}"`,
+    'bulk.field': 'Field',
+    'bulk.setValue': 'Set value',
+    'bulk.delete': 'Delete selected',
+    'bulk.clear': 'Clear selection',
+    'bulk.confirmTitle': 'Delete selected records?',
+    'bulk.confirmBody': (n) =>
+      `${n} ${plural(n, 'record', 'records')} will be removed from the working set. ` +
+      `One Ctrl+Z brings them back in this session.`,
+    'bulk.typeToConfirm': (n) => `Type ${n} to confirm.`,
+    'bulk.confirmDelete': 'Delete',
+    'bulk.blockedRefs': (n) =>
+      `${n} ${plural(n, 'record', 'records')} kept — still referenced by other records.`,
+
     'entities.tabsLabel': 'Entities',
     'view.list': 'List',
     'view.dashboard': 'Dashboard',
@@ -165,6 +184,11 @@ const STRINGS = {
     'toast.configAppliedPlain': 'Configuration applied — not saved yet.',
     'toast.importCancelled': (msg) => `Import cancelled: ${msg}`,
     'toast.recordsImported': (n) => `${n} ${plural(n, 'record', 'records')} imported.`,
+    'toast.bulkUpdated': (n) => `${n} ${plural(n, 'record', 'records')} updated.`,
+    'toast.bulkSkipped': (n, reason) => `${n} not changed: ${reason}`,
+    'toast.bulkDeleted': (n) => `${n} ${plural(n, 'record', 'records')} deleted.`,
+    'toast.bulkDeletedBlocked': (deleted, kept) =>
+      `${deleted} deleted, ${kept} kept — still referenced by other records.`,
     'toast.encryptionRemoved': 'Encryption removed — the next save writes plain text.',
     'toast.aiDisabled': 'AI integration switched off. The app is fully local again.',
     'toast.passphraseSet': 'Passphrase set — save now.',
@@ -681,9 +705,27 @@ const STRINGS = {
     'drawer.edit': (singular) => `Bearbeiten: ${singular}`,
     'drawer.delete': 'Löschen',
     'drawer.confirmDelete': 'Löschen bestätigen',
+    'drawer.duplicate': 'Duplizieren',
+    'drawer.duplicateSuffix': (title) => `${title} (Kopie)`,
     'drawer.ariaLabel': 'Datensatz bearbeiten',
     'drawer.blockedByReferences': (refs) =>
       `Löschen nicht möglich — wird noch referenziert von: ${refs}.`,
+
+    'bulk.selected': (n) => `${n} ausgewählt`,
+    'bulk.selectAll': 'Alle sichtbaren Zeilen auswählen',
+    'bulk.selectRow': (title) => `„${title}“ auswählen`,
+    'bulk.field': 'Feld',
+    'bulk.setValue': 'Wert setzen',
+    'bulk.delete': 'Ausgewählte löschen',
+    'bulk.clear': 'Auswahl aufheben',
+    'bulk.confirmTitle': 'Ausgewählte Datensätze löschen?',
+    'bulk.confirmBody': (n) =>
+      `${n} Datensätze werden aus dem Datenbestand entfernt. ` +
+      `Ein Strg+Z stellt in dieser Sitzung alles wieder her.`,
+    'bulk.typeToConfirm': (n) => `Zur Bestätigung die Anzahl ${n} eingeben.`,
+    'bulk.confirmDelete': 'Löschen',
+    'bulk.blockedRefs': (n) => `${n} Datensätze behalten — sie werden noch referenziert.`,
+
     'entities.tabsLabel': 'Entitäten',
     'view.list': 'Liste',
     'view.dashboard': 'Dashboard',
@@ -765,6 +807,11 @@ const STRINGS = {
     'toast.configAppliedPlain': 'Konfiguration angewandt — noch nicht gespeichert.',
     'toast.importCancelled': (msg) => `Import abgebrochen: ${msg}`,
     'toast.recordsImported': (n) => `${n} ${plural(n, 'Datensatz', 'Datensätze')} importiert.`,
+    'toast.bulkUpdated': (n) => `${n} Datensätze aktualisiert.`,
+    'toast.bulkSkipped': (n, reason) => `${n} nicht geändert: ${reason}`,
+    'toast.bulkDeleted': (n) => `${n} Datensätze gelöscht.`,
+    'toast.bulkDeletedBlocked': (deleted, kept) =>
+      `${deleted} gelöscht, ${kept} behalten — wird noch referenziert.`,
     'toast.encryptionRemoved': 'Verschlüsselung entfernt — nächstes Speichern schreibt Klartext.',
     'toast.aiDisabled': 'KI-Integration ausgeschaltet. Die Anwendung ist wieder vollständig lokal.',
     'toast.passphraseSet': 'Passphrase gesetzt — jetzt speichern.',

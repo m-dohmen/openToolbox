@@ -80,6 +80,18 @@ await page.locator('.chips--filters .chip button').last().click()
 await page.locator('.globalsearch .search').fill('')
 await page.waitForTimeout(200)
 
+/* Mehrfachauswahl und Aktionsleiste in einem Bild: der erste Haken setzt den
+   Anker, der Umschalt-Klick auf die dritte Zeile nimmt die dazwischen mit.
+   Zaehler, Feld- und Wert-Auswahl und die drei Knöpfe sind der Punkt des
+   Bildes; die getoenten Zeilen zeigen, worauf die naechste Aktion zielt. */
+await page.locator('table tbody tr').nth(0).locator('.td-check input').click()
+await page.locator('table tbody tr').nth(2).locator('.td-check input').click({ modifiers: ['Shift'] })
+await page.waitForSelector('.bulk-bar')
+await page.waitForTimeout(250)
+await shot(page, 'bulk')
+await page.getByRole('button', { name: 'Clear selection' }).click()
+await page.waitForTimeout(150)
+
 await page.getByRole('tab', { name: 'Dashboard' }).click()
 await page.waitForSelector('.dashboard')
 await page.waitForTimeout(250)

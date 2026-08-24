@@ -509,6 +509,61 @@ console.log('1c) Berechnetes Feld im Formular als:', computedControl)
 if (computedControl !== 'OUTPUT') fail('Berechnetes Feld ist im Formular beschreibbar')
 await page.keyboard.press('Escape')
 
+/*
+ * Sortierung (OPEN-18): Dreiklang auf/ab/Zurück am Spaltenkopf, Zahlen
+ * numerisch statt wortweise. Der dritte Klick auf denselben Kopf stellt die
+ * Datenblock-Reihenfolge wieder her - der Pfeil verschwindet, aria-sort mit.
+ */
+const headD = page.getByRole('columnheader', { name: /^D\b/ })
+const effortCells = () =>
+  page
+    .locator('td.cell-num:not(.cell-computed)')
+    .allInnerTexts()
+    .then((t) => t.join())
+await headD.click()
+const effortAsc = await effortCells()
+console.log('1d) Aufwand nach 1. Klick:', effortAsc, '| aria-sort:', await headD.getAttribute('aria-sort'))
+if (effortAsc !== '1,2,3,4,5,6,8,10,12,16,20') fail('Aufwand nicht numerisch aufsteigend (10 hinter 9) sortiert')
+if ((await headD.getAttribute('aria-sort')) !== 'ascending') fail('Erster Klick muss aufsteigend sortieren')
+await headD.click()
+const effortDesc = await effortCells()
+console.log('    Nach 2. Klick:', effortDesc, '| aria-sort:', await headD.getAttribute('aria-sort'))
+if (effortDesc !== '20,16,12,10,8,6,5,4,3,2,1') fail('Zweiter Klick muss absteigend sortieren')
+if ((await headD.getAttribute('aria-sort')) !== 'descending') fail('aria-sort meldet nicht absteigend')
+await headD.click()
+const dataOrder = await page.locator('td.cell-id').allInnerTexts()
+console.log('1e) Nach 3. Klick zurück auf Datenblock-Reihenfolge:', dataOrder.join(','), '| aria-sort:', await headD.getAttribute('aria-sort'))
+if (dataOrder.join() !== Array.from({ length: 11 }, (_, i) => 'A-' + (1041 + i)).join()) {
+  fail('Dritter Klick hat nicht zur Datenblock-Reihenfolge zurückgestellt')
+}
+if ((await headD.getAttribute('aria-sort')) !== null) fail('Nach dem dritten Klick darf kein Sortierindikator bleiben')
+
+// Datumschronologie: der Kopf sortiert nach dem ISO-Wert, nicht nach der
+// angezeigten Schreibweise.
+const headDue = page.getByRole('columnheader', { name: /^Due/ })
+await headDue.click()
+const dueSequence = (await page.locator('td.cell-date').allInnerTexts()).map((t) => {
+  const [m, d, y] = t.split('/')
+  return `${y}-${m}-${d}`
+})
+const dueAscending = dueSequence.every((s, i, a) => i === 0 || a[i - 1] <= s)
+console.log('1f) Fälligkeit chronologisch:', dueSequence.join(' '), '| aufsteigend:', dueAscending)
+if (!dueAscending) fail('Datums-Sortierung folgt nicht der Chronologie')
+
+// Leerwerte stehen in BEIDEN Richtungen unten - die erledigten Punkte ohne
+// Restlaufzeit dürfen nie über den befüllten Werten liegen.
+const headLeft = page.getByRole('columnheader', { name: /^Left/ })
+await headLeft.click()
+const leftAsc = await page.locator('td.cell-computed').allInnerTexts()
+await headLeft.click()
+const leftDesc = await page.locator('td.cell-computed').allInnerTexts()
+const blanksAtBottom = (cells) => cells.slice(-2).every((t) => t === '—')
+console.log('1g) Restlaufzeit absteigend:', leftDesc.join(' '), '| Leerwerte unten:',
+  blanksAtBottom(leftAsc), '/', blanksAtBottom(leftDesc))
+if (!blanksAtBottom(leftAsc)) fail('Leerwerte liegen bei aufsteigender Sortierung nicht unten')
+if (!blanksAtBottom(leftDesc)) fail('Leerwerte rutschen bei absteigender Sortierung nach oben')
+await headLeft.click()
+
 // Neuen Datensatz anlegen
 await page.getByRole('button', { name: 'New action item' }).first().click()
 await page.locator('#f-title').fill('Smoke test entry')
@@ -600,6 +655,230 @@ const redoneRow = await page.locator('tr:has-text("Smoke test entry")').innerTex
 console.log('    Editieren wiederholt — Zeile:', redoneRow.replace(/\s+/g, ' '))
 if (!redoneRow.includes('New owner after undo')) fail('Wiederholen hat den neuen Feldwert nicht zurueckgebracht')
 
+/*
+ * Mehrfachauswahl und Sammelaktionen (OPEN-19). Der Zustandsstand wird je
+ * Schritt ueber die Id-Zelle eingesammelt, nicht ueber die Position - die
+ * Reihenfolge in der Tabelle haengt an der laufenden Sortierung, eine Id nicht.
+ */
+const statusMap = async () =>
+  Object.fromEntries(
+    await Promise.all(
+      (await page.locator('table tbody tr').all()).map(async (tr) => [
+        (await tr.locator('.cell-id').innerText()).trim(),
+        (await tr.locator('.pill').innerText()).trim(),
+      ]),
+    ),
+  )
+const bulkCounter = () => page.locator('.bulk-bar__count').innerText()
+
+// Ohne Auswahl gibt es keine Aktionsleiste - sie blendet sich zu.
+if (await page.locator('.bulk-bar').count()) {
+  fail('Aktionsleiste steht, ohne dass etwas ausgewaehlt ist')
+}
+
+// 2h) Bereichsauswahl: erster Klick setzt den Anker, Umschalt-Klick den Bereich.
+const rowCheck = (i) => page.locator('table tbody tr').nth(i).locator('.td-check input')
+await rowCheck(0).click()
+let bulkShown = await bulkCounter()
+console.log('2h) Erste Auswahl:', bulkShown)
+if (!bulkShown.startsWith('1')) fail('Zaehler zeigt nach dem ersten Klick nicht 1')
+
+await rowCheck(3).click({ modifiers: ['Shift'] })
+bulkShown = await bulkCounter()
+console.log('    Umschalt-Klick auf Zeile 4:', bulkShown)
+if (!bulkShown.startsWith('4')) fail('Bereichsauswahl hat nicht genau die Zeilen 1 bis 4 erfasst')
+
+const headCheck = page.locator('.th-check input')
+if (!(await headCheck.evaluate((el) => el.indeterminate))) {
+  fail('Kopfkontrollkaestchen zeigt bei Teilauswahl keinen unbestimmten Zustand')
+}
+
+// Alles-auswählen trifft genau die sichtbare Seite, derselbe Schalter hebt ab.
+await headCheck.click()
+const visibleCount = await page.locator('table tbody tr').count()
+bulkShown = await bulkCounter()
+console.log(`    Alles auswaehlen (${visibleCount} sichtbar):`, bulkShown)
+if (!bulkShown.startsWith(String(visibleCount))) fail('Alles-auswaehlen hat nicht alle sichtbaren Zeilen erfasst')
+await headCheck.click()
+if (await page.locator('.bulk-bar').count()) fail('Auswahl aufheben ueber den Kopf hat nicht geleert')
+
+// 2i) Sammelaktion: Wert setzen. EIN Strg+Z stellt alle vorherigen Werte her.
+const SET_ROWS = ['Review interface error returns', 'Start Q3 access recertification']
+for (const title of SET_ROWS) {
+  await page.locator(`tr:has-text("${title}") .td-check input`).click()
+}
+const beforeBulk = await statusMap()
+await page.locator('.bulk-bar select').nth(0).selectOption({ label: 'Status' })
+await page.locator('.bulk-bar select').nth(1).selectOption('done')
+await page.getByRole('button', { name: 'Set value' }).click()
+await page.waitForSelector('.toast')
+const bulkToast = await page.locator('.toast').innerText()
+console.log('2i) Sammelaktion:', bulkToast)
+if (!/^2 /.test(bulkToast)) fail('Sammelaktion meldet nicht genau 2 aktualisierte Datensaetze')
+for (const title of SET_ROWS) {
+  const pill = (await page.locator(`tr:has-text("${title}") .pill`).innerText()).trim()
+  if (pill !== 'done') fail(`"${title}" wurde nicht auf done gesetzt`)
+}
+await page.keyboard.press('Control+z')
+const restoredBulk = await statusMap()
+console.log(
+  '    Nach einem Strg+Z identisch zum Ausgangsstand:',
+  JSON.stringify(restoredBulk) === JSON.stringify(beforeBulk),
+)
+if (JSON.stringify(restoredBulk) !== JSON.stringify(beforeBulk)) {
+  fail('Ein Strg+Z hat die Sammelaktion nicht vollstaendig rueckgaengig gemacht')
+}
+
+// 2j) Abbruch der Rueckfrage: Daten unangetastet, Auswahl bleibt stehen.
+await page.locator(`tr:has-text("${SET_ROWS[0]}") .td-check input`).click()
+await page.getByRole('button', { name: 'Delete selected' }).click()
+await page.waitForSelector('.modal')
+const cancelBody = await page.locator('.modal').innerText()
+console.log('2j) Rueckfrage nennt Anzahl:', cancelBody.includes('1 record will be removed'))
+if (!cancelBody.includes('1 record will be removed')) fail('Die Rueckfrage nennt die Anzahl nicht')
+await page.locator('.modal .btn--quiet').click()
+const rowsAfterCancel = await page.locator('table tbody tr').count()
+if (rowsAfterCancel !== 12) fail('Abbruch hat doch etwas geloescht')
+if (!(await page.locator('.bulk-bar').count())) fail('Abbruch hat die Auswahl mit weggeworfen')
+
+// Der dritte Balken-Knopf: Auswahl aufheben.
+await page.getByRole('button', { name: 'Clear selection' }).click()
+if (await page.locator('.bulk-bar').count()) fail('Auswahl aufheben hat nicht geleert')
+
+// 2k) Sammel-Loeschen mit Bestätigung; ein Strg+Z bringt beide zurück.
+const DELETE_TITLES = ['Refresh chapter 4 of the continuity handbook', 'Recalibrate monitoring thresholds']
+const deletedIds = []
+for (const title of DELETE_TITLES) {
+  deletedIds.push((await page.locator(`tr:has-text("${title}") .cell-id`).innerText()).trim())
+  await page.locator(`tr:has-text("${title}") .td-check input`).click()
+}
+await page.getByRole('button', { name: 'Delete selected' }).click()
+await page.waitForSelector('.modal')
+await page.locator('.modal .btn--danger').click()
+await page.waitForSelector('.toast')
+const deleteToast = await page.locator('.toast').innerText()
+const rowsAfterBulkDelete = await page.locator('table tbody tr').count()
+console.log('2k) Sammel-Loeschen:', deleteToast, '| Zeilen:', rowsAfterBulkDelete)
+if (!/^2 /.test(deleteToast)) fail('Loeschmeldung zaehlt nicht genau 2 Datensaetze')
+if (rowsAfterBulkDelete !== 10) fail('Sammel-Loeschen hat nicht genau 2 Zeilen entfernt')
+for (const id of deletedIds) {
+  if (await page.locator(`td.cell-id:text-is("${id}")`).count()) {
+    fail(`Datensatz ${id} wurde nicht geloescht`)
+  }
+}
+await page.keyboard.press('Control+z')
+const rowsAfterUndoBulkDelete = await page.locator('table tbody tr').count()
+const bothBack = await Promise.all(
+  deletedIds.map((id) => page.locator(`td.cell-id:text-is("${id}")`).count()),
+)
+console.log('    Ein Strg+Z danach — Zeilen:', rowsAfterUndoBulkDelete, '| beide zurueck:', bothBack.every((n) => n === 1))
+if (rowsAfterUndoBulkDelete !== 12 || !bothBack.every((n) => n === 1)) {
+  fail('Ein Strg+Z hat das Sammel-Loeschen nicht vollstaendig rueckgaengig gemacht')
+}
+
+// 2l) Schema-Regeln gelten fuer die Sammelaktion genauso: ohne Verantwortlicher
+// kein "in progress" - der Datensatz wird benannt und uebersprungen, der
+// Nachbar daneben wird regulär gesetzt.
+await page.getByRole('button', { name: 'New action item' }).first().click()
+await page.locator('#f-title').fill('Bulk rule probe')
+await page.getByRole('button', { name: 'Apply' }).click()
+await page.locator('tr:has-text("Bulk rule probe") .td-check input').click()
+await page.locator('tr:has-text("Consolidate the process map") .td-check input').click()
+await page.locator('.bulk-bar select').nth(0).selectOption({ label: 'Status' })
+await page.locator('.bulk-bar select').nth(1).selectOption('in progress')
+await page.getByRole('button', { name: 'Set value' }).click()
+await page.waitForSelector('.toast')
+const ruleToast = await page.locator('.toast').innerText()
+console.log('2l) Regel-Beanstandung:', ruleToast)
+if (!ruleToast.includes('1 not changed') || !ruleToast.includes('needs an owner')) {
+  fail('Der regelwidrige Datensatz wurde nicht benannt und uebersprungen')
+}
+const neighborPill = (await page.locator('tr:has-text("Consolidate the process map") .pill').innerText()).trim()
+const probePill = (await page.locator('tr:has-text("Bulk rule probe") .pill').innerText()).trim()
+if (neighborPill !== 'in progress') fail('Der zulässige Nachbar wurde nicht mitgesetzt')
+if (probePill !== 'open') fail('Der regelwidrige Datensatz wurde trotzdem geändert')
+
+// Aufräumen über denselben Verlauf: zwei Schritte, Ausgangszustand für die
+// Speicher-Prüfungen unten.
+await page.keyboard.press('Control+z')
+await page.keyboard.press('Control+z')
+const rowsCleanedUp = await page.locator('table tbody tr').count()
+if (rowsCleanedUp !== 12) fail('Aufraeumen hat nicht den Ausgangszustand wiederhergestellt')
+
+/*
+ * Duplizieren (OPEN-20): Kopie über die Zeilenaktion und über das geöffnete
+ * Formular, jeweils mit Namenszusatz, eigener Id und auf dem Undo-Stapel.
+ * Zugriff über den Titel als Bezeichner - nicht über "erste Zeile", denn die
+ * Sortierung kann sich zwischen den Schritten ändern.
+ */
+const sourceId = await page.locator('tr:has-text("Smoke test entry")').locator('.cell-id').innerText()
+await page.locator('tr:has-text("Smoke test entry") .cell-action button').click()
+
+const rowsAfterDuplicate = await page.locator('table tbody tr').count()
+console.log('2m) Dupliziert (Zeilenaktion) — Zeilen:', rowsAfterDuplicate)
+if (rowsAfterDuplicate !== 13) fail('Duplizieren hat keinen Datensatz angelegt')
+
+const copyRow = page.locator('tr:has-text("Smoke test entry (Copy)")')
+if ((await copyRow.count()) !== 1) fail('Kopie fehlt oder liegt doppelt')
+const copyValues = await copyRow.innerText()
+if (!copyValues.includes('New owner after undo')) fail('Kopie hat die Feldwerte des Originals nicht uebernommen')
+const copyId = await copyRow.locator('.cell-id').innerText()
+if (copyId === sourceId) fail('Kopie traegt dieselbe Id wie das Original')
+if ((await page.locator('tr:has-text("Smoke test entry")').count()) !== 2) fail('Original ist durch das Duplizieren veraendert oder verschwunden')
+
+// Nach dem Anlegen steht das Formular der Kopie offen, nicht das des Originals.
+const dupDrawerId = await page.locator('.drawer__head .cell-id').innerText()
+if (dupDrawerId !== copyId) fail('Nach dem Duplizieren oeffnet nicht das Formular der Kopie')
+const dupDrawerTitle = await page.locator('#f-title').inputValue()
+if (dupDrawerTitle !== 'Smoke test entry (Copy)') fail('Titelfeld der Kopie traegt den Namenszusatz nicht')
+
+await page.keyboard.press('Escape')
+await page.keyboard.press('Control+z')
+const rowsAfterUndoDuplicate = await page.locator('table tbody tr').count()
+const copyGone = (await page.locator('tr:has-text("Smoke test entry (Copy)")').count()) === 0
+console.log('2n) Duplikat rueckgaengig — Zeilen:', rowsAfterUndoDuplicate, '| Kopie weg:', copyGone)
+if (rowsAfterUndoDuplicate !== 12 || !copyGone) fail('Strg+Z hat die Kopie nicht vollstaendig entfernt')
+
+// Dieselbe Aktion aus dem geöffneten Formular heraus.
+await page.locator('tr:has-text("Smoke test entry") .cell-id').click()
+await page.waitForSelector('.drawer')
+await page.getByRole('button', { name: 'Duplicate', exact: true }).click()
+const rowsAfterDrawerDuplicate = await page.locator('table tbody tr').count()
+const secondCopyId = await page.locator('.drawer__head .cell-id').innerText()
+console.log('2o) Dupliziert (Formular) — Zeilen:', rowsAfterDrawerDuplicate, '| neue Id:', secondCopyId)
+if (rowsAfterDrawerDuplicate !== 13) fail('Duplizieren aus dem Formular hat keinen Datensatz angelegt')
+if (secondCopyId === sourceId || secondCopyId === copyId) {
+  fail('Formular zeigt nach dem Duplizieren nicht die frische Kopie')
+}
+if ((await page.locator('#f-title').inputValue()) !== 'Smoke test entry (Copy)') {
+  fail('Kopie aus dem Formular traegt den Namenszusatz nicht')
+}
+
+// Ein neuer, noch nie gespeicherter Entwurf bietet Duplizieren nicht an -
+// es gibt nichts, das man kopieren koennte.
+await page.keyboard.press('Escape')
+await page.getByRole('button', { name: 'New action item' }).first().click()
+await page.waitForSelector('.drawer')
+if (await page.getByRole('button', { name: 'Duplicate', exact: true }).count()) {
+  fail('Ein neuer Entwurf darf keine Duplizieren-Aktion anbieten')
+}
+await page.keyboard.press('Escape')
+
+/* Unspeicherte Kopien verhalten sich wie jeder neue Datensatz: ohne
+   Speichern ueberlebt ein Neuladen sie nicht. Frische Seite, weil die alte
+   nach Strg+Z oben ohnehin wieder bei 12 Zeilen steht. */
+await page.keyboard.press('Control+z')
+const rowsAfterSecondUndo = await page.locator('table tbody tr').count()
+if (rowsAfterSecondUndo !== 12) fail('Strg+Z hat das zweite Duplikat nicht entfernt')
+const pageFresh = await ctx.newPage()
+pageFresh.on('pageerror', (e) => errors.push(String(e)))
+await openList(pageFresh, dist)
+const freshRows = await pageFresh.locator('table tbody tr').count()
+const freshCopies = await pageFresh.locator('tr:has-text("(Copy)")').count()
+console.log('2p) Neuladen ohne Speichern — Zeilen:', freshRows, '| Kopien:', freshCopies)
+if (freshRows !== 11 || freshCopies !== 0) fail('Unspeicherte Kopie hat ein Neuladen ueberlebt')
+await pageFresh.close()
+
 // Speichern (ohne File System Access API -> Download-Pfad)
 const saved = resolve(tmp, 'runde1.html')
 const dl = await saveTo(page, saved, 'Testeintrag angelegt')
@@ -614,6 +893,35 @@ const savedPayload = readFileSync(saved, 'utf8').match(
 )[1]
 console.log('3a) "daysLeft" im gespeicherten Datenblock:', (savedPayload.match(/daysLeft/g) ?? []).length, 'mal')
 if (savedPayload.includes('daysLeft')) fail('Berechnetes Feld wurde in die Datei geschrieben')
+
+/*
+ * Duplizieren und Protokoll (OPEN-20): eine Kopie, die den Speichertermin
+ * erlebt, muss im Änderungsprotokoll als Anlegen-Ereignis stehen - abgeleitet
+ * gegen den letzten Stand, nicht eingetippt. Danach wird sie zurückgenommen
+ * und neu gespeichert, damit der weitere Ablauf wieder vom alten Datenstand
+ * ausgeht und keine der folgenden Zeilenzählungen kippt.
+ */
+await page.locator('tr:has-text("Smoke test entry") .cell-action button').click()
+await page.waitForSelector('.drawer')
+const loggedCopyId = await page.locator('.drawer__head .cell-id').innerText()
+await page.keyboard.press('Escape')
+await saveTo(page, saved, 'Kopie fuer das Protokoll')
+const savedLog = JSON.parse(
+  readFileSync(saved, 'utf8').match(/<script id="sb-payload"[^>]*>([\s\S]*?)<\/script>/)[1],
+)
+const copyCreated = (savedLog.data?.log ?? [])
+  .flatMap((entry) => entry.changes ?? [])
+  .filter((c) => c.op === 'created' && String(c.id) === String(loggedCopyId))
+console.log('3b) Protokoll: Anlegen-Ereignis der Kopie:', copyCreated.length ? copyCreated[0].title : 'fehlt')
+if (copyCreated.length !== 1) fail('Die Kopie fehlt als Anlegen-Ereignis im Änderungsprotokoll')
+if (copyCreated[0].title !== 'Smoke test entry (Copy)') {
+  fail('Anlegen-Ereignis trägt nicht den Titel der Kopie')
+}
+
+await page.keyboard.press('Control+z')
+const rowsAfterLogUndo = await page.locator('table tbody tr').count()
+if (rowsAfterLogUndo !== 12) fail('Ruecknahme der Protokoll-Kopie hat nicht gegriffen')
+await saveTo(page, saved, 'Kopie zurueckgenommen')
 
 // Wiederöffnen: kommt der Datenstand zurück?
 const page2 = await ctx.newPage()
@@ -1926,11 +2234,21 @@ if (kruegerRows !== 2) fail('Die Volltextsuche über Nicht-Titel-Felder traf nic
 if (kruegerMarks < 1) fail('Der Suchtreffer wurde in der Tabelle nicht hervorgehoben')
 if (!/2 of 11/.test(await page30.locator('.toolbar .counter').innerText())) fail('Der Zähler zeigt nicht die Trefferzahl')
 
+// Exakter Zelltreffer: entspricht der Suchbegriff der ganzen Zelle, steht die
+// Zelle komplett in <mark> - derselbe Weg wie beim Treffer mitten im Text.
+await searchBox.fill('T. Krueger')
+await page30.waitForTimeout(150)
+const exactRows = await page30.locator('table tbody tr').count()
+const exactMarks = await page30.locator('td mark').count()
+console.log('92) Suche "T. Krueger" (ganze Zelle):', exactRows, 'Zeilen | Hervorhebungen:', exactMarks)
+if (exactRows !== 2) fail('Die Suche auf den vollen Zelltext trifft nicht die erwarteten Zeilen')
+if (exactMarks !== 2) fail('Ein exakter Zelltreffer wird nicht hervorgehoben')
+
 // Zahlen und Daten sind ebenfalls Volltext - beides stand nie in schema.search.
 await searchBox.fill('16')
 await page30.waitForTimeout(150)
 const sixteenTitle = await page30.locator('tr:has-text("Recalibrate") .cell-title').innerText()
-console.log('92) Suche "16" trifft den Aufwand:', sixteenTitle.split('\n')[0])
+console.log('93) Suche "16" trifft den Aufwand:', sixteenTitle.split('\n')[0])
 if (!sixteenTitle.includes('Recalibrate')) fail('Die Suche findet keine Zahlenwerte')
 const plus21 = new Date(Date.now() + 21 * 86400000).toISOString().slice(0, 10)
 await searchBox.fill(plus21)
@@ -1944,7 +2262,7 @@ if ((await page30.locator('table tbody tr').count()) !== 11) fail('Nach dem Leer
 await page30.locator('.fieldfilter input[aria-label="Owner contains…"]').fill('behrens')
 await page30.waitForTimeout(150)
 const behrensRows = await page30.locator('table tbody tr').count()
-console.log('93) Enthält-Filter "behrens":', behrensRows, 'Zeilen | Chips:', await page30.locator('.chips--filters .chip').count())
+console.log('94) Enthält-Filter "behrens":', behrensRows, 'Zeilen | Chips:', await page30.locator('.chips--filters .chip').count())
 if (behrensRows !== 2) fail('Der enthält-Filter schneidet nicht wie erwartet')
 if ((await page30.locator('.chips--filters .chip').count()) !== 1) fail('Der aktive Filter erscheint nicht als Chip')
 await page30.locator('.chips--filters .chip button').click()
@@ -1956,7 +2274,7 @@ await page30.locator('.fieldfilter input[aria-label="Effort in days from"]').fil
 await page30.locator('.fieldfilter input[aria-label="Effort in days to"]').fill('15')
 await page30.waitForTimeout(150)
 const effortRows = await page30.locator('table tbody tr').count()
-console.log('94) Aufwand 10 bis 15:', effortRows, 'Zeilen')
+console.log('95) Aufwand 10 bis 15:', effortRows, 'Zeilen')
 if (effortRows !== 2) fail('Der Zahlenbereich filtert nicht korrekt')
 const pastBoundary = new Date(Date.now() - 2 * 86400000).toISOString().slice(0, 10)
 await page30.locator('.fieldfilter input[aria-label="Due date from"]').fill(pastBoundary)
@@ -1978,7 +2296,7 @@ await page30.locator('.fieldfilter input[aria-label="Effort in days from"]').fil
 await page30.waitForTimeout(150)
 const comboRows = await page30.locator('table tbody tr').count()
 const comboTitle = comboRows ? await page30.locator('table tbody tr').first().locator('.cell-title').innerText() : ''
-console.log('95) Suche "krueger" + Aufwand ab 10:', comboRows, '|', comboTitle.split('\n')[0])
+console.log('96) Suche "krueger" + Aufwand ab 10:', comboRows, '|', comboTitle.split('\n')[0])
 if (comboRows !== 1 || !comboTitle.includes('Sign off')) fail('Suche und Filter schneiden nicht gemeinsam korrekt')
 
 // Sitzungsspeicher: nichts davon übersteht ein Neuladen.
@@ -1986,7 +2304,7 @@ await openList(page30, dist)
 const reloadedRows = await page30.locator('table tbody tr').count()
 const reloadedQuery = await searchBox.inputValue()
 const reloadedChips = await page30.locator('.chips--filters .chip').count()
-console.log('96) Nach Neuladen:', reloadedRows, 'Zeilen | Suchfeld:', JSON.stringify(reloadedQuery), '| Chips:', reloadedChips)
+console.log('97) Nach Neuladen:', reloadedRows, 'Zeilen | Suchfeld:', JSON.stringify(reloadedQuery), '| Chips:', reloadedChips)
 if (reloadedRows !== 11 || reloadedQuery !== '' || reloadedChips !== 0) {
   fail('Suche/Filter sollen nur in der Sitzung leben, nicht im Datenblock oder Speicher')
 }

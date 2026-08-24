@@ -130,7 +130,7 @@ Dashboard · CSV-Import · Änderungsprotokoll · Versionsnummern.**
   [Daten hineinbekommen](#daten-hineinbekommen).
 - **Zwei Oberflächensprachen ab Werk** (Englisch, Deutsch), eine Einstellung, die mit der Datei
   reist. Eine dritte zu ergänzen ist eine kleine, mechanische Änderung — siehe
-  [Oberflächensprachen](#oberflächensprachen).
+  [Interface languages](README.md#interface-languages).
 - **Mehrere Entitäten und Beziehungen**, wenn ein Datensatztyp nicht reicht — siehe
   [Mehrere Entitäten](#mehrere-entitäten-und-beziehungen).
 - **Dashboard-Kacheln und ein Druck-Stylesheet**, weil Analyse meistens in einer Folie oder einer
@@ -164,6 +164,14 @@ Dashboard · CSV-Import · Änderungsprotokoll · Versionsnummern.**
   Hervorhebung in der Tabelle, dazu Feldfilter je Feldtyp im Seitenbereich mit entfernbaren Chips
   darüber — nur für die Sitzung, nichts davon landet in der Datei — siehe
   [Suchen und Filtern](#suchen-und-filtern).
+- **Sortierbare Spalten in jeder Entitätsliste** — ein Klick auf den Kopf sortiert aufsteigend,
+  noch einer absteigend, ein dritter gibt die Ordnung an den Datenblock zurück; der Vergleich folgt
+  dem Feldtyp, und Leerwerte stehen in beide Richtungen unten — siehe
+  [Listen sortieren](#listen-sortieren).
+- **Datensatz duplizieren**, aus der Tabellenzeile oder dem offenen Formular — alle Werte kommen
+  mit, der Titel bekommt einen lokalisierten Zusatz, die Kopie eine eigene Kennung, und es läuft
+  über denselben Weg wie ein manueller Eintrag: Undo-Stapel und Änderungsprotokoll eingeschlossen —
+  siehe [Datensatz duplizieren](#datensatz-duplizieren).
 - **Massenpflege mit Mehrfachauswahl** — Zeile für Zeile, als Bereich per Umschalt-Klick oder alle
   sichtbaren Zeilen auf einmal — und eine Aktionsleiste, die einen Aufzählwert setzt oder mit
   gezählter Rückfrage löscht; ein Protokolleintrag und ein Strg+Z je Aktion — siehe
@@ -313,6 +321,12 @@ gespeichert ist: Anhänge zählen nur mit ihrem Dateinamen (das eingebettete bas
 kein Text), Reference-Felder mit dem Titel des Datensatzes, auf den sie zeigen, berechnete Felder
 wie alle anderen — und die Kennung zählt mit.
 
+![Globale Suche und Feldfilter](docs/screenshots/search.png)
+
+Ein Bild mit dem ganzen Mechanismus auf einmal: Ein Begriff, dessen Treffer in zwei Entitäten
+liegen, zwei Feldfilter, die die Liste auf zwei Zeilen verengen — und über der Tabelle die Chips,
+die jeden Filter tragen, daneben ein *Alles löschen*.
+
 Unter den Facettengruppen bekommt die Seitenleiste einen Filter je Feld, das sich filtern lässt,
 geformt nach seinem Typ: Text sucht auf *enthält*, eine Aufzählung bietet Mehrfachauswahl, Zahlen
 und Daten nehmen einen von/bis-Bereich. Felder, die schon als Facette laufen, bleiben
@@ -333,6 +347,72 @@ Das ist gewollt: Browserspeicher ist unter `file://` unzuverlässig, der eingebe
 ist der einzige Speicher, und nichts von „welche Teilmenge habe ich angesehen" gehört in Daten,
 die jemand anderes öffnet. Eine gespeicherte Datei trägt nie einen Filter in sich — die Kopie,
 die man weiterschickt, zeigt alles, genau wie ihre Druckansicht.
+
+## Listen sortieren
+
+Jeder Spaltenkopf einer Entitätsliste ist anklickbar. Der erste Klick sortiert aufsteigend, der
+zweite absteigend, der dritte gibt die Ordnung an den Datenblock zurück — kein vierter Zustand,
+und eine Spalte merkt sich ihre Richtung nicht über den Gebrauch hinaus. Der Wechsel auf eine
+andere Spalte beginnt ebenfalls von vorn, aufsteigend. Solange eine Spalte sortiert, trägt ihr
+Kopf einen Pfeil; für Screenreader meldet er die Richtung als `ascending`/`descending`. Eines
+weiß man vorher: Beim Öffnen der Datei steht jede Liste bereits aufsteigend nach ihrer ersten
+Spalte sortiert — das ist die Voreinstellung des Hauses, nicht die Datenblock-Reihenfolge. Der
+dritte Klick landet deshalb auf der rohen Datenblock-Reihenfolge, die anders aussehen kann als
+der Stand beim Öffnen.
+
+Der Vergleich folgt dem Feldtyp, nicht den Zeichen auf dem Schirm: Zahlen vergleichen numerisch
+(10 steht hinter 9), Daten chronologisch — ihre ISO-Schreibweise vergleicht als Zeichenkette,
+und genau das ist bei Daten die chronologische Ordnung —, Text und Aufzählungen als lokalisierter
+Textvergleich in der aktuellen Oberflächensprache, wobei der Wert einer Aufzählung zugleich ihre
+Beschriftung ist. Eine Reference-Spalte ordnet nach dem Titel des Datensatzes, auf den sie zeigt,
+nicht nach der Kennung dahinter (sortiert wird das, was man sieht), ein Anhang nach seinem
+Dateinamen, ein berechnetes Feld nach dem Wert, den es liefert — numerisch, wenn dieser Wert eine
+Zahl ist.
+
+Datensätze ohne Wert in der sortierten Spalte stehen unten — in beiden Richtungen. Ein fehlender
+Wert ist keine kleine Zahl und kein frühes Datum; dem Vergleich überlassen, würde er absteigend
+nach oben rutschen, wo niemand „nichts" sucht. Gleichstand behält die Datenblock-Reihenfolge,
+damit Gleiche nicht zwischen zwei Plätzen flackern.
+
+Suche und Feldfilter schneiden zuerst, die Sortierung ordnet, was übrig bleibt — sortieren kann
+nie zurückholen, was die Filter entfernt haben. Und wie alles, was nur die Ansicht betrifft, lebt
+der Sortierzustand nur in der Sitzung: Datei neu laden, und die Datenblock-Reihenfolge ist wieder
+da; in die Datei geschrieben wird nie eine Sortierung. Die Kopie, die man weitergibt, öffnet so,
+wie die Daten stehen.
+
+## Datensatz duplizieren
+
+Beratungsdaten wiederholen sich: dieselbe Maßnahme an drei Standorten, ein Risiko je Baustein, ein
+Kontakt je Rolle. Jeden **gespeicherten** Datensatz gibt es deshalb zum Duplizieren statt zum
+Neutippen. Die Aktion liegt an zwei Stellen: ein Kopier-Symbol am Ende jeder Tabellenzeile (es
+erscheint, wenn man mit der Maus über die Zeile fährt oder sie per Tab ansteuert — eine
+Dauerleiste aus Symbolen würde die Tabelle lauter machen, als eine einzelne Aktion es verdient)
+und ein Knopf im Fuß des geöffneten Formulars neben dem Löschen. Ein nie übernommener Entwurf hat
+beides nicht: Es gibt keinen gespeicherten Inhalt, den eine Kopie tragen könnte.
+
+Die Kopie übernimmt jeden Feldwert aus dem gespeicherten Stand, nicht aus einem halb ausgefüllten
+Formular, das zufällig offen steht — nicht übernommene Eingaben gehören zur nächsten Sicherung des
+Originals, nicht in eine Kopie; Reference-Felder zeigen weiter auf dieselben Ziele. Zwei Dinge
+unterscheiden die Kopie vom Original: Das Titelfeld bekommt einen lokalisierten Zusatz („(Kopie)"
+auf Deutsch, „(Copy)" auf Englisch, je nach Oberflächensprache), und die Kopie erhält eine eigene
+Kennung mit dem Präfix ihrer Entität. Am Original ändert sich nichts.
+
+Angelegt wird die Kopie über denselben Änderungsweg wie ein manuell übernommener Datensatz — und
+dieser eine Satz trägt das meiste Verhalten, das man kennen sollte:
+
+- Sie liegt auf dem [Undo-Stapel](#rückgängig-und-wiederholen) — ein `Strg`/`Cmd`+`Z` nimmt die
+  ganze Kopie zurück.
+- Der amberfarbene Punkt erscheint; in eine neue HTML-Datei landet die Kopie erst mit der nächsten
+  Sicherung, und eine ungespeicherte Kopie überlebt kein Neuladen — wie jeder andere neue
+  Datensatz auch.
+- Das [Änderungsprotokoll](#versionen-und-änderungsprotokoll) leitet beim Speichern sein eigenes
+  Anlegen-Ereignis für die Kopie ab, gegen den letzten gespeicherten Stand — nichts davon wird
+  abgefragt oder eingetippt.
+
+Direkt nach dem Duplizieren steht das Formular der Kopie offen — die kleinen Änderungen, derentwegen
+man dupliziert, sind also der aller nächste Schritt. Eine Grenze gehört genannt: Eine Kopie mit
+Anhängen verdoppelt deren Anteil am [Anhangsbudget](#anhänge), und die Prüfung, die einen zu
+großen Upload ablehnt, schlägt hier sofort zu — nicht erst bei der nächsten Sicherung.
 
 ## Daten hineinbekommen
 
@@ -585,6 +665,13 @@ ganze Risikogruppe — dafür ist die Auswahlspalte in jeder Tabelle da. Zeilen 
 **Umschalt-Klick** einen Bereich ab der zuletzt gehakten Zeile, oder das Kontrollkästchen im Kopf
 nehmen für alle **sichtbaren** Zeilen auf einmal (und nochmal, um sie wieder freizugeben). Solange
 nur ein Teil der Seite gewählt ist, zeigt der Kopfhaken seinen gemischten Zustand.
+
+![Mehrfachauswahl und Aktionsleiste](docs/screenshots/bulk.png)
+
+Ein Bild mit dem ganzen Mechanismus auf einmal: drei gewählte Zeilen — ein Klick, dann ein
+Umschalt-Klick, der die Zeile dazwischen mitnimmt —, die getönten Zeilen zeigen, worauf die
+nächste Aktion zielt, und über der Tabelle die Leiste mit Zähler, Feld- und Wert-Auswahl der
+Aufzählung und den drei Aktionen.
 
 Alles-auswählen meint bewusst genau das: die sichtbare Seite, nicht jeden Treffer, der sich hinter
 dem Filter verbirgt. Eine Massenänderung darf keine Zeilen erreichen, die niemand ansieht — und wer

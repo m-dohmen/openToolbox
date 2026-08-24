@@ -87,6 +87,13 @@ son anchuras CSS y el anillo es un único círculo SVG. Ambas vistas se imprimen
 - **Búsqueda global en todos los campos de todas las entidades**, en vivo, con el número de
   resultados en cada pestaña y coincidencias resaltadas; además filtros por tipo de campo en la
   barra lateral con etiquetas extraíbles — solo para la sesión, nada se guarda en el archivo.
+- **Columnas ordenables en cada lista de entidades**: un clic ordena ascendente, otro descendente
+  y un tercero devuelve el orden del bloque de datos; la comparación sigue el tipo de campo
+  (números numéricamente, fechas cronológicamente) y los valores vacíos quedan siempre al final.
+- **Duplicar registros** desde la fila de la tabla o desde el formulario abierto: todos los valores
+  se copian, el título recibe el sufijo localizado y la copia obtiene su propio identificador; pasa
+  por el mismo camino que un registro manual — deshacer, registro de cambios y escritura solo al
+  guardar.
 - **Mantenimiento masivo con selección múltiple**: por fila, por rango con Mayús+clic o todas las
   filas visibles de una vez; barra de acciones para fijar un valor de enumeración o borrar con
   confirmación contada — una entrada en el registro y un Ctrl+Z por acción.

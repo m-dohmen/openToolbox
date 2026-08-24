@@ -145,6 +145,12 @@ dashboard · CSV import · change log · version numbers.**
   highlighted matches in the table, plus typed field filters in the sidebar with removable chips
   above it — session-only, none of it saved into the file — see
   [Searching and filtering](#searching-and-filtering).
+- **Sortable columns in every entity list** — click a heading to sort ascending, again for
+  descending, a third time back to the data-block order; comparisons follow the field type, and
+  empty values stay at the bottom either way — see [Sorting the lists](#sorting-the-lists).
+- **Duplicating a record** from the table row or the open form — every value carried over, the
+  title suffixed `(Copy)`, an own identifier for the copy, and the same write path as a manual
+  entry: undo stack and change log included — see [Duplicating a record](#duplicating-a-record).
 - **Bulk editing with multi-select** — row by row, by range with Shift-click, or all visible rows at
   once — and an action bar that sets an enum value or deletes with a counted confirmation; one log
   entry and one Ctrl+Z per action — see [Mass editing](#mass-editing).
@@ -665,6 +671,12 @@ and it finds what you can see rather than what is stored: attachments count by t
 only (the embedded base64 is noise, not text), reference fields by the title of the record they
 point at, calculated fields like any other — and the record id counts too.
 
+![Global search and field filters](docs/screenshots/search.png)
+
+One frame with the whole mechanism at work: a term that finds its matches in two entities, two
+field filters narrowing the list to two rows, and above the table the chips that carry each
+filter — with *clear all* next to them.
+
 Below the facet groups, the sidebar gains one filter per field worth filtering, shaped by its
 type: text matches on *contains*, an enum offers multi-select, numbers and dates take a from/to
 range. Fields that already run as facets stay quick filters with their counts — they keep doing
@@ -684,6 +696,64 @@ That is deliberate: browser storage is unreliable under `file://`, the embedded 
 only storage there is, and nothing about "which subset was I looking at" belongs in data someone
 else will open. A saved file never carries a filter inside it, so the copy you send on shows
 everything — exactly like its print view.
+
+## Sorting the lists
+
+Every column heading in an entity list is clickable. The first click sorts ascending, the second
+descending, and the third hands the order back to the data block — no fourth state, and a column
+does not remember its direction once you have moved on. Switching to another column also starts
+fresh at ascending. While a column sorts, its heading carries an arrow; it announces the direction
+as `ascending`/`descending` for screen readers as well. One thing to know upfront: when the file
+opens, every list already stands sorted ascending by its first column — that is the house default,
+not the data block. The third click therefore lands on the raw data-block order, which can look
+different from what you saw when you opened the file.
+
+The comparison follows the field type, not the characters on screen: numbers compare numerically
+(10 sorts after 9), dates chronologically — their ISO spelling compares lexically, which for dates
+is exactly chronologically — and text and enums compare as localized text in the current interface
+language, an enum's value being its label. A reference column sorts by the title of the record it
+points at rather than by the id behind it (you sort what you see), an attachment by its file name,
+and a calculated field by the value it produces — numerically when that value is a number.
+
+Records without a value in the sorted column stand at the bottom, in both directions. A missing
+value is not a small number and not an early date; left to the comparison it would drift to the
+top when descending, which is where nobody looks for "nothing". Equal values keep their
+data-block order, so ties never flicker between two positions.
+
+Search and field filters cut first, sorting then orders what remains — sorting can never bring
+back what the filters removed. And like everything view-related, the sort state lives only in the
+session: reload the file and the data-block order is back, and no sort is ever written into it.
+The copy you pass on opens the way the data stands.
+
+## Duplicating a record
+
+Consulting data repeats itself: the same measure at three sites, one risk per building block, a
+contact per role. Every **saved** record can therefore be duplicated instead of retyped. The
+action lives in two places: a copy icon at the end of each table row (it appears when you point at
+the row or tab into it — a permanent column of symbols would make the table louder than one
+action deserves) and a button in the footer of the open form, next to Delete. A draft that has
+never been applied has neither: there is no saved content for a copy to carry.
+
+The copy takes every field value from the saved record, not from any half-filled form you may have
+open on it — unapplied edits belong to the original's next save, not to a copy, and reference
+fields keep pointing at the same targets. Two things differ from the original: the title field
+gets a localized suffix (`(Copy)` in English, `(Kopie)` in German, following the interface
+language), and the copy receives its own identifier with its entity's prefix. The original stays
+untouched.
+
+The duplicate is created through the same write path as a manually applied record, and that one
+sentence carries most of the behaviour worth knowing:
+
+- It sits on the [undo stack](#undo-and-redo) — one `Ctrl`/`Cmd`+`Z` removes the whole copy again.
+- The amber dot appears; the copy only lands in a new HTML file with the next save, and an unsaved
+  copy does not survive a reload, exactly like any other new record.
+- The [change log](#version-numbers-and-change-log) derives its own *created* event for the copy
+  at that save, worked out against the last saved state — nothing about it is asked or typed in.
+
+Right after duplicating, the copy's own form opens, so the small changes that were the point of
+duplicating are the very next step. One boundary to know: a copy carrying attachments doubles
+their share of the [attachment budget](#attachments), and the check that refuses an oversized
+upload refuses the copy right away rather than letting the next save discover it.
 
 ## Getting data in
 
@@ -731,6 +801,13 @@ group — this is what the selection column in every table is for. Tick rows one
 for a range starting at the last ticked row, or use the header checkbox to take all **visible** rows
 in one go (and again to release them). While only part of the page is selected, the header box shows
 its mixed state.
+
+![Bulk selection and the action bar](docs/screenshots/bulk.png)
+
+One frame with the whole mechanism at work: three rows selected — one click, then a Shift-click
+that takes the row in between — the tinted rows showing what the next action will hit, and above
+the table the bar with the count, the field and value dropdowns for the enum, and the three
+actions.
 
 Select-all means exactly what it says, on purpose: the visible page, not every match hiding behind
 the filter. A mass change must not reach rows nobody is looking at — and whoever narrows the list

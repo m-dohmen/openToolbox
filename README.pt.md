@@ -86,6 +86,12 @@ larguras em CSS e o anel é um único círculo SVG. As duas visões imprimem com
 - **Busca global em todos os campos de todas as entidades**, ao vivo, com contagem de resultados
   em cada aba e correspondências destacadas; além de filtros por tipo de campo na barra lateral,
   com etiquetas removíveis — apenas para a sessão, nada é gravado no arquivo.
+- **Colunas ordenáveis em cada lista de entidades**: um clique ordena crescente, outro decrescente
+  e um terceiro devolve a ordem do bloco de dados; a comparação segue o tipo de campo (números
+  numericamente, datas cronologicamente) e os valores vazios ficam sempre no final.
+- **Duplicar um registro** pela linha da tabela ou pelo formulário aberto: todos os valores são
+  copiados, o título recebe o sufixo localizado e a cópia ganha seu próprio identificador; mesmo
+  caminho de um registro manual — desfazer, registro de alterações e gravação apenas ao salvar.
 - **Manutenção em massa com seleção múltipla**: linha a linha, por intervalo com Shift+clique ou
   todas as linhas visíveis de uma vez; barra de ações para definir um valor de enumeração ou excluir
   com confirmação com contagem — uma entrada no registro e um Ctrl+Z por ação.

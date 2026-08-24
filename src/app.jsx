@@ -40,7 +40,7 @@ import {
 } from './lib/search.js'
 import { Wordmark } from './brand.jsx'
 import { paletteVariables } from './lib/color.js'
-import { IconSave, IconSettings, IconLink, IconPaperclipSmall, IconUndo, IconRedo } from './icons.jsx'
+import { IconSave, IconSettings, IconLink, IconPaperclipSmall, IconUndo, IconRedo, IconCopy } from './icons.jsx'
 import { SettingsPage } from './settings.jsx'
 import { DashboardView } from './dashboard.jsx'
 import { WizardView } from './wizard.jsx'
@@ -62,6 +62,7 @@ import { ChatDock } from './chat.jsx'
 import { AI_DEFAULTS } from './lib/ai.js'
 import { countOpen, DEFAULT_COUNT_URL } from './lib/count.js'
 import { hasDueDates } from './lib/dueDate.js'
+import { nextSort, sortRecords } from './lib/sort.js'
 import { relativeAge } from './lib/time.js'
 import { translator, DEFAULT_LOCALE } from './i18n.js'
 
@@ -231,6 +232,12 @@ const today = () => new Date().toISOString().slice(0, 10)
 const versionSlug = (v) =>
   String(v ?? '').trim().replace(/[^\w.-]+/g, '-').replace(/^-+|-+$/g, '').toLowerCase()
 const kb = (n) => (n / 1024).toFixed(n < 10240 ? 1 : 0) + ' KB'
+
+/** Aufzählungswert für die Sammelbearbeitung: nur erlaubte Werte, sonst der erste. */
+function resolveBulkValue(enumFields, key, value) {
+  const field = enumFields.find((f) => f.key === key) ?? enumFields[0]
+  return field.values.includes(value) ? value : field.values[0]
+}
 
 /**
  * Schreibpfad in absteigender Bequemlichkeit:
@@ -425,6 +432,19 @@ function Workbench({
      Speichern raeumt ihn deshalb auch nicht ab (siehe save() weiter unten). */
   const [undoStack, setUndoStack] = useState([])
   const [redoStack, setRedoStack] = useState([])
+  /* Mehrfachauswahl für Sammelaktionen. Liegt bewusst nur im Sitzungsspeicher
+     (Leitplanke 2) und hält Datensatz-Ids der aktiven Entität - nach einem
+     Undo oder Löschen verschwinden tote Ids einfach aus der wirksamen Auswahl,
+     statt die Zähler zu verfälschen. */
+  const [selected, setSelected] = useState([])
+  // Anker für die Bereichsauswahl (Umschalt-Klick): Index des zuletzt
+  // angeklickten Kontrollkästchens in der sichtbaren Reihenfolge.
+  const bulkAnchor = useRef(null)
+  /* Feld und Wert der Sammelbearbeitung; null heißt die Voreinstellung nehmen
+     (erstes Aufzählfeld, dessen erster Wert). */
+  const [bulkEdit, setBulkEdit] = useState(null)
+  // Offene Rückfrage vor dem Sammel-Löschen; count steht im Dialog.
+  const [bulkConfirm, setBulkConfirm] = useState(null)
 
   const tr = translator(settings.locale)
   const showHints = settings.examplePrompts
@@ -491,13 +511,17 @@ function Workbench({
      Entwurf ab - die sind pro Schema, ein Übertrag zwischen unterschiedlichen
      Feldern ergäbe keinen Sinn. Die globale Suche bleibt dagegen stehen: sie
      läuft ja über alle Entitäten hinweg, und die Trefferzahlen an den
-     Reitern leben genau davon. */
+     Reitern leben genau davon. Die Auswahl fällt mit: sie gehört zur Liste,
+     die man gerade sieht, nicht zu der, die eben noch da war. */
   const switchEntity = (key) => {
     setActiveKey(key)
     setFacet({})
     setFiltersByEntity((all) => ({ ...all, [key]: {} }))
     setSort({ key: ENTITIES[key].schema.list[0], dir: 1 })
     setDraft(null)
+    setSelected([])
+    bulkAnchor.current = null
+    setBulkEdit(null)
   }
 
   /** Springt zu einem referenzierten Datensatz - Klick auf einen Reference-Chip. */
@@ -706,11 +730,17 @@ function Workbench({
         matchesSearch(entity, r, query, searchCtx) &&
         matchesFilters(entity, r, filters),
     )
-    return out.sort((a, b) => {
-      const x = fieldValue(entity, a, sort.key) ?? ''
-      const y = fieldValue(entity, b, sort.key) ?? ''
-      if (typeof x === 'number' && typeof y === 'number') return (x - y) * sort.dir
-      return String(x).localeCompare(String(y), settings.locale) * sort.dir
+    /* Die Sortierung lebt in lib/sort.js: Typvergleich, Leerwerte unten,
+       Gleichstand über die Datenblock-Reihenfolge. Sie sieht sich auch
+       recordsByEntity an, weil Reference-Spalten nach dem Titel des Ziels
+       und nicht nach der Id ordnen. */
+    return sortRecords({
+      entity,
+      entities: ENTITIES,
+      recordsByEntity,
+      records: out,
+      sort,
+      locale: settings.locale,
     })
   }, [records, query, facet, filters, sort, settings.locale, activeKey, recordsByEntity])
 
@@ -736,8 +766,7 @@ function Workbench({
 
   const payloadSize = useMemo(() => JSON.stringify(recordsByEntity).length, [recordsByEntity])
 
-  const sortBy = (key) =>
-    setSort((s) => ({ key, dir: s.key === key ? -s.dir : 1 }))
+  const sortBy = (key) => setSort((s) => nextSort(s, key))
 
   /* Datensätze ------------------------------------------------- */
 
@@ -789,6 +818,151 @@ function Workbench({
     setDraft(null)
   }
 
+  /* ── Mehrfachauswahl und Sammelaktionen ─────────────────────────
+   *
+   * Wirksam ist eine Auswahl immer nur auf dem, was der Anwender gerade
+   * sieht: gewählt UND in `visible`. Alles andere wäre die Massenänderung
+   * über unsichtbare Treffer hinweg, die es bewusst nicht gibt - ein
+   * Filter, der die Auswahl verkleinert, verkleinert damit auch das Ziel
+   * der nächsten Sammelaktion. Umsortieren ändert an den Ids nichts,
+   * die Auswahl bleibt also beim Sortieren erhalten.
+   */
+
+  const selectedVisible = useMemo(() => {
+    const set = new Set(selected)
+    return visible.filter((r) => set.has(r[schema.idField]))
+  }, [visible, selected])
+
+  const isRowSelected = (id) => selected.includes(id)
+
+  const toggleRow = (id, index, extend) => {
+    if (extend && bulkAnchor.current !== null) {
+      const from = Math.min(bulkAnchor.current, index)
+      const to = Math.max(bulkAnchor.current, index)
+      const range = visible.slice(from, to + 1).map((r) => r[schema.idField])
+      setSelected((prev) => Array.from(new Set([...prev, ...range])))
+      return
+    }
+    setSelected((prev) => (prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]))
+    bulkAnchor.current = index
+  }
+
+  const allVisibleSelected = visible.length > 0 && selectedVisible.length === visible.length
+
+  /** Kopfkontrollkästchen: alle Sichtbaren dazu oder wieder davon. */
+  const toggleAllVisible = () => {
+    const ids = visible.map((r) => r[schema.idField])
+    setSelected((prev) =>
+      allVisibleSelected ? prev.filter((id) => !ids.includes(id)) : Array.from(new Set([...prev, ...ids])),
+    )
+    bulkAnchor.current = null
+  }
+
+  /**
+   * Einziger Weg einer Sammelaktion in die Daten: dieselbe applyActions,
+   * die auch Vorschläge des Modells prüft - Typprüfung, Schema-Regeln,
+   * Beanstandungen. Ein Durchlauf, ein recordChange, also genau ein
+   * Protokollschritt und genau ein Strg+Z für alles.
+   */
+  const applyBulk = (actions, doneMessage, skippedMessage) => {
+    const outcome = applyActions(recordsByEntity, actions, ENTITIES, tr, activeKey)
+    if (!outcome.done.length && outcome.problems.length) {
+      notify(outcome.problems[0], 'error')
+      return false
+    }
+    recordChange(outcome.next)
+    setDirty(true)
+    notify(
+      outcome.problems.length
+        ? `${doneMessage(outcome.done.length)} · ${skippedMessage(outcome.problems.length, outcome.problems[0])}`
+        : doneMessage(outcome.done.length),
+    )
+    return true
+  }
+
+  /** Aufzählfelder der aktiven Entität - Ziel der Sammelbearbeitung. */
+  const enumFields = schema.fields.filter((f) => f.type === 'enum')
+
+  const bulkSet = () => {
+    const fieldKey = bulkEdit?.field ?? enumFields[0].key
+    const target = resolveBulkValue(enumFields, fieldKey, bulkEdit?.value)
+    // Datensätze, die den Wert schon tragen, bleiben außen vor - sonst meldet
+    // die gemeinsame Prüfung für sie zurecht "nichts zu ändern".
+    const ids = selectedVisible
+      .filter((r) => String(r[fieldKey]) !== String(target))
+      .map((r) => r[schema.idField])
+    if (!ids.length) {
+      setSelected([])
+      return
+    }
+    const applied = applyBulk(
+      ids.map((id) => ({ op: 'update', id, changes: { [fieldKey]: target } })),
+      (n) => tr('toast.bulkUpdated', n),
+      (n, reason) => tr('toast.bulkSkipped', n, reason),
+    )
+    if (applied) setSelected([])
+  }
+
+  /**
+   * Sammel-Löschen nach bestätigter Rückfrage. Referenzgeschützte
+   * Datensätze werden vorher aussortiert und benannt - sie würden von
+   * applyActions ohnehin gelöscht, denn der Schutz lebt im Formular.
+   */
+  const runBulkDelete = () => {
+    const ids = selectedVisible.map((r) => r[schema.idField])
+    const blocked = []
+    const deletable = ids.filter((id) => {
+      if (findReferencingRecords(ENTITIES, recordsByEntity, activeKey, id).length) {
+        blocked.push(id)
+        return false
+      }
+      return true
+    })
+    setBulkConfirm(null)
+    if (!deletable.length) {
+      notify(tr('bulk.blockedRefs', blocked.length), 'error')
+      return
+    }
+    /* Behaltene Datensätze gehören in dieselbe Meldung wie die gelöschten -
+       zwei Toasts hintereinander würden den ersten wegwerfen. */
+    applyBulk(
+      deletable.map((id) => ({ op: 'delete', id })),
+      (n) => (blocked.length ? tr('toast.bulkDeletedBlocked', n, blocked.length) : tr('toast.bulkDeleted', n)),
+      () => '',
+    )
+    setSelected([])
+  }
+
+  /**
+   * Duplizieren legt die Kopie über denselben Weg an wie das Übernehmen im
+   * Formular: mutate setzt sie auf den Undo-Stapel, markiert die Datei als
+   * geändert und lässt sie erst mit dem nächsten Speichern in einer neuen
+   * Datei landen - im Protokoll erscheint sie dann als Anlegen-Ereignis,
+   * weil der Protokoll-Eintrag beim Speichern gegen den letzten Stand
+   * abgeleitet wird. Kopiert wird der gespeicherte Datensatz, nicht ein
+   * etwaiger offener Formularstand: ungespeicherte Eingaben gehören nicht
+   * in eine Kopie.
+   */
+  const duplicate = (id) => {
+    const source = records.find((r) => r[schema.idField] === id)
+    if (!source) return
+    const copy = { ...source, [schema.idField]: entity.uid() }
+    if (String(source[schema.titleField] ?? '').trim()) {
+      copy[schema.titleField] = tr('drawer.duplicateSuffix', source[schema.titleField])
+    }
+    /* Dieselbe Budgetprüfung wie beim Übernehmen: Eine Kopie mit Anhang
+       verdoppelt dessen Platz, und erst hier schlägt die Ablehnung ein,
+       statt nach dem nächsten Speichern entdeckt zu werden. */
+    const nextRecords = [...records, copy]
+    const after = usedBytes(ENTITIES, { ...recordsByEntity, [activeKey]: nextRecords })
+    const limit = (settings.attachmentBudgetMb ?? DEFAULT_BUDGET_MB) * 1024 * 1024
+    if (after > limit) {
+      return notify(tr('attach.overBudget', mb(after).toFixed(1), settings.attachmentBudgetMb), 'error')
+    }
+    mutate(nextRecords)
+    setDraft({ ...copy })
+  }
+
   /* Austausch -------------------------------------------------- */
 
   const exportCsv = () => {
@@ -797,7 +971,11 @@ function Workbench({
       ...schema.fields.map((f) => ({ key: f.key, label: f.label })),
     ]
     const rows = visible.map((r) => {
-      const row = materialize(entity, r)
+      /* materialize liefert bei Entitäten ohne berechnete Felder den
+         Datensatz SELBST zurück - ohne Kopie würde die aufgelöste Referenz
+         unten in den Live-Bestand geschrieben und die Id durch den Titel
+         ersetzt, ohne Protokollschritt und ohne Rückgängig. */
+      const row = { ...materialize(entity, r) }
       for (const f of referenceFields(schema)) {
         row[f.key] = resolveReferenceTitle(ENTITIES, recordsByEntity, f.entity, r[f.key]) ?? r[f.key]
       }
@@ -1366,6 +1544,63 @@ function Workbench({
             )}
           </div>
 
+          {/* Aktionsleiste der Mehrfachauswahl - nur solange etwas gewählt ist.
+              Der Wert-Setzen-Zweig erscheint nur bei Entitäten mit Aufzählfeld. */}
+          {selectedVisible.length > 0 && (
+            <div class="bulk-bar" role="toolbar" aria-label={tr('bulk.selected', selectedVisible.length)}>
+              <span class="bulk-bar__count">{tr('bulk.selected', selectedVisible.length)}</span>
+              {enumFields.length > 0 && (
+                <>
+                  {enumFields.length > 1 && (
+                    <select
+                      aria-label={tr('bulk.field')}
+                      value={bulkEdit?.field ?? enumFields[0].key}
+                      onChange={(e) => {
+                        const nextField = e.currentTarget.value
+                        setBulkEdit({ field: nextField, value: resolveBulkValue(enumFields, nextField, undefined) })
+                      }}
+                    >
+                      {enumFields.map((f) => (
+                        <option key={f.key} value={f.key}>
+                          {f.short ?? f.label}
+                        </option>
+                      ))}
+                    </select>
+                  )}
+                  <select
+                    aria-label={field(enumFields.find((f) => f.key === (bulkEdit?.field ?? enumFields[0].key))?.key).label}
+                    value={resolveBulkValue(enumFields, bulkEdit?.field ?? enumFields[0].key, bulkEdit?.value)}
+                    onChange={(e) =>
+                      setBulkEdit({
+                        field: bulkEdit?.field ?? enumFields[0].key,
+                        value: e.currentTarget.value,
+                      })
+                    }
+                  >
+                    {(enumFields.find((f) => f.key === (bulkEdit?.field ?? enumFields[0].key)) ?? enumFields[0]).values.map(
+                      (v) => (
+                        <option key={v}>{v}</option>
+                      ),
+                    )}
+                  </select>
+                  <button onClick={bulkSet}>{tr('bulk.setValue')}</button>
+                </>
+              )}
+              <button class="btn btn--danger" onClick={() => setBulkConfirm({})}>
+                {tr('bulk.delete')}
+              </button>
+              <button
+                class="btn btn--quiet"
+                onClick={() => {
+                  setSelected([])
+                  bulkAnchor.current = null
+                }}
+              >
+                {tr('bulk.clear')}
+              </button>
+            </div>
+          )}
+
           {visible.length === 0 ? (
             <div class="empty">
               <h2>{records.length ? tr('empty.noMatches') : tr('empty.nothingYet')}</h2>
@@ -1379,6 +1614,18 @@ function Workbench({
               <table>
                 <thead>
                   <tr>
+                    {/* Kein Sortierkopf: das Kontrollkästchen wählt aus, die
+                        Spalte sortiert nicht. */}
+                    <th class="th-check">
+                      <input
+                        type="checkbox"
+                        aria-label={tr('bulk.selectAll')}
+                        checked={allVisibleSelected}
+                        ref={(el) => el && (el.indeterminate = selectedVisible.length > 0 && !allVisibleSelected)}
+                        onClick={(e) => e.stopPropagation()}
+                        onChange={toggleAllVisible}
+                      />
+                    </th>
                     <Th sort={sort} k={schema.idField} onSort={sortBy}>{tr('app.id')}</Th>
                     {schema.list.map((key) => (
                       <Th
@@ -1391,17 +1638,36 @@ function Workbench({
                         {field(key).short ?? field(key).label}
                       </Th>
                     ))}
+                    <th class="cell-action" scope="col">
+                      <span class="visually-hidden">{tr('drawer.duplicate')}</span>
+                    </th>
                   </tr>
                 </thead>
                 <tbody>
-                  {visible.map((r) => (
+                  {visible.map((r, i) => (
                     <tr
                       key={r[schema.idField]}
                       data-selected={draft?.[schema.idField] === r[schema.idField]}
+                      data-checked={String(isRowSelected(r[schema.idField]))}
                       onClick={() => setDraft({ ...r })}
                       tabIndex={0}
-                      onKeyDown={(e) => e.key === 'Enter' && setDraft({ ...r })}
+                      onKeyDown={(e) => e.key === 'Enter' && e.target.tagName !== 'INPUT' && setDraft({ ...r })}
                     >
+                      {/* stopPropagation hält den Zeilenklick vom Drawer fern;
+                          shiftKey gibt es nur am Klick, nicht am change-Event.
+                          Der Zustand bleibt kontrolliert - der Browser-Haken
+                          wird beim Rendern ohnehin überschrieben. */}
+                      <td class="td-check" onClick={(e) => e.stopPropagation()}>
+                        <input
+                          type="checkbox"
+                          aria-label={tr('bulk.selectRow', r[schema.titleField])}
+                          checked={isRowSelected(r[schema.idField])}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            toggleRow(r[schema.idField], i, e.shiftKey)
+                          }}
+                        />
+                      </td>
                       <td class="cell-id">{r[schema.idField]}</td>
                       {schema.list.map((key) => (
                         <Cell
@@ -1416,6 +1682,21 @@ function Workbench({
                           q={query}
                         />
                       ))}
+                      <td class="cell-action">
+                        {/* stopPropagation: der Klick gehoert der Aktion, nicht
+                            dem Zeilenwechsel ins Formular des Originals. */}
+                        <button
+                          class="iconbtn row-duplicate"
+                          title={`${tr('drawer.duplicate')}: ${r[schema.titleField]}`}
+                          aria-label={`${tr('drawer.duplicate')}: ${r[schema.titleField]}`}
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            duplicate(r[schema.idField])
+                          }}
+                        >
+                          <IconCopy />
+                        </button>
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -1472,6 +1753,7 @@ function Workbench({
             onCancel={() => setDraft(null)}
             onSave={commit}
             onDelete={remove}
+            onDuplicate={duplicate}
             showHints={showHints}
             log={log}
             locale={settings.locale}
@@ -1597,6 +1879,21 @@ function Workbench({
         </>
       )}
 
+      {/* Rückfrage vor dem Sammel-Löschen. Abbruch lässt alles unverändert;
+          ab 50 Datensätzen will die Anzahl eingetippt sein - eine Mausbewegung
+          soll bei dieser Größenordnung nicht genügen. */}
+      {bulkConfirm && (
+        <>
+          <div class="scrim" onClick={() => setBulkConfirm(null)} />
+          <BulkDeleteDialog
+            count={selectedVisible.length}
+            tr={tr}
+            onCancel={() => setBulkConfirm(null)}
+            onConfirm={runBulkDelete}
+          />
+        </>
+      )}
+
       {toast && <div class={'toast' + (toast.kind === 'error' ? ' toast--error' : '')}>{toast.text}</div>}
     </div>
   )
@@ -1696,6 +1993,49 @@ function CsvImportDialog({ state, schema, showHints, tr, onMap, onMode, onRun, o
         </button>
         <button class="btn btn--primary" onClick={onRun}>
           {tr('import.run')}
+        </button>
+      </div>
+    </div>
+  )
+}
+
+/**
+ * Rückfrage vor dem Sammel-Löschen, mit Anzahl. Ab 50 Datensätzen will die
+ * Anzahl eingetippt sein - bei dieser Größenordnung genügt keine Mausbewegung
+ * mehr, und ein Tippfehler kostet nichts außer einem zweiten Versuch.
+ */
+function BulkDeleteDialog({ count, tr, onCancel, onConfirm }) {
+  const [typed, setTyped] = useState('')
+  const needsTyping = count >= 50
+  const ready = !needsTyping || typed.trim() === String(count)
+  const input = useRef(null)
+
+  useEffect(() => needsTyping && input.current?.focus(), [])
+
+  return (
+    <div class="modal" role="dialog" aria-label={tr('bulk.confirmTitle')}>
+      <h2>{tr('bulk.confirmTitle')}</h2>
+      <p>{tr('bulk.confirmBody', count)}</p>
+      {needsTyping && (
+        <div class="field">
+          <label for="bulk-count">{tr('bulk.typeToConfirm', count)}</label>
+          <input
+            id="bulk-count"
+            ref={input}
+            type="number"
+            autocomplete="off"
+            value={typed}
+            onInput={(e) => setTyped(e.currentTarget.value)}
+            onKeyDown={(e) => e.key === 'Enter' && ready && onConfirm()}
+          />
+        </div>
+      )}
+      <div class="modal__foot">
+        <button class="btn btn--quiet" onClick={onCancel}>
+          {tr('common.cancel')}
+        </button>
+        <button class="btn btn--danger" disabled={!ready} onClick={onConfirm}>
+          {tr('bulk.confirmDelete')}
         </button>
       </div>
     </div>
@@ -1896,7 +2236,6 @@ function FieldFilter({ field: f, spec, tr, onChange }) {
  */
 function Hi({ text, q }) {
   const parts = highlightParts(text, q)
-  if (parts.length === 1) return <>{parts[0].text}</>
   return <>{parts.map((p, i) => (p.hit ? <mark key={i}>{p.text}</mark> : p.text))}</>
 }
 
@@ -1977,14 +2316,16 @@ function Cell({ record, field, schema, entities, recordsByEntity, entity, onNavi
   return <td>{value ? <Hi text={value} q={q} /> : '—'}</td>
 }
 
+/* Der Kopf trägt den Pfeil nur, solange eine Sortierung nach ihm läuft -
+   der dritte Klick stellt die Datenblock-Reihenfolge wieder her (sort: null). */
 const Th = ({ sort, k, onSort, align, children }) => (
   <th
-    aria-sort={sort.key === k ? (sort.dir === 1 ? 'ascending' : 'descending') : undefined}
+    aria-sort={sort?.key === k ? (sort.dir === 1 ? 'ascending' : 'descending') : undefined}
     style={align === 'right' ? 'text-align:right' : undefined}
     onClick={() => onSort(k)}
   >
     {children}
-    {sort.key === k && <span class="caret">{sort.dir === 1 ? '▲' : '▼'}</span>}
+    {sort?.key === k && <span class="caret">{sort.dir === 1 ? '▲' : '▼'}</span>}
   </th>
 )
 
@@ -2110,7 +2451,7 @@ function FieldInput({ field: f, record: r, entity, entities, recordsByEntity, on
   return <input id={id} ref={inputRef} value={r[f.key]} onInput={set} />
 }
 
-function RecordDrawer({ record, schema, singular, entity, entities, recordsByEntity, isNew, onCancel, onSave, onDelete, showHints, log, locale, tr }) {
+function RecordDrawer({ record, schema, singular, entity, entities, recordsByEntity, isNew, onCancel, onSave, onDelete, onDuplicate, showHints, log, locale, tr }) {
   const [r, setR] = useState(record)
   const [confirm, setConfirm] = useState(false)
   const [touched, setTouched] = useState({})
@@ -2215,6 +2556,13 @@ function RecordDrawer({ record, schema, singular, entity, entities, recordsByEnt
         <button class="btn btn--quiet" onClick={onCancel}>
           {tr('common.cancel')}
         </button>
+        {/* Nur fuer gespeicherte Datensaetze: ein noch nie uebernommener
+            Entwurf hat keinen Inhalt, den eine Kopie tragen koennte. */}
+        {!isNew && (
+          <button class="btn btn--quiet" onClick={() => onDuplicate(r[schema.idField])}>
+            {tr('drawer.duplicate')}
+          </button>
+        )}
         {!isNew && (
           <button
             class="btn btn--danger"

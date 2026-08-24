@@ -103,6 +103,37 @@ const firstChip = await page.locator('.ref-chip').first().innerText()
 console.log('3) Erster Reference-Chip:', firstChip)
 if (/^S-\d/.test(firstChip)) fail('Reference-Chip zeigt rohe Id statt Titel')
 
+/*
+ * Sortierung (OPEN-18): die Reference-Spalte sortiert nach dem aufgeloesten
+ * Lieferantennamen, nicht nach der rohen Id - die Tabelle zeigt den Namen,
+ * also muss der Kopf dieselbe Ordnung legen. Aufzaehlungen sortieren nach
+ * ihrer Beschriftung.
+ */
+await page.getByRole('columnheader', { name: 'Supplier', exact: true }).click()
+const chipsByTitle = await page.locator('.ref-chip').allInnerTexts()
+const expectedChips = [
+  'Elbe Hardware Solutions',
+  'Havel Consulting Partners',
+  'Nordwind IT GmbH',
+  'Nordwind IT GmbH',
+  'Rheinmetall Services AG',
+  'Rheinmetall Services AG',
+  'Spree Cloud Systems',
+  'Spree Cloud Systems',
+  'Spree Cloud Systems',
+]
+console.log('2a) Nach Supplier-Kopf sortiert:', chipsByTitle.join(' | '))
+if (chipsByTitle.join('|') !== expectedChips.join('|')) {
+  fail('Reference-Spalte sortiert nach Id statt nach Titel: ' + chipsByTitle.join(', '))
+}
+
+await page.getByRole('columnheader', { name: /^Type/ }).click()
+const pillsByLabel = await page.locator('td .pill').allInnerTexts()
+console.log('2b) Nach Type-Kopf sortiert:', pillsByLabel.join(', '))
+if (pillsByLabel.join('|') !== ['ISO 27001', 'ISO 27001', 'ISO 27001', 'Other', 'Other', 'PCI-DSS', 'PCI-DSS', 'SOC 2', 'SOC 2'].join('|')) {
+  fail('Aufzaehlungsspalte sortiert nicht nach Beschriftung: ' + pillsByLabel.join(', '))
+}
+
 // 3) Klick auf den Chip springt zur Suppliers-Ansicht und oeffnet den Datensatz
 await page.locator('.ref-chip').first().click()
 await page.waitForSelector('.drawer')
@@ -119,7 +150,9 @@ console.log('5) Loesch-Schutz-Meldung:', guardToast)
 if (!guardToast.includes("Can't delete")) fail('Loesch-Schutz griff nicht wie erwartet')
 const suppliersStill = await page.locator('.drawer').count()
 if (suppliersStill !== 1) fail('Drawer wurde trotz Lösch-Schutz geschlossen')
-await page.locator('.drawer__foot .btn--quiet').click()
+// Der Fuss hat seit dem Duplizieren zwei stille Knoepfe - Abbrechen ist
+// namentlich angesprochen, nicht ueber seine Klasse.
+await page.getByRole('button', { name: 'Cancel' }).click()
 
 // 5) Reference-Feld im Formular: Select mit dem Titel-Feld der Zielentitaet
 // Klick gezielt auf die Id-Zelle, nicht auf die Zeilenmitte - die faellt bei
@@ -144,6 +177,12 @@ await dl.saveAs(csvPath)
 const csv = readFileSync(csvPath, 'utf8')
 console.log('7) CSV enthaelt Supplier-Namen statt Id:', csv.includes('Nordwind IT GmbH'), '| rohe Id vorhanden:', /S-00\d;/.test(csv))
 if (!csv.includes('Nordwind IT GmbH')) fail('CSV-Export loest Reference-Feld nicht auf')
+
+// Regression: der Export durfte die aufgeloesten Titel nicht in den
+// Datenbestand zurueckschreiben - danach waeren alle Chips "—".
+const chipsAfterExport = await page.locator('.ref-chip').count()
+console.log('   Chips nach dem CSV-Export weiterhin aufgeloest:', chipsAfterExport)
+if (chipsAfterExport !== 9) fail('CSV-Export hat die Referenz-Ids in der Datei ueberschrieben')
 
 // 7) KI-Aktion ueber Entitaetsgrenze: Modell nennt den Supplier per Name, nicht per Id
 await page.getByLabel('Settings').click()
@@ -211,6 +250,89 @@ if (supplierRowsAfterWizard !== 6 || certRowsFinal !== 11) fail('Wizard hat nich
 const wizChip = await page.locator('tr:has-text("ISO 9001 certificate") .ref-chip').innerText()
 console.log('    Aufgeloester Supplier:', wizChip)
 if (wizChip !== 'Suedwind Logistik GmbH') fail('Referenz auf den im selben Durchlauf angelegten Datensatz fehlt')
+
+/*
+ * Duplizieren mit zwei Entitaeten (OPEN-20): die Kopie bleibt in ihrer
+ * Entitaet, traegt die Id ihres eigenen Praefix, der Reference-Wert reist
+ * mit, und ein Strg+Z nimmt sie vollstaendig zurueck.
+ */
+const certSourceId = await page.locator('tr:has-text("ISO 9001 certificate") .cell-id').innerText()
+await page.locator('tr:has-text("ISO 9001 certificate") .cell-action button').click()
+
+const certRowsAfterDuplicate = await page.locator('table tbody tr').count()
+console.log('13a) Zertifikat dupliziert — Zeilen:', certRowsAfterDuplicate)
+if (certRowsAfterDuplicate !== 12) fail('Duplizieren hat im aktiven Tab nicht gegriffen')
+
+const certCopyRow = page.locator('tr:has-text("ISO 9001 certificate (Copy)")')
+if ((await certCopyRow.count()) !== 1) fail('Zertifikats-Kopie fehlt oder liegt doppelt')
+const certCopyId = await certCopyRow.locator('.cell-id').innerText()
+if (!certCopyId.startsWith('C-')) fail('Kopie traegt nicht das Id-Praefix ihrer Entitaet')
+if (certCopyId === certSourceId) fail('Kopie traegt dieselbe Id wie das Original')
+const certCopyChip = await certCopyRow.locator('.ref-chip').innerText()
+if (certCopyChip !== 'Suedwind Logistik GmbH') fail('Kopie hat den Reference-Wert nicht uebernommen')
+if ((await page.locator('.drawer__head .cell-id').innerText()) !== certCopyId) {
+  fail('Nach dem Duplizieren oeffnet nicht das Formular der Kopie')
+}
+
+await page.keyboard.press('Escape')
+await page.keyboard.press('Control+z')
+const certRowsAfterUndoDuplicate = await page.locator('table tbody tr').count()
+const certCopyGone = (await page.locator('tr:has-text("ISO 9001 certificate (Copy)")').count()) === 0
+console.log('13b) Duplikat rueckgaengig — Zeilen:', certRowsAfterUndoDuplicate, '| Kopie weg:', certCopyGone)
+if (certRowsAfterUndoDuplicate !== 11 || !certCopyGone) fail('Strg+Z hat die Zertifikats-Kopie nicht vollstaendig entfernt')
+
+/*
+ * Mehrfachauswahl mit Sammelaktionen (OPEN-19), hier im Mehr-Entitaeten-Build:
+ * Certificates hat genau ein Aufzählfeld - kein Feld-Select, nur der Wert -
+ * und der Sammel-Löschversuch auf Suppliers läuft in den Referenz-Schutz:
+ * alle Gewählten sind referenziert, keiner wird entfernt, alle werden benannt.
+ */
+await page.locator('tr:has-text("PCI-DSS attestation") .td-check input').click()
+await page.locator('tr:has-text("Hardware supply ISO 27001") .td-check input').click()
+
+const certSelects = await page.locator('.bulk-bar select').count()
+if (certSelects !== 1) fail('Bei genau einem Aufzahlfeld gibt es keinen Feld-Select')
+await page.locator('.bulk-bar select').selectOption('SOC 2')
+await page.getByRole('button', { name: 'Set value' }).click()
+await page.waitForSelector('.toast')
+console.log('M1) Sammelaktion auf Certificates:', await page.locator('.toast').innerText())
+const BULK_TARGETS = [
+  ['PCI-DSS attestation', 'PCI-DSS'],
+  ['Hardware supply ISO 27001', 'ISO 27001'],
+]
+for (const [title] of BULK_TARGETS) {
+  const pill = (await page.locator(`tr:has-text("${title}") .pill`).innerText()).trim()
+  if (pill !== 'SOC 2') fail(`"${title}" wurde nicht auf SOC 2 gesetzt`)
+}
+await page.keyboard.press('Control+z')
+for (const [title, expected] of BULK_TARGETS) {
+  const pill = (await page.locator(`tr:has-text("${title}") .pill`).innerText()).trim()
+  if (pill !== expected) fail(`Ein Strg+Z hat "${title}" nicht auf ${expected} zurueckgesetzt`)
+}
+if (await page.locator('.bulk-bar').count()) {
+  fail('Nach der abgeschlossenen Sammelaktion ist noch eine Auswahl aktiv')
+}
+
+// Referenz-Schutz beim Sammel-Loeschen: beide Suppliers sind Ziel von
+// Reference-Feldern, der Löschversuch entfernt keinen einzigen.
+await page.getByRole('tab', { name: 'suppliers' }).click()
+await page.waitForSelector('table tbody tr')
+await page.locator('tr:has-text("Nordwind IT GmbH") .td-check input').click()
+await page.locator('tr:has-text("Spree Cloud Systems") .td-check input').click()
+await page.getByRole('button', { name: 'Delete selected' }).click()
+await page.waitForSelector('.modal')
+const supplierDialogBody = await page.locator('.modal').innerText()
+if (!supplierDialogBody.includes('2 records will be removed')) {
+  fail('Die Rueckfrage zaehlt die ausgewählten Suppliers nicht')
+}
+await page.locator('.modal .btn--danger').click()
+await page.waitForSelector('.toast')
+const guardBulkToast = await page.locator('.toast').innerText()
+const supplierRowsAfterGuard = await page.locator('table tbody tr').count()
+console.log('M2) Referenz-Schutz beim Sammel-Loeschen:', guardBulkToast, '| Zeilen:', supplierRowsAfterGuard)
+if (!guardBulkToast.includes('still referenced')) fail('Behaltene Datensaetze wurden nicht begruendet')
+if (supplierRowsAfterGuard !== 6) fail('Der Referenz-Schutz hat beim Sammel-Loeschen versagt')
+if (!(await page.locator('.bulk-bar').count())) fail('Der fehlgeschlagene Löschversuch hat die Auswahl weggeworfen')
 
 /*
  * Faelligkeiten-Widget ueber Entitaetsgrenzen: eigener Build mit

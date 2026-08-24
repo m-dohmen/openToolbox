@@ -92,6 +92,14 @@ s'impriment en un PDF propre.
   résultats sur chaque onglet et les correspondances surlignées ; filtres par type de champ dans
   la barre latérale, avec puces amovibles — pour la session uniquement, rien n'est enregistré
   dans le fichier.
+- **Colonnes triables dans chaque liste d'entités** : un clic trie croissant, un second
+  décroissant, un troisième rend l'ordre du bloc de données ; la comparaison suit le type de
+  champ (nombres numériquement, dates chronologiquement), les valeurs vides restent toujours en
+  bas.
+- **Dupliquer un enregistrement** depuis la ligne du tableau ou depuis le formulaire ouvert : toutes
+  les valeurs sont reprises, le titre reçoit le suffixe localisé et la copie obtient son propre
+  identifiant ; même chemin qu'une saisie manuelle — annulation, journal des modifications,
+  écriture uniquement à l'enregistrement.
 - **Entretien en masse avec sélection multiple** : ligne par ligne, par plage avec Maj+clic ou
   toutes les lignes visibles d'un coup ; barre d'actions pour fixer une valeur d'énumération ou
   supprimer avec confirmation comptée — une entrée de journal et un Ctrl+Z par action.
