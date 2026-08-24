@@ -17,20 +17,9 @@ Gebaut ist sie für einen Ablauf im Besonderen:
 > „Bau mir ein Werkzeug zur Verfolgung von Lieferantenaudits, auf Basis von openToolbox."
 
 Man richtet einen KI-Agenten auf dieses Repository, und er hat alles, was er braucht — das Gerüst,
-und [`AGENTS.md`](AGENTS.md), das ihm sagt, was er fragen und welche Datei er ändern soll.
-
-Noch einen Schritt kürzer wird es mit dem Skill in [`plugin/`](plugin/) — einmal installiert,
-beschreibt man das gewünschte Werkzeug in einem beliebigen Verzeichnis, und der Agent holt sich die
-Vorlage selbst. Claude Code und Codex lesen dieselbe `SKILL.md`:
-
-```bash
-claude plugin marketplace add m-dohmen/openToolbox
-claude plugin install opentoolbox@opentoolbox
-```
-
-Für Codex das Verzeichnis `plugin/skills/opentoolbox-tool` nach `~/.codex/skills/` kopieren — siehe
-[`plugin/README.md`](plugin/README.md). Nötig ist der Skill nicht; der Satz oben funktioniert auch
-ohne ihn.
+und [`AGENTS.md`](AGENTS.md), das ihm sagt, was er fragen und welche Datei er ändern soll. Wie das
+in der Praxis abläuft und wie man sich den ersten Schritt sparen kann, steht unten unter
+[Zusammen mit einem KI-Assistenten bauen](#zusammen-mit-einem-ki-assistenten-bauen).
 
 ---
 
@@ -130,7 +119,7 @@ Dashboard · CSV-Import · Änderungsprotokoll · Versionsnummern.**
   [Daten hineinbekommen](#daten-hineinbekommen).
 - **Zwei Oberflächensprachen ab Werk** (Englisch, Deutsch), eine Einstellung, die mit der Datei
   reist. Eine dritte zu ergänzen ist eine kleine, mechanische Änderung — siehe
-  [Interface languages](README.md#interface-languages).
+  [Oberflächensprachen](#oberflächensprachen).
 - **Mehrere Entitäten und Beziehungen**, wenn ein Datensatztyp nicht reicht — siehe
   [Mehrere Entitäten](#mehrere-entitäten-und-beziehungen).
 - **Dashboard-Kacheln und ein Druck-Stylesheet**, weil Analyse meistens in einer Folie oder einer
@@ -606,6 +595,14 @@ Die Einträge liegen bei den Datensätzen, nicht bei den Einstellungen — in ei
 Datei steht das Protokoll damit **innerhalb** des Umschlags, wo Notizen wie „Budget nach
 Prüfungsfeststellung korrigiert" auch hingehören.
 
+### Wem die Copyright-Zeile gehört
+
+Der Hinweis am Fuß der Einstellungsseite ist eine Freitext-Einstellung, denn das Werkzeug, das man
+aus dieser Vorlage baut, gehört dem Ersteller — nicht der Vorlage. Ausgeliefert wird er als
+`© openToolbox` mit Verweis auf das Projekt, dazu ein optionales eigenes Linkfeld — beides gegen die
+eigene Angabe oder die des Kunden tauschen (Einstellungen → Anwendung). Darunter steht unveränderlich
+eine Zeile `based on openToolbox · Apache License 2.0` mit Rückverweis hierher.
+
 ## Beispiel-Prompts
 
 Die gebaute Datei erklärt, wie man sie ändert. An den Stellen, die man typischerweise anpassen will
@@ -618,7 +615,44 @@ Der Sinn: Wer die Datei bekommt, muss weder diese Beschreibung gelesen haben noc
 Agenten.
 
 Standardmäßig an, weil die Vorlage lehren soll. **Vor der Übergabe eines fertigen Werkzeugs an reine
-Anwender ausschalten** — dort sind die Kästen nur Lärm.
+Anwender ausschalten** — dort sind die Kästen nur Lärm. Ein Schalter unter Einstellungen →
+Darstellung, und `examplePrompts: false` in `DEFAULT_SETTINGS` liefert sie von Anfang an aus.
+
+## Drucken
+
+Beide Ansichten haben ein Druck-Stylesheet, damit Strg/Cmd+P ein brauchbares PDF für eine Anlage zur
+Besprechung liefert. Dateizeile, Seitenleiste, Suche, Chatbereich, Wasserzeichen und sämtliche Knöpfe
+fallen weg; die Tabelle wiederholt ihren Kopf auf jeder Seite und bricht keine Zeile mittig durch;
+Dashboard-Kacheln brechen nicht über Seitengrenzen. Farbe wird für Balken, Ringe und Status-Marken
+erzwungen — dort tragen sie Information statt Dekoration, und Browser drucken sie sonst weiß.
+
+## Zusammen mit einem KI-Assistenten bauen
+
+Sage etwas wie:
+
+> Bau mir ein Werkzeug zur Verfolgung von Lieferantenzertifikaten, auf Basis von openToolbox
+> (https://github.com/m-dohmen/openToolbox).
+
+Der Assistent liest [`AGENTS.md`](AGENTS.md), fragt nach, wie ein Datensatz aussieht, schreibt
+`src/domain.js`, läuft den Build und reicht die fertige HTML-Datei weiter. `AGENTS.md` zählt auch die
+Fehler auf, die einen Einzeldatei-Build zerbrechen — der Assistent muss sie nicht erst neu
+entdecken.
+
+### Den Skill installieren und den ersten Schritt überspringen
+
+`AGENTS.md` hilft erst, wenn der Agent bereits in diesem Repository ist. Der Skill in
+[`plugin/`](plugin/) ist der Einstieg von außen: einmal installiert, beschreibt man das gewünschte
+Werkzeug in einem beliebigen Verzeichnis, und der Agent holt sich die Vorlage selbst, führt das
+Interview, baut und übergibt. Claude Code und Codex lesen dieselbe `SKILL.md`:
+
+```bash
+claude plugin marketplace add m-dohmen/openToolbox
+claude plugin install opentoolbox@opentoolbox
+```
+
+Für Codex das Verzeichnis `plugin/skills/opentoolbox-tool` nach `~/.codex/skills/` kopieren — siehe
+[`plugin/README.md`](plugin/README.md). Nötig ist der Skill nicht; der Prompt oben funktioniert auch
+ohne ihn.
 
 ## Warum eine Datei
 
@@ -632,7 +666,34 @@ Drei Randbedingungen, die in regulierten und in Konzernumgebungen immer wieder a
 Eine einzelne HTML-Datei umgeht alle drei. Und sie ist ehrlich in dem, was sie ist: Der Anwender kann
 den gesamten Quelltext lesen, und es gibt keinen Dienst, der sich unter ihm still verändern könnte.
 
-## Die dunkle Leiste oben
+## Wie die Persistenz funktioniert
+
+`index.html` enthält einen leeren Datenblock:
+
+```html
+<script id="sb-payload" type="application/json">null</script>
+```
+
+Beim Start nimmt die Anwendung eine Momentaufnahme des unveränderten Dokumentquelltexts. Beim
+Speichern ersetzt sie nur diesen Block und schreibt das Ergebnis hinaus. Drei Wege zum Speichern,
+absteigend nach Komfort: die zuvor gewählte Datei (File System Access API — ab dem zweiten Speichern
+kein Dialog mehr), ein „Speichern unter"-Dialog oder der Download-Ordner. Chromium bekommt den
+ersten Weg, Firefox und Safari den letzten.
+
+Bewusst gibt es **keinen Browserspeicher**. `IndexedDB` und `localStorage` sind unter `file://`
+unzuverlässig — Chrome verweigert `IndexedDB`, wenn Drittanbieter-Cookies blockiert sind, und
+`localStorage` teilt sich in manchen Browsern über alle lokalen Dateien hinweg. Der eingebettete
+Datenblock funktioniert überall.
+
+## Markenbildung
+
+Produktname, Logo und fünf Farben sind auf der Einstellungsseite änderbar und reisen mit der Datei.
+Hochgeladene SVGs werden zuerst gereinigt — Skripte, `on…`-Handler, `foreignObject`,
+`<style>`-Elemente, `style`-Attribute und externe Verweise werden entfernt, und gemeldet wird, was
+entfernt wurde. Die Konfiguration lässt sich als JSON exportieren (ohne Datensätze, ohne den
+API-Schlüssel) und in jedes weitere Werkzeug laden, das man auf dieser Grundlage baut.
+
+### Die dunkle Leiste oben
 
 Zwei Einstellungen prägen sie. **Kopfzeile** ersetzt den Text hinter dem Dateinamen — leer bleibt
 der übersetzte Standardtext, der der Oberflächensprache folgt; ausgefüllt gewinnt die eigene Angabe
@@ -648,6 +709,81 @@ Symbol und Adresse werden geprüft, denn beides reist mit der Datei zu Leuten, d
 haben: Symbole laufen durch denselben Reiniger wie das Logo, und angezeigt werden nur http-, https-
 und mailto-Adressen. Ein fehlendes Schema wird zu `https` ergänzt; ein `javascript:` oder `data:`
 wird verworfen, statt in einem `href` zu landen.
+
+## Oberflächensprachen
+
+Die Oberfläche kommt mit **Englisch (Vorgabe) und Deutsch**, umschaltbar unter Einstellungen →
+Darstellung → Sprache. Die Wahl reist mit der Datei, genau wie das Farbschema.
+
+Bewusst in zwei Schichten geteilt, die sich nicht mischen:
+
+- **Die Hülle der Anwendung** — Knöpfe, Dialoge, Meldungen, die Vorschau eines KI-Vorschlags
+  („A-123 aktualisiert — Status: offen → erledigt"). Das ist es, was der Sprachschalter steuert. Es
+  liegt in einer Datei, `src/i18n.js`: ein flaches Wörterbuch aus Schlüssel und Zeichenkette, ein
+  Block je Sprache.
+- **Der Schemainhalt** — Feldbeschriftungen, Aufzählungswerte, Seed-Daten in `src/domain.js`. In
+  welcher Sprache man sie geschrieben hat, in welcher bleiben sie auf dem Schirm, gleich welche
+  Oberflächensprache gilt. Ein deutschsprachiges Werkzeug behält seine deutschen Spaltenköpfe
+  („Fälligkeit", „Zuständig"), selbst wenn der Schalter auf Englisch steht — laufende Fachdaten live
+  zu übersetzen ist nicht Sache eines Oberflächen-Schalters, und beides zu vermischen ließe die
+  Schema-Schicht an einer Sprachregelung hängen, von der sie nichts weiß.
+
+### Eine Sprache ergänzen
+
+Weil der ganze Mechanismus in einer einzigen Datei sitzt und jede Zeichenkette schon einmal
+übersetzt worden ist, bleibt das Ergänzen einer Sprache klein genug für eine einzige Anweisung an
+einen KI-Assistenten:
+
+> Ergänze Italienisch als Oberflächensprache.
+
+Alles Nötige liegt offen: `src/i18n.js` dokumentiert das Muster in seinem Kopfkommentar, `LOCALES`
+und `LOCALE_LABELS` listen, was die Einstellungen anbieten, und alle 474 Schlüssel in `STRINGS.en`
+haben ein Gegenstück in `STRINGS.de`, aus dem sich übersetzen lässt. Konkret ist die Änderung:
+
+```js
+// src/i18n.js
+export const LOCALES = ['en', 'de', 'it']
+export const LOCALE_LABELS = { en: 'English', de: 'Deutsch', it: 'Italiano' }
+
+const STRINGS = {
+  en: { /* … */ },
+  de: { /* … */ },
+  it: {
+    'app.settings': 'Impostazioni',
+    'common.apply': 'Applica',
+    // … eine Zeile je Schlüssel, gleiche Form wie bei `en` — einfache
+    // Zeichenketten und kleine Funktionen wie `(n) => `${n} Datensätze``
+    // für die Handvoll Schlüssel, die Argumente nehmen (Zähler, Namen,
+    // Pluralformen).
+  },
+}
+```
+
+Sonst ändert sich nichts im Bestand. Die Einstellungsseite übernimmt die neue Option automatisch aus
+`LOCALES`, jede Komponente ruft ohnehin das generische `tr('some.key', ...args)` auf, und ein
+Schlüssel, der in einer unfertigen Übersetzung noch fehlt, fällt auf Englisch zurück, statt etwas zu
+brechen — eine halbfertige Übersetzung darf man also ausliefern und später vollenden.
+
+### Wie es verdrahtet ist, für alle, die weiterbauen
+
+- `settings.locale` ist eine normale Einstellung: mit der Datei gespeichert, Vorgabe `'en'`,
+  gerendert als Segmentumschalter neben Farbschema und Zeilenhöhe.
+- Jede Komponente baut sich einmal einen gebundenen Übersetzer —
+
+  ```js
+  const tr = translator(settings.locale)
+  ```
+
+  — und ruft `tr('key')` beziehungsweise `tr('key', ...args)` für die wenigen Schlüssel auf, die
+  einen Wert einsetzen (eine Stückzahl, ein Dateiname, eine Feldbeschriftung).
+- `src/lib/actions.js` (Prüfung und Beschreibung von KI-Vorschlägen) und `dialectSummary()` in
+  `src/lib/ai.js` (die Zeile zum ausgehandelten Dialekt in den Einstellungen) nehmen denselben `tr` —
+  auch die Sätze, die jemand beim Durchsehen eines KI-Vorschlags liest, sind übersetzt, nicht nur die
+  Hülle drumherum.
+- Bewusst englisch bleibt, was **an das Modell** geht: die Anweisungen und die Schemabeschreibung
+  (`buildInstructions`, `buildContext` in `src/lib/ai.js`). Modelle arbeiten unabhängig von der
+  Oberflächensprache auf Englisch am zuverlässigsten, und dieser Text wird nie direkt vom Anwender
+  gelesen — nur vom Modell.
 
 ## Einstellungen sperren
 
@@ -691,6 +827,33 @@ haben:
 Zähler aus, KI-Anbindung aus — dann öffnet die Datei **keine** Netzwerkverbindung. Nachprüfbar im
 Netzwerk-Tab, und von der Testsuite zugesichert.
 
+## Der KI-Assistent
+
+Standardmäßig ausgeschaltet. Solange er aus ist, öffnet die KI-Anbindung keinerlei
+Netzwerkverbindung — es gibt keinen zweiten Weg nach draußen.
+
+**Kompatibilität wird ausgehandelt, nicht vorausgesetzt.** „OpenAI-kompatibel" ist eine Familie von
+Dialekten, kein Standard. Aktuelle Reasoning-Modelle verlangen `max_completion_tokens` und weisen
+eine eigene Temperatur zurück; ältere Proxies kennen nur `max_tokens`. Der Client beginnt mit der
+breitesten Variante, liest der 400er-Antwort ab, was der Endpunkt beanstandet, passt sich an und
+versucht es erneut — bis zu sechs Versuche. Das Ergebnis wird mit der Datei gespeichert, damit der
+nächste Aufruf beim ersten Mal richtig liegt.
+
+**CORS ist die Stelle, die zuschlägt.** Von einer lokalen Datei aus ist der Origin `null`. Der
+Endpunkt muss das zulassen, was in der Praxis bedeutet: einen Proxy davorsetzen (LiteLLM,
+API-Management, eine Funktion). Direkte Aufrufe an api.openai.com funktionieren nicht. Die
+Fehlermeldung sagt das auch, statt einen mit einer leeren Konsole allein zu lassen.
+
+**Änderungen sind Vorschläge, keine Befehle.** Wird er um eine Änderung der Daten gebeten, hängt das
+Modell einen JSON-Block an; die Anwendung prüft jede Operation gegen das Schema — unbekannte Felder
+fallen weg, Aufzählungswerte werden geprüft, Ids verifiziert, neue Ids vergibt die Anwendung — und
+zeigt die Liste an, bevor irgendetwas angefasst wird. Abgewiesene Operationen werden benannt, nicht
+stillschweigend verschluckt.
+
+**Schlüssel werden standardmäßig nicht gespeichert.** Ist die KI ohne hinterlegten Schlüssel
+eingeschaltet, fragt die Datei ihn beim Öffnen einmal ab und bietet an, die Anbindung stattdessen
+auszuschalten.
+
 ## Rückgängig und Wiederholen
 
 Jedes Anlegen, Ändern und Löschen landet auf einem Verlauf für die Sitzung — Strg/Cmd+Z macht es
@@ -725,8 +888,9 @@ dem Filter verbirgt. Eine Massenänderung darf keine Zeilen erreichen, die niema
 die Liste mit einem [Filter](#suchen-und-filtern) verkleinert, verkleinert damit das Ziel der
 nächsten Sammelaktion mit. Beim Umsortieren bleibt die Auswahl erhalten: sortiert werden Ids um,
 nicht weggeworfen. Die Auswahl selbst lebt nur in der Sitzung — der Wechsel auf einen anderen
-Entitäts-Reiter räumt sie ab, ein Neuladen beginnt leer (bewusst ohne `localStorage` — der
-eingebettete Datenblock ist der einzige Speicher, den es gibt).
+Entitäts-Reiter räumt sie ab, ein Neuladen beginnt leer (bewusst ohne `localStorage`, siehe
+[Wie die Persistenz funktioniert](#wie-die-persistenz-funktioniert) — der eingebettete Datenblock
+ist der einzige Speicher, den es gibt).
 
 Sobald etwas gewählt ist, blendet sich über der Tabelle eine Aktionsleiste ein — „N ausgewählt“ —
 mit drei Aktionen:
@@ -757,13 +921,64 @@ zurück — dreißig Korrekturen sind ein Verlaufsschritt, nicht dreißig.
   Punkt und die Rückfrage beim Schließen sind das Netz für alles darüber hinaus.
   Strg/Cmd+S speichert.
 - **Ein Rechner, eine Datei.** Kein Mehrbenutzerbetrieb. Zwei Personen, die dieselbe Datei
-  bearbeiten, erzeugen zwei Wahrheiten.
+  bearbeiten, erzeugen zwei Wahrheiten. Was es seit v0.4.0 *gibt*, ist ein nachträglicher Abgleich,
+  Datensatz für Datensatz; siehe [Rückläufer zusammenführen](#rückläufer-zusammenführen).
+  Live-Zusammenarbeit bleibt außerhalb des Scopes — und wird es immer bleiben.
 - **Mail-Gateways filtern `.html`-Anhänge** öfter als nicht. Gezippt versenden oder einen
   Dateitransfer nutzen, und den Weg einmal mit einer Attrappe testen, bevor es darauf ankommt.
 - **Verschlüsselung schützt die Daten, nicht den Zugriff auf die Anwendung.** Rollen und Ansichten in
   einer lokal laufenden Datei wären nur Oberfläche — wer die Datei hat, hat auch den Code. Die
   [Sperre der Einstellungen](#einstellungen-sperren) ist genau solche Oberfläche und sagt das dort,
   wo sie sitzt.
+
+## Projektaufbau
+
+```
+src/domain.js          die einzige Datei, die die meisten Werkzeuge ändern müssen
+src/app.jsx            Hülle, Liste, Formular, Speicherlogik
+src/settings.jsx       Einstellungsseite
+src/dashboard.jsx      Dashboard-Kacheln (stat, bar, donut) — keine Diagrammbibliothek
+src/hint.jsx           die Beispiel-Prompt-Kästen
+plugin/                installierbarer Skill für Claude Code und Codex (siehe plugin/README.md)
+examples/              acht vollständige Domänen, bereit zum Kopieren über src/domain.js
+docs/demos/            die gebauten Demos, eingecheckt, damit man sie verlinken und herunterladen kann
+scripts/demos.mjs      die Demo-Liste: Beispiel, Farben, Startseite, Kurzbeschreibung
+scripts/build-demo.mjs baut jeden Eintrag dieser Liste nach docs/demos/<slug>/
+scripts/demo-index.mjs baut die Übersichtsseite docs/demos/index.html
+scripts/build-prompts.mjs erzeugt die Aufbau-Prompts aus den Domänen, 7 Sprachen
+scripts/screenshots.mjs erzeugt die Bilder dieses README neu
+src/chat.jsx           Dock des KI-Assistenten
+src/brand.jsx          Wortmarke und hochgeladenes Logo
+src/i18n.js            Wörterbuch der Oberflächensprachen (Englisch, Deutsch)
+src/tokens.css         Farb- und Typografie-Primitive
+src/styles.css         semantische Rollen und Komponenten
+src/lib/payload.js     den eingebetteten Datenblock lesen und schreiben
+src/lib/crypto.js      PBKDF2 + AES-GCM
+src/lib/lock.js        Einstellungssperre — Schutz vor Versehen, keine Sicherheitsgrenze
+src/lib/ai.js          Endpunkt-Client, Dialektverhandlung, Kontextaufbau
+src/lib/actions.js     Prüfung und Anwendung von KI-Vorschlägen
+src/lib/entities.js    normalisiert SCHEMA/ENTITIES, gemeinsame Feldtypprüfung, Löschschutz
+src/lib/csv.js         CSV-Schreiber und CSV-Leser (Trennzeichen erkennen, RFC-4180-Quoting)
+src/lib/count.js       der Aufrufzähler — der einzige von sich aus gehende Netzwerkaufruf der Datei
+src/home.jsx           die Startseite und ihr Editor
+src/lib/markdown.js    der kleine Markdown-Teilsatz — geparst zu einem Baum, nie zu HTML
+src/lib/attach.js      Anhänge — Lesen, Budget, sicherer Name und Typ
+src/lib/trail.js       feldgenauer Änderungspfad, beim Speichern abgeleitet
+src/merge.jsx          Abgleich-Dialog: drei Gruppen, feldgenauer Vergleich
+src/lib/merge.js       den Datenblock einer anderen Datei lesen, vergleichen, Übernahmen anwenden
+src/wizard.jsx         geführte Erfassung: Schritte, CSV-Schritt, Zusammenfassung
+src/lib/wizard.js      Wizard-Form — sichtbare Schritte, Beanstandungen je Schritt, Einsammeln
+src/lib/links.js       Kopfzeilen-Verweise — Adressprüfung (nur http/https/mailto)
+src/lib/svg.js         Reiniger für Logo und Symbole
+src/lib/color.js       Palettenableitung und Kontrastprüfung
+test/prompts-metrics.mjs      reiner Knoten-Test — prüft den Kennzahlen-Abschnitt der erzeugten Aufbau-Prompts
+test/actions-delete-guard.mjs reiner Knoten-Test — der Referenzschutz greift auch bei KI-vorgeschlagenen Löschungen
+test/timezone.mjs             reiner Knoten-Test — Fälligkeiten folgen dem lokalen Kalendertag, nicht UTC
+test/timezone-examples.mjs    reiner Knoten-Test — dieselbe eingefrorene Uhr über jede Beispieldomäne unter examples/
+test/smoke.mjs                Ende-zu-Ende-Test gegen einen echten Headless-Browser
+test/multi-entity.mjs         Ende-zu-Ende-Test für den ENTITIES-/Reference-Feld-Pfad
+test/demos.mjs                öffnet jede gebaute Demo einmal — sonst verrotten die Beispiele still
+```
 
 ## Testen
 
