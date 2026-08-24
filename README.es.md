@@ -28,9 +28,9 @@ obligatorio: la frase de arriba funciona sin él.
 
 ## Verlo en funcionamiento
 
-[**Abrir la demo en vivo**](https://m-dohmen.github.io/openToolbox/demo/) — una cartera de proyectos
-con dos tipos de registro enlazados. O [descargar `docs/demo/index.html`](docs/demo/index.html) y
-hacer doble clic. El mismo archivo; en ninguno de los dos casos interviene un servidor.
+[**Abrir las demos en vivo**](https://m-dohmen.github.io/openToolbox/demos/) — el mismo marco como
+seis herramientas distintas, de una cartera de proyectos a un registro de envases. O descargar
+cualquiera desde [`docs/demos/`](docs/demos/) y hacer doble clic. El mismo archivo; sin servidor.
 
 ![La vista de lista](docs/screenshots/list.png)
 

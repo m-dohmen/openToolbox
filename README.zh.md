@@ -20,7 +20,7 @@ openToolbox 是一个模板，用于那些需要四处流转的小型内部工�
 
 ## 先看看
 
-[**打开在线演示**](https://m-dohmen.github.io/openToolbox/demo/)——一个项目组合工具，含两种相互关联的记录类型。或者[下载 `docs/demo/index.html`](docs/demo/index.html) 双击打开。同一个文件，两种方式都不需要服务器。
+[**打开在线演示**](https://m-dohmen.github.io/openToolbox/demos/)——同一框架的六种工具：从项目组合、包装登记册到班级出游。或者[从 `docs/demos/`](docs/demos/) 下载任意一个，双击打开。同一个文件，两种方式都不需要服务器。
 
 ![列表视图](docs/screenshots/list.png)
 

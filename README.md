@@ -217,9 +217,11 @@ the reason if it ignores it. `required: true` on a field is enforced the same wa
 That schema alone produces the table columns, the edit form, the sidebar filters, the CSV export,
 the instructions sent to the AI model and the validation of anything the model proposes back.
 `examples/` holds **eight complete domains**, six of them published as
-[live demos](https://m-dohmen.github.io/openToolbox/demos/). Copy the closest one over
+[live demos](https://m-dohmen.github.io/openToolbox/demos/). The other two — `risk-register` and
+`suppliers-certificates` — are examples without a demo: the first is the plainest starting point,
+the second shows the reference mechanics alone. Copy the closest one over
 `src/domain.js` and rebuild to watch the entire app change — that is usually faster than writing a
-schema from a blank file. `risk-register.domain.js` is the plainest starting point.
+schema from a blank file.
 
 ### Attachments
 
@@ -349,7 +351,7 @@ as a ring with a legend). `measure` is either `'count'` or a field key whose val
 
 Drawn **without a charting library**: the bars are CSS widths and the ring is a single SVG circle
 with `stroke-dasharray`. A charting library would multiply the size of a file that has to travel by
-email, for four tile types. Category colours are derived from the tool's own accent colour — so a
+email, for three tile types. Category colours are derived from the tool's own accent colour — so a
 rebranded tool recolours its dashboard by itself — and the shade direction flips in dark mode, or
 one end of the range would disappear into the background.
 
@@ -643,7 +645,7 @@ language is small enough to hand an AI assistant as a single instruction:
 > Add Italian as an interface language.
 
 Everything it needs is right there: `src/i18n.js` documents the pattern in its header comment,
-`LOCALES` and `LOCALE_LABELS` list what Settings offers, and all 229 keys in `STRINGS.en` already
+`LOCALES` and `LOCALE_LABELS` list what Settings offers, and all 467 keys in `STRINGS.en` already
 have a `STRINGS.de` counterpart to translate from. Concretely, the change is:
 
 ```js
@@ -937,9 +939,12 @@ src/lib/wizard.js      wizard shape — visible steps, per-step objections, harv
 src/lib/links.js       header links — URL check (http/https/mailto only)
 src/lib/svg.js         logo and icon sanitiser
 src/lib/color.js       palette derivation and contrast check
-test/smoke.mjs         end-to-end test against a real headless browser
-test/multi-entity.mjs  end-to-end test for the ENTITIES/reference-field path
-test/demos.mjs         opens every built demo once — the examples rot silently otherwise
+test/prompts-metrics.mjs      pure Node — checks the metric section of the generated build prompts
+test/actions-delete-guard.mjs pure Node — the reference guard holds on AI-proposed deletions too
+test/timezone.mjs             pure Node — due dates follow the local calendar day, not UTC
+test/smoke.mjs                end-to-end test against a real headless browser
+test/multi-entity.mjs         end-to-end test for the ENTITIES/reference-field path
+test/demos.mjs                opens every built demo once — the examples rot silently otherwise
 ```
 
 ## Testing
@@ -948,8 +953,16 @@ test/demos.mjs         opens every built demo once — the examples rot silently
 npm test
 ```
 
-Runs two suites, both against a real headless Chromium:
+Runs six suites — three of them against a real headless Chromium:
 
+- `test/prompts-metrics.mjs` — pure Node, no browser: the metric section that
+  `scripts/build-prompts.mjs` generates must describe every declared metric so an agent reading only
+  the prompt builds the same tiles the demo shows.
+- `test/actions-delete-guard.mjs` — pure Node: the reference guard holds on every delete path,
+  including an AI-proposed deletion naming a record that another entity still references.
+- `test/timezone.mjs` — pure Node: freezes the clock at two instants and reruns the due-date logic
+  in child processes with shifted timezones — a due date follows the local calendar day, whether
+  that day lies ahead of or behind the UTC date.
 - `test/smoke.mjs` — the single-entity path, against the already-built `dist/index.html`: startup,
   edit, save, reopen, encrypt, wrong passphrase, decrypt, dark mode, settings round-trip, AI dialect
   negotiation against a mock endpoint, attachments, proposed changes with a deliberately invalid one,
@@ -957,15 +970,18 @@ Runs two suites, both against a real headless Chromium:
   fixture deliberately contains a row without a title, an unknown enum value and a misformatted
   date, plus the usage counter in all three of its states (preset, pointed at a different endpoint,
   and switched off — the last one asserting that the file makes no outbound request whatsoever).
-  the dashboard tiles agreeing with the sidebar counts, and the print stylesheet actually hiding
-  the interactive chrome. Around 55 assertions.
-- `test/multi-entity.mjs` — the `ENTITIES`/reference-field path: builds
+  Also covered: the dashboard tiles agreeing with the sidebar counts, and the print stylesheet
+  actually hiding the interactive chrome. Around 300 assertions.
+- `test/multi-entity.mjs` — also headless Chromium: builds
   `examples/suppliers-certificates.domain.js` into its own `dist-multi-entity/` (swapping
   `src/domain.js` only for the duration of that one build, restored immediately after), then checks
   the entity switcher, the reference dropdown in the form, the resolved-title chip and its
   click-to-navigate in the table, the delete guard against a referenced record, CSV export
   resolving the reference to a name, and an AI-proposed action that creates a record in one entity
-  by naming a related record in another by its title text.
+  by naming a related record in another by its title text. Around 60 assertions.
+- `test/demos.mjs` — opens every built demo once and checks the few things that must always hold:
+  it renders without console errors, has records, its computed fields produce values, and the
+  configured accent colour arrives. The examples are the part of the repository that rots silently.
 
 ## Contributing
 
