@@ -125,11 +125,16 @@ rules: [
 ]
 ```
 
-The point is the single place it runs. **The form, the CSV import and AI-proposed changes all pass
-through the same check** — one rule in the schema hardens all three at once instead of being
-retrofitted in three places. In the form the objection appears under the offending field and the
-save is refused; in the import the row is skipped and named; the AI is told the `message` up front
-and gets it back as the reason if it proposes something that violates it.
+The point is the single place it runs. **The form, the CSV import, the wizard's
+CSV step and AI-proposed changes all pass through the same check** — one rule in
+the schema hardens all of them at once instead of being retrofitted in four
+places. In the form the objection appears under the offending field and the
+save is refused; in the import the row is skipped and named; the AI is told the
+`message` up front and gets it back as the reason if it proposes something that
+violates it. The JSON import runs every incoming record through the same type
+and rule check plus an id check (missing or duplicate ids are rejected); it is
+atomic — one violation rejects the whole file, because Trail-Diff and the audit
+log key records by id and cannot survive half-applied imports.
 
 Two details worth knowing when you write rules:
 

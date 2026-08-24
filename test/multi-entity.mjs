@@ -6,7 +6,7 @@
 // eine Entitaetsgrenze hinweg.
 import { chromium } from 'playwright'
 import { createServer } from 'node:http'
-import { readFileSync, mkdirSync, rmSync } from 'node:fs'
+import { readFileSync, writeFileSync, mkdirSync, rmSync } from 'node:fs'
 import { resolve, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { buildWithDomain, pidSuffix } from './domain-swap.mjs'
@@ -539,6 +539,81 @@ if (activeAfterMetricClick.toLowerCase() !== 'certificates') {
 }
 await metricsCtx.close()
 rmSync(metricsOutDir, { recursive: true, force: true })
+
+/*
+ * JSON-Import ueber Entitaetsgrenzen ({ records: { <entity>: [...] } }):
+ * dieselbe Pruefung wie beim CSV-Import - eine Referenz, die keinen
+ * Bestandsdatensatz aufloest, lehnt die GANZE Datei ab. Eine saubere Datei
+ * ersetzt die Datensaetze der genannten Entitaeten und loest Referenzen per
+ * Titel auf.
+ */
+const jsonPage = await ctx.newPage()
+jsonPage.on('pageerror', (e) => errors.push(String(e)))
+await jsonPage.goto('file://' + dist)
+await jsonPage.waitForSelector('.home, table tbody tr')
+if (await jsonPage.locator('.home').count()) await jsonPage.locator('.home__foot .btn--primary').click()
+await jsonPage.waitForSelector('table tbody tr')
+
+await jsonPage.evaluate(() => {
+  const original = HTMLInputElement.prototype.click
+  HTMLInputElement.prototype.click = function () {
+    if (this.type === 'file') { window.__jsonPicker = this; return }
+    return original.call(this)
+  }
+})
+await jsonPage.getByText('Import JSON', { exact: true }).click()
+await jsonPage.waitForFunction(() => window.__jsonPicker)
+// pickFile erzeugt je Aufruf ein neues Input-Element - der Handle wird vor
+// jeder Dateiuebergabe frisch aufgeloest.
+const pickJson = async (path) => {
+  await jsonPage.getByText('Import JSON', { exact: true }).click()
+  await jsonPage.waitForFunction(() => window.__jsonPicker)
+  const handle = await jsonPage.evaluateHandle(() => window.__jsonPicker)
+  await handle.asElement().setInputFiles(path)
+}
+
+const badCertJson = resolve(tmp, 'zertifikate-kaputt.json')
+writeFileSync(
+  badCertJson,
+  JSON.stringify({
+    records: {
+      certificates: [
+        { id: 'C-90', title: 'Broken cert', supplierId: 'Ghost supplier', type: 'ISO 27001', expiry: '2027-02-01' },
+      ],
+    },
+  }),
+)
+// Bestand unangetastet: der Zertifikats-Reiter zeigt vor und nach der
+// Ablehnung dieselbe Zahl.
+await jsonPage.locator('.entity-tabs > button', { hasText: 'certificates' }).click()
+await jsonPage.waitForSelector('table tbody tr')
+const certsBeforeReject = await jsonPage.locator('table tbody tr').count()
+await pickJson(badCertJson)
+await jsonPage.waitForSelector('.toast--error', { timeout: 5000 })
+console.log('28) JSON-Map-Import abgelehnt:', await jsonPage.locator('.toast--error').innerText())
+if ((await jsonPage.locator('table tbody tr').count()) !== certsBeforeReject) {
+  fail('Die abgelehnte JSON-Datei hat den Zertifikatsbestand veraendert')
+}
+
+const okCertJson = resolve(tmp, 'zertifikate-sauber.json')
+writeFileSync(
+  okCertJson,
+  JSON.stringify({
+    records: {
+      certificates: [
+        { id: 'C-91', title: 'Imported via JSON', supplierId: 'Nordwind IT GmbH', type: 'ISO 27001', expiry: '2027-03-01' },
+      ],
+    },
+  }),
+)
+await pickJson(okCertJson)
+await jsonPage.waitForTimeout(300)
+const jsonCertRows = await jsonPage.locator('table tbody tr').count()
+const certRowText = jsonCertRows ? await jsonPage.locator('table tbody tr').first().innerText() : ''
+console.log('    sauber importiert:', jsonCertRows, 'Zeile |', certRowText.replace(/\s+/g, ' '))
+if (jsonCertRows !== 1) fail('Der Map-Import hat die Entitaet nicht vollstaendig ersetzt (1 erwartet)')
+if (!certRowText.includes('Nordwind IT GmbH')) fail('Die Referenz wurde beim JSON-Import nicht per Titel aufgeloest')
+await jsonPage.close()
 
 console.log(errors.length ? '\nKonsolenfehler:\n' + errors.join('\n') : '\nKeine Konsolenfehler.')
 await browser.close()

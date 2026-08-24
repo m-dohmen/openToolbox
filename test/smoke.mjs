@@ -9,6 +9,8 @@ import { translator } from '../src/i18n.js'
 import { relativeAge } from '../src/lib/time.js'
 import { groupByDueDate, hasDueDates } from '../src/lib/dueDate.js'
 import { HISTORY_LIMIT, pushHistory } from '../src/lib/history.js'
+import { normalizeEntities, screenImportRows } from '../src/lib/entities.js'
+import * as twoEntityDomain from '../examples/suppliers-certificates.domain.js'
 import {
   matchesSearch,
   matchesFilters,
@@ -483,6 +485,82 @@ if (highlightParts('Unverändert', '').length !== 1) fail('Ohne Suchbegriff soll
 if (filterChipLabel(sfSchema, 'size', { v: '', values: [], from: '10', to: '15' }) !== 'Size: 10 – 15') fail('Chiptext Zahlbereich falsch')
 if (filterChipLabel(sfSchema, 'size', { v: '', values: [], from: '10', to: '' }) !== 'Size: 10 – …') fail('Chiptext offene Obergrenze falsch')
 if (filterChipLabel(sfSchema, 'status', { v: '', values: ['open', 'done'], from: '', to: '' }) !== 'Status: open, done') fail('Chiptext Mehrfachauswahl falsch')
+
+// 0l) JSON-Import-Siebung: dieselbe Pruefung wie beim CSV-Import, bevor ein
+// Datensatz den Bestand erreicht - Typ, Pflichtfelder, Regeln, doppelte Ids.
+const impTr = translator('en')
+{
+  const twoEntities = normalizeEntities(twoEntityDomain)
+  const stock = { suppliers: [{ id: 'S-1', name: 'Nordwind IT GmbH' }], certificates: [] }
+  const good = {
+    id: 'C-1',
+    title: 'ISO 27001',
+    supplierId: 'Nordwind IT GmbH', // Referenz per Titel, nicht per Id
+    type: 'iso 27001', // bewusst abweichende Schreibweise - wird kanonisiert
+    expiry: '2027-01-31',
+    daysLeft: 999, // berechnetes Feld: darf hereinkommen, bleibt aber draußen
+  }
+  const { built, problems } = screenImportRows(
+    twoEntities.certificates,
+    [
+      good,
+      { id: 'C-2', title: 'Bad enum', supplierId: 'S-1', type: 'Kosmos-Zertifikat' },
+      { title: 'No identifier', supplierId: 'S-1' },
+      { id: 'C-1', title: 'Duplicate id', supplierId: 'S-1' },
+      'no record at all',
+    ],
+    { entities: twoEntities, recordsByEntity: stock },
+    impTr,
+  )
+  console.log('0l) JSON-Siebung:', built.length, 'durchgelassen,', problems.length, 'Beanstandungen')
+  if (built.length !== 1) fail('Genau der gueltige Datensatz sollte durch die Siebung kommen')
+  if (built[0].supplierId !== 'S-1') fail('Die Referenz wurde nicht per Titel aufgeloest')
+  if (built[0].type !== 'ISO 27001') fail('Der Aufzaehlungswert wurde nicht kanonisiert')
+  if ('daysLeft' in built[0]) fail('Ein berechnetes Feld gehoert nicht in den gespeicherten Datensatz')
+  const codes = problems.map((p) => p.code)
+  if (!codes.includes('notEnum')) fail('Falscher Aufzählungswert wurde nicht beanstandet')
+  if (!codes.includes('noId')) fail('Fehlender Bezeichner wurde nicht beanstandet')
+  if (!codes.includes('duplicateId')) fail('Doppelter Bezeichner wurde nicht beanstandet')
+  if (!codes.includes('notRecord')) fail('Kein Datensatz-Objekt wurde nicht beanstandet')
+}
+{
+  // Regel- und Pflichtfeldpruefung an einem minimalen Schema mit denselben
+  // Regeln wie der shipped-Domain.
+  const entity = {
+    schema: {
+      idField: 'id',
+      titleField: 'title',
+      fields: [
+        { key: 'id', label: 'Id', type: 'text' },
+        { key: 'title', label: 'Title', type: 'text', required: true },
+        { key: 'status', label: 'Status', type: 'enum', values: ['open', 'in progress'] },
+        { key: 'owner', label: 'Owner', type: 'text' },
+      ],
+      rules: [
+        {
+          when: (r) => r.status === 'in progress',
+          require: ['owner'],
+          message: 'An item that is under way needs an owner.',
+        },
+      ],
+    },
+    emptyRecord: () => ({ id: '', title: '', status: 'open', owner: '' }),
+  }
+  const { built, problems } = screenImportRows(
+    entity,
+    [
+      { id: 'X-1', status: 'in progress' }, // Pflichtfeld fehlt UND Regel verletzt
+      { id: 'X-2', title: 'Fine', status: 'open' },
+    ],
+    {},
+    impTr,
+  )
+  const texts = problems.map((p) => p.message ?? '')
+  console.log('0m) JSON-Siebung Regeln:', built.length, 'durchgelassen |', texts.join(' / '))
+  if (built.length !== 1 || built[0].id !== 'X-2') fail('Nur der regelkonforme Datensatz sollte durchkommen')
+  if (!texts.some((t) => t.includes('Title is required'))) fail('Pflichtfeldprüfung griff beim JSON-Import nicht')
+  if (!texts.some((t) => t.includes('needs an owner'))) fail('Schema-Regel griff beim JSON-Import nicht')
+}
 
 const browser = await chromium.launch()
 const ctx = await browser.newContext({ acceptDownloads: true, viewport: { width: 1280, height: 850 } })
@@ -2037,15 +2115,32 @@ await page20.locator('#f-owner').fill('S. Behrens')
 await page20.locator('#f-status').selectOption('in progress')
 await page20.getByRole('button', { name: 'Next' }).click()
 
-// CSV-Schritt: die Zeilen werden vorgemerkt, nicht geschrieben
+// CSV-Schritt: die Zeilen werden vorgemerkt, nicht geschrieben. Eine Zeile,
+// die der regelmaessige Import abweisen wuerde (Status "in progress" ohne
+// Owner), darf hier nicht still mit durchkommen - dieselbe Pruefung.
 await page20.waitForSelector('.wizard__csv')
 const wizCsv = resolve(tmp, 'wizard.csv')
-writeFileSync(wizCsv, 'Title;Owner;Status\nFrom the file A;M. Voss;open\nFrom the file B;M. Voss;open\n')
+writeFileSync(
+  wizCsv,
+  'Title;Owner;Status\n' +
+    'From the file A;M. Voss;open\n' +
+    'From the file B;M. Voss;open\n' +
+    'Rule breaker;;in progress\n',
+)
 await page20.locator('.wizard__csv input[type=file]').setInputFiles(wizCsv)
 await page20.waitForSelector('.wizard__csv .import__map')
 await page20.getByRole('button', { name: 'Take these rows' }).click()
 await page20.waitForSelector('.note--ok')
 console.log('61) CSV im Wizard:', await page20.locator('.note--ok').innerText())
+const wizProblems = await page20.locator('.wizard__csv .import__problems li').allInnerTexts()
+console.log('    Beanstandungen:', wizProblems.join(' / '))
+if (!wizProblems.some((p) => p.includes('needs an owner'))) {
+  fail('Der Wizard-CSV-Schritt hat eine Regelverstoss-Zeile nicht beanstandet')
+}
+if (!wizProblems.some((p) => p.includes('Line 4'))) fail('Die Beanstandung nennt die Zeile nicht')
+if ((await page20.locator('.note--ok').innerText()).includes('3')) {
+  fail('Die beanstandete Zeile wurde trotzdem vorgemerkt')
+}
 
 await page20.getByRole('button', { name: 'Next' }).click()
 await page20.waitForSelector('.wizard__review')
@@ -2544,6 +2639,81 @@ if (reloadedRows !== 11 || reloadedQuery !== '' || reloadedChips !== 0) {
   fail('Suche/Filter sollen nur in der Sitzung leben, nicht im Datenblock oder Speicher')
 }
 await page30.close()
+
+// JSON-Import: derselbe Prueflauf wie beim CSV-Import - falscher Aufzaehlungswert,
+// fehlendes Pflichtfeld, doppelte Id. Ein einziger Verstoss lehnt die GANZE
+// Datei ab (atomarer Import), nichts landet ungeprueft im Bestand.
+const page31 = await ctx.newPage()
+page31.on('pageerror', (e) => errors.push(String(e)))
+page31.on('console', (m) => m.type() === 'error' && errors.push(m.text()))
+await openList(page31, dist)
+const jsonRowsBefore = await page31.locator('table tbody tr').count()
+
+await page31.evaluate(() => {
+  const original = HTMLInputElement.prototype.click
+  HTMLInputElement.prototype.click = function () {
+    if (this.type === 'file') { window.__jsonPicker = this; return }
+    return original.call(this)
+  }
+})
+await page31.getByText('Import JSON', { exact: true }).click()
+await page31.waitForFunction(() => window.__jsonPicker)
+// pickFile erzeugt je Aufruf ein neues Input-Element - der Handle wird vor
+// jeder Dateiuebergabe frisch aufgeloest.
+const pickJson = async (path) => {
+  await page31.getByText('Import JSON', { exact: true }).click()
+  await page31.waitForFunction(() => window.__jsonPicker)
+  const handle = await page31.evaluateHandle(() => window.__jsonPicker)
+  await handle.asElement().setInputFiles(path)
+}
+
+const badJson = resolve(tmp, 'import-kaputt.json')
+writeFileSync(
+  badJson,
+  JSON.stringify({
+    records: [
+      { id: 'A-9001', title: 'Looks fine', status: 'open', effort: 2 },
+      { id: 'A-9002', title: 'Broken status', status: 'erledigt' }, // falscher Enum-Wert
+      { id: 'A-9002', title: 'Duplicate id', status: 'open' }, // doppelte Id
+      { title: 'Missing id', status: 'open' }, // fehlender Bezeichner
+    ],
+  }),
+)
+await pickJson(badJson)
+await page31.waitForSelector('.toast--error', { timeout: 5000 })
+const jsonReject = await page31.locator('.toast--error').innerText()
+console.log('98) JSON-Import abgelehnt:', jsonReject)
+if (!jsonReject.includes('rejected')) fail('Der JSON-Import hat eine fehlerhafte Datei nicht abgelehnt')
+if (!jsonReject.includes('A-9002')) fail('Die Ablehnung nennt den doppelten Bezeichner nicht')
+if ((await page31.locator('table tbody tr').count()) !== jsonRowsBefore) {
+  fail('Die abgelehnte Datei hat den Bestand veraendert')
+}
+const leaked = await page31.locator('tr:has-text("Looks fine")').count()
+if (leaked) fail('Aus der abgelehnten Datei ist trotzdem ein Datensatz im Bestand gelandet')
+
+// Saubere Datei: kommt durch. Zahlen als Text werden kanonisiert, die Regel
+// ("in progress" braucht Owner) ist hier erfuellt. Erst warten, bis der
+// Fehl-Toast des vorherigen Imports abgeklungen ist, sonst greift der
+// Selektor auf den alten Toast.
+const okJson = resolve(tmp, 'import-sauber.json')
+writeFileSync(
+  okJson,
+  JSON.stringify({
+    records: [{ id: 'A-9100', title: 'From clean JSON', owner: 'M. Voss', status: 'in progress', effort: '4' }],
+  }),
+)
+await page31.waitForSelector('.toast', { state: 'detached', timeout: 6000 })
+await pickJson(okJson)
+await page31.waitForSelector('.toast:not(.toast--error)', { timeout: 5000 })
+console.log('99) JSON-Import sauber:', await page31.locator('.toast').innerText())
+// Ein flaches Array ERSETZT die Datensaetze der aktiven Entitaet - wie beim
+// Round-Trip eines Exports, sonst wuerde das Zurueckspielen Ids verdoppeln.
+if ((await page31.locator('table tbody tr').count()) !== 1) {
+  fail('Die saubere JSON-Datei hat die aktive Entitaet nicht vollstaendig ersetzt')
+}
+const jsonRow = await page31.locator('tr:has-text("From clean JSON")').innerText()
+if (!/\b4\b/.test(jsonRow)) fail('Der Aufwand wurde nicht in eine Zahl ueberfuehrt')
+await page31.close()
 
 // Vorschau im hellen Modus
 await page3.getByLabel('Settings').click()

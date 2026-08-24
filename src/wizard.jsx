@@ -10,7 +10,7 @@
  */
 import { useMemo, useState } from 'preact/hooks'
 import { fromCsv } from './lib/csv.js'
-import { coerceField, materialize, fieldValue } from './lib/entities.js'
+import { coerceField, materialize, fieldValue, validateRecord } from './lib/entities.js'
 import {
   visibleSteps,
   stepEntity,
@@ -274,6 +274,15 @@ function CsvStep({ entity, entityKey, entities, recordsByEntity, rows, onRows, t
       }
       if (!String(record[schema.titleField] ?? '').trim()) {
         problems.push(tr('import.needsTitle', where, schema.titleField))
+        return
+      }
+      /* Dieselben Regeln wie beim regelmaessigen Import. Eine Zeile, die dort
+         abgewiesen wuerde, darf ueber den Wizard keinen Schleichweg in den
+         Bestand bekommen - der Schritt ist der Import, nicht eine Kopie
+         ohne Pruefung. */
+      const objections = validateRecord(schema, materialize(entity, record), tr)
+      if (objections.length) {
+        for (const o of objections) problems.push(tr('validation.rowRejected', where, o.message))
         return
       }
       built.push(record)

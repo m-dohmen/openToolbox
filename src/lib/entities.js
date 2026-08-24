@@ -271,3 +271,84 @@ export function validateRecord(schema, record, tr) {
 
   return objections
 }
+
+/* ── Import-Siebung ─────────────────────────────────────────────
+ *
+ * Der JSON-Import ist der eine Datenweg, auf dem Datensätze mit fremden
+ * Werten und fertigen Ids hereinkommen. Damit er nicht zum Schleichweg um
+ * die Schema-Prüfung wird, läuft jeder eingehende Datensatz durch denselben
+ * Lauf wie eine CSV-Zeile: coerceField für jeden gesetzten Wert,
+ * validateRecord für Pflichtfelder und Regeln, dazu die Id-Kontrolle - ohne
+ * Id oder mit doppelter Id bleiben Trail-Diff und Änderungsprotokoll
+ * kaputt, weil beide nach Id keyen.
+ *
+ * Die Siebung baut die Datensätze zugleich neu auf (emptyRecord plus die
+ * geprüften Werte): nichts Ungeprüftes - unbekannte Schlüssel, Rohwerte
+ * statt kanonisierter Aufzählungswerte - erreicht den Datenblock.
+ * Anhangsfelder sind bewusst ausgenommen: ihr Inhalt kommt beim
+ * Round-Trip legitimerweise aus dem eigenen Export zurück, ein Dateidialog
+ * ist hier nicht beteiligt.
+ *
+ * Atomar entscheidet der Aufrufer: problems.length > 0 heißt ganze Datei
+ * ablehnen, `built` dann verwerfen. Ein halb importierter Bestand wäre
+ * schlimmer als gar keiner.
+ */
+
+/**
+ * Prüft eingehende Datensätze einer Entität und liefert
+ * `{ built, problems }` - built die übernommenswerten Datensätze, problems
+ * Beanstandungen `{ index, code?, params?, message? }`. Typfehler kommen
+ * als coerceField-Code durch (Übersetzung beim Aufrufer), Regelverstöße
+ * als fertiger Satz aus dem Schema, so wie validateRecord sie liefert.
+ */
+export function screenImportRows(entity, rows, context = {}, tr) {
+  const schema = entity.schema
+  const built = []
+  const problems = []
+  const seenIds = new Set()
+  rows.forEach((raw, index) => {
+    if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+      problems.push({ index, code: 'notRecord' })
+      return
+    }
+
+    const id = String(raw[schema.idField] ?? '').trim()
+    let idProblem = null
+    if (!id) {
+      idProblem = { index, code: 'noId', params: [schema.idField] }
+    } else if (seenIds.has(id)) {
+      idProblem = { index, code: 'duplicateId', params: [id] }
+    } else {
+      seenIds.add(id)
+    }
+    if (idProblem) problems.push(idProblem)
+
+    // Ohne gueltige Id wird die Zeile ohnehin abgelehnt; der Platzhalter
+    // dient nur der Regelpruefung darunter.
+    const record = { ...entity.emptyRecord(), [schema.idField]: id }
+    let firstObjection = problems.length
+    for (const field of writableFields(schema)) {
+      if (!(field.key in raw)) continue
+      if (field.type === 'attachment') {
+        record[field.key] = raw[field.key]
+        continue
+      }
+      const outcome = coerceField(schema, field.key, raw[field.key], context)
+      if (!outcome.ok) {
+        problems.push({ index, code: outcome.code, params: outcome.params })
+        continue
+      }
+      record[field.key] = outcome.value
+    }
+
+    // Dieselben Regeln wie im Formular und beim CSV-Import - auch bei einer
+    // Zeile, die schon oben beanstandet wurde, damit die Meldung vollständig
+    // bleibt und nicht nur der erste aufgefundene Fehler zählt.
+    for (const o of validateRecord(schema, materialize(entity, record), tr)) {
+      problems.push({ index, message: o.message })
+    }
+
+    if (!idProblem && problems.length === firstObjection) built.push(record)
+  })
+  return { built, problems }
+}
