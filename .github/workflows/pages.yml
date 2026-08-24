@@ -43,6 +43,22 @@ jobs:
             git --no-pager diff --stat -- docs/demo docs/demos
             exit 1
           fi
+      # Der Artifact-Inhalt ist das, was veroeffentlicht wird — nicht der Repo-
+      # Stand. Fehlt hier eine Datei, geht die Seite still demos-frei online;
+      # genau deshalb pruefen wir den kopierten Bestand hart (OPEN-89).
+      - name: Copy the demos into the site
+        run: |
+          cp -r docs/demos dist/demos
+          # /demo/ ist der alte Einzelpfad. Bestehende Verweise in READMEs,
+          # Wiki und aelteren Releases zeigen dorthin und sollen nicht ins
+          # Leere laufen.
+          cp -r docs/demo dist/demo
+          # Die Uebersichtsseite bindet ../logo.svg ein, also /logo.svg.
+          cp docs/logo.svg dist/logo.svg
+          test -f dist/demos/index.html || { echo 'dist/demos/index.html is missing from the site artifact'; exit 1; }
+          test -f dist/demos/ppwr-packaging/index.html || { echo 'dist/demos/ppwr-packaging/index.html is missing from the site artifact'; exit 1; }
+          test -f dist/demo/index.html || { echo 'dist/demo/index.html is missing from the site artifact'; exit 1; }
+          test -f dist/logo.svg || { echo 'dist/logo.svg is missing from the site artifact'; exit 1; }
       - uses: actions/upload-artifact@v4
         with:
           name: site
