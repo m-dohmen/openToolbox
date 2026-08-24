@@ -78,7 +78,7 @@ s'impriment en un PDF propre.
 - **Une ligne d'en-tête modifiable et jusqu'à cinq liens** dans la barre sombre du haut, vers ce qui
   accompagne l'outil.
 - **Des règles de validation entre champs**, appliquées à l'identique dans le formulaire, à
-  l'import CSV et aux changements proposés par l'IA.
+  l'import CSV (étape CSV de l'assistant et import JSON compris) et aux changements proposés par l'IA.
 - **Un assistant de saisie guidée** et un mode de collecte qui ouvre le fichier directement dessus,
   pour ceux qui n'ont qu'une chose à signaler.
 - **Fusionner une copie renvoyée**, enregistrement par enregistrement, avec un comparatif champ par

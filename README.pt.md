@@ -73,8 +73,8 @@ larguras em CSS e o anel é um único círculo SVG. As duas visões imprimem com
   registra dados não seja reconfigurada por acidente.
 - **Uma linha de cabeçalho editável e até cinco links** na barra escura do topo, apontando para o
   que acompanha a ferramenta.
-- **Regras de validação entre campos**, aplicadas igualmente no formulário, na importação CSV e nas
-  alterações propostas pela IA.
+- **Regras de validação entre campos**, aplicadas igualmente no formulário, na importação CSV
+  (incluindo a etapa CSV do assistente e a importação JSON) e nas alterações propostas pela IA.
 - **Um assistente de captura guiada** e um modo de recepção que abre o arquivo direto nele, para
   quem só precisa relatar uma coisa.
 - **Mesclar uma cópia devolvida**, registro a registro e com comparação campo a campo.

@@ -147,8 +147,8 @@ Dashboard · CSV-Import · Änderungsprotokoll · Versionsnummern.**
   [Einstellungen sperren](#einstellungen-sperren).
 - **Eine änderbare Kopfzeile und bis zu fünf Verweise** in der dunklen Leiste ganz oben, auf das,
   was neben dem Werkzeug liegt — siehe [Die dunkle Leiste oben](#die-dunkle-leiste-oben).
-- **Prüfregeln über Felder hinweg**, identisch durchgesetzt im Formular, beim CSV-Import und bei
-  Vorschlägen der KI — siehe [Ein eigenes Werkzeug bauen](#ein-eigenes-werkzeug-bauen).
+- **Prüfregeln über Felder hinweg**, identisch durchgesetzt im Formular, beim CSV-Import, im
+  Wizard und bei Vorschlägen der KI — siehe [Ein eigenes Werkzeug bauen](#ein-eigenes-werkzeug-bauen).
 - **Eine bearbeitbare Startseite**, damit die Datei sich erklärt, bevor sie eine Tabelle zeigt —
   siehe [Die Startseite](#die-startseite).
 - **Eine geführte Erfassung** und ein Erfassungsmodus, der die Datei direkt darin öffnet — siehe
@@ -229,12 +229,15 @@ rules: [
 ]
 ```
 
-Der Wert liegt im einen Aufrufort: **Formular, CSV-Import und die Vorschläge der KI laufen alle
-durch dieselbe Prüfung.** Eine Regel im Schema härtet alle drei Wege gleichzeitig. Im Formular
-erscheint die Beanstandung unter dem Feld und das Speichern wird verweigert; eine verstoßende
-CSV-Zeile wird übersprungen und benannt; das Modell bekommt die Meldung vorab und als Begründung
-zurück, wenn es sie übergeht. `required: true` am Feld wird genauso durchgesetzt — und eine
-numerische `0` zählt als gefüllt, denn null ist meistens eine echte Angabe.
+Der Wert liegt im einen Aufrufort: **Formular, CSV-Import, der CSV-Schritt im Wizard und die
+Vorschläge der KI laufen alle durch dieselbe Prüfung.** Eine Regel im Schema härtet alle diese Wege
+gleichzeitig. Im Formular erscheint die Beanstandung unter dem Feld und das Speichern wird
+verweigert; eine verstoßende CSV-Zeile wird übersprungen und benannt; das Modell bekommt die
+Meldung vorab und als Begründung zurück, wenn es sie übergeht. Der JSON-Import schickt jeden
+eingehenden Datensatz durch dieselbe Typ- und Regelprüfung samt Id-Kontrolle (fehlende oder
+doppelte Bezeichner werden abgewiesen) und ist atomar: Ein einziger Verstoß lehnt die ganze Datei
+ab, denn Protokoll und Trail keyen nach Id. `required: true` am Feld wird genauso durchgesetzt —
+und eine numerische `0` zählt als gefüllt, denn null ist meistens eine echte Angabe.
 
 Dieses Schema allein erzeugt die Tabellenspalten, das Formular, die Filter in der Seitenleiste, den
 CSV-Export, die Anweisungen an das KI-Modell und die Prüfung dessen, was das Modell zurückschlägt.
