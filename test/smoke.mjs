@@ -80,12 +80,17 @@ const fail = (m) => {
 }
 
 // Test-Logo mit absichtlich unsauberem Markup, um den SVG-Sanitiser zu pruefen.
+// Neben Skript und Event-Handlern tragen beide CSS-Vektoren externe Verweise
+// (OPEN-71): ein <style>-Element mit @import und ein style-Attribut mit url().
+const EXTERNAL = 'attacker.example'
 const logoFixture = resolve(tmp, 'logo.svg')
 writeFileSync(
   logoFixture,
-  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 40" onload="evil()">' +
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 40" onload="evil()" style="fill:url(https://attacker.example/root)">' +
     '<script>alert(1)</script>' +
+    '<style>@import url("https://attacker.example/track.css"); rect { fill: #f00 }</style>' +
     '<rect width="100" height="40" fill="#0e7c86" onclick="evil()" />' +
+    '<rect y="20" width="100" height="20" style="fill:url(\'https://attacker.example/pixel\')" />' +
     '</svg>',
 )
 
@@ -1242,6 +1247,65 @@ if (await page9.locator('.modal').isVisible()) {
   await page9.waitForTimeout(200)
 }
 
+/*
+ * Direktprüfung des SVG-Reinigers (OPEN-71): die E2E-Prüfung weiter unten sieht
+ * nur den gerenderten DOM. Hier zählt, WAS der Reiniger als entfernt meldet,
+ * und dass legitime Grafik unangetastet bleibt. Das Modul braucht DOMParser und
+ * läuft deshalb im Seitenkontext; der Quelltext kommt unverändert aus
+ * src/lib/svg.js, nur die export-Markierung ist für new Function zu lösen.
+ */
+const sanitizerSource = readFileSync(resolve(root, 'src/lib/svg.js'), 'utf8')
+const runSanitizer = (input) =>
+  page9.evaluate(({ src, input }) => {
+    const make = new Function(src.replace(/^export /gm, '') + '\nreturn sanitizeSvg')
+    return make()(input)
+  }, { src: sanitizerSource, input })
+
+const styleElSvg =
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10">' +
+  '<style>@import url("https://attacker.example/track.css"); rect { fill: #f00 }</style>' +
+  '<rect width="10" height="10"/></svg>'
+const styleAttrSvg =
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10">' +
+  '<rect width="10" height="10" style=\'fill:url("https://attacker.example/x");stroke:#333\'/></svg>'
+const styleRootSvg =
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10" style=\'fill:url("https://attacker.example/root")\'>' +
+  '<rect width="10" height="10"/></svg>'
+const legitSvg =
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10">' +
+  '<defs><linearGradient id="g"><stop offset="0" stop-color="#0e7c86"/><stop offset="1" stop-color="#8a2f5a"/></linearGradient></defs>' +
+  '<rect width="10" height="10" fill="url(#g)" stroke="#123456"/></svg>'
+
+const cleanedEl = await runSanitizer(styleElSvg)
+const cleanedAttr = await runSanitizer(styleAttrSvg)
+const cleanedRoot = await runSanitizer(styleRootSvg)
+const keptLegit = await runSanitizer(legitSvg)
+console.log(
+  '27a) Direktprüfung — style-Element:', JSON.stringify(cleanedEl.removed),
+  '| style-Attribut:', JSON.stringify(cleanedAttr.removed),
+  '| style am Wurzelelement:', JSON.stringify(cleanedRoot.removed),
+  '| legitim:', JSON.stringify(keptLegit.removed),
+)
+if (!cleanedEl.removed.includes('style')) fail('Das <style>-Element wurde nicht als entfernt gemeldet')
+if (/attacker\.example|<style|@import/i.test(cleanedEl.svg)) {
+  fail('Der Inhalt eines <style>-Elements hat den Reiniger überlebt')
+}
+if (!cleanedAttr.removed.includes('style')) fail('Das style-Attribut mit externer url() wurde nicht entfernt')
+if (/attacker\.example|url\(/i.test(cleanedAttr.svg)) {
+  fail('Ein externer CSS-Verweis im style-Attribut hat den Reiniger überlebt')
+}
+if (!cleanedRoot.removed.includes('style') && /attacker\.example/.test(cleanedRoot.svg)) {
+  fail('Ein externer CSS-Verweis am Wurzelelement hat den Reiniger überlebt')
+}
+if (
+  keptLegit.removed.length ||
+  !keptLegit.svg.includes('fill="url(#g)"') ||
+  !keptLegit.svg.includes('linearGradient') ||
+  !keptLegit.svg.includes('stroke="#123456"')
+) {
+  fail('Legitime SVG-Grafik wurde verändert oder beschädigt')
+}
+
 // Branding: Farben und hochgeladenes Logo
 await page9.locator('#c-accent').evaluate((el) => {
   el.value = '#8a2f5a'
@@ -1278,6 +1342,15 @@ const hasOnclick = await page9.evaluate(() =>
 console.log('    Logo an Stellen gerendert:', marks, '| script:', hasScript, '| onclick:', hasOnclick)
 if (hasScript || hasOnclick) fail('SVG wurde nicht bereinigt')
 if (marks < 2) fail('Logo ersetzt die Wortmarke nicht')
+// OPEN-71: auch die CSS-Vektoren duerfen das hochgeladene Logo ueberleben -
+// weder ein <style>-Element noch irgendein externer Verweis im Markup.
+const logoStyleCount = await page9.evaluate(() => document.querySelectorAll('.wordmark--logo style').length)
+const logoMarkup = await page9.evaluate(() =>
+  [...document.querySelectorAll('.wordmark--logo')].map((el) => el.innerHTML).join('\n'),
+)
+console.log('    <style> im gerenderten Logo:', logoStyleCount, '| externe Verweise:', /attacker\.example/.test(logoMarkup))
+if (logoStyleCount) fail('Ein <style>-Element hat das hochgeladene Logo überlebt')
+if (/attacker\.example/.test(logoMarkup)) fail('Ein externer CSS-Verweis hat das hochgeladene Logo überlebt')
 await page9.waitForTimeout(300)
 await page9.screenshot({ path: resolve(tmp, 'branding.png'), fullPage: false })
 
