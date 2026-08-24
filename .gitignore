@@ -4,6 +4,8 @@ dist-multi-entity/
 dist-due-date/
 dist-due-date-multi/
 test/.out/
+# Sperrverzeichnis des Fixture-Austauschs - ein hart gekillter Lauf kann es stehen lassen.
+test/.domain-swap.lock/
 .DS_Store
 docs/.social-preview.html
 
