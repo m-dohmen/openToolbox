@@ -46,7 +46,7 @@ son anchuras CSS y el anillo es un único círculo SVG. Ambas vistas se imprimen
 
 ## Qué incluye
 
-- **Un archivo.** Unos 160 KB, autocontenido. Doble clic y funciona. Desconecta el cable de red y
+- **Un archivo.** Unos 240 KB, autocontenido. Doble clic y funciona. Desconecta el cable de red y
   sigue funcionando; lo único que echaría en falta es el [contador de aperturas](#el-contador-de-aperturas),
   y está a un interruptor visible de quedar apagado.
 - **El archivo es la base de datos.** Guardar escribe un nuevo HTML con los registros incrustados.
@@ -74,8 +74,8 @@ son anchuras CSS y el anillo es un único círculo SVG. Ambas vistas se imprimen
   datos no se reconfigure por accidente.
 - **Una línea de cabecera editable y hasta cinco enlaces** en la barra oscura superior, apuntando a
   lo que acompaña a la herramienta.
-- **Reglas de validación entre campos**, aplicadas igual en el formulario, en la importación CSV y
-  en los cambios que propone la IA.
+- **Reglas de validación entre campos**, aplicadas igual en el formulario, en la importación CSV
+  (incluido el paso CSV del asistente y la importación JSON) y en los cambios que propone la IA.
 - **Un asistente de captura guiada** y un modo de recepción que abre el archivo directamente en él,
   para quien solo tiene que reportar una cosa.
 - **Fusionar una copia devuelta**, registro por registro y con comparación campo a campo.

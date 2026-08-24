@@ -98,7 +98,7 @@ dashboard · CSV import · change log · version numbers.**
 
 ## What you get
 
-- **One file.** ~90 KB, self-contained. Double-click, it runs. Pull the network cable, it still runs
+- **One file.** ~240 KB, self-contained. Double-click, it runs. Pull the network cable, it still runs
   — the only thing it would miss is the [usage counter](#the-usage-counter), which is one visible
   setting away from off.
 - **The file is the database.** Save writes a new HTML file with the records embedded. No backend,
@@ -131,8 +131,8 @@ dashboard · CSV import · change log · version numbers.**
   reconfigured by accident — see [Locking the settings](#locking-the-settings).
 - **An editable header line and up to five links** in the dark bar at the top, pointing at whatever
   sits next to the tool — see [The dark bar at the top](#the-dark-bar-at-the-top).
-- **Validation rules across fields**, enforced identically in the form, the CSV import and
-  AI-proposed changes — see [Building your own tool](#building-your-own-tool).
+- **Validation rules across fields**, enforced identically in the form, the CSV import, the
+  wizard and AI-proposed changes — see [Building your own tool](#building-your-own-tool).
 - **An editable start page**, so the file can explain itself before showing a table — see
   [The start page](#the-start-page).
 - **A guided entry wizard**, and an intake mode that opens the file straight into it — see
@@ -207,17 +207,17 @@ rules: [
 ]
 ```
 
-The value is the single place it runs: **the form, the CSV import and anything the AI proposes all
-pass through the same check.** One rule in the schema hardens all three at once. In the form the
-objection appears under the field and the save is refused; an offending CSV row is skipped and
-named; the model is told the message up front and gets it back as the reason if it ignores it.
-`required: true` on a field is enforced the same way — and a numeric `0` counts as filled, because
-zero is usually a real answer.
+The value is the single place it runs: **the form, the CSV import, the wizard's CSV step and
+anything the AI proposes all pass through the same check.** One rule in the schema hardens all of
+them at once. In the form the objection appears under the field and the save is refused; an
+offending CSV row is skipped and named; the model is told the message up front and gets it back as
+the reason if it ignores it. `required: true` on a field is enforced the same way — and a numeric
+`0` counts as filled, because zero is usually a real answer.
 
 That schema alone produces the table columns, the edit form, the sidebar filters, the CSV export,
 the instructions sent to the AI model and the validation of anything the model proposes back.
-`examples/` holds **seven complete domains**, each published as a
-[live demo](https://m-dohmen.github.io/openToolbox/demos/). Copy the closest one over
+`examples/` holds **eight complete domains**, six of them published as
+[live demos](https://m-dohmen.github.io/openToolbox/demos/). Copy the closest one over
 `src/domain.js` and rebuild to watch the entire app change — that is usually faster than writing a
 schema from a blank file. `risk-register.domain.js` is the plainest starting point.
 
@@ -599,8 +599,8 @@ on open and offers to switch the integration off instead.
 ## Branding
 
 Product name, logo and five colours are editable in the settings page and travel with the file.
-Uploaded SVGs are sanitised first — scripts, `on…` handlers, `foreignObject` and external references
-are stripped, and you are told what was removed. Export the configuration as JSON (without records,
+Uploaded SVGs are sanitised first — scripts, `on…` handlers, `foreignObject`, `<style>` elements,
+`style` attributes and external references are stripped, and you are told what was removed. Export the configuration as JSON (without records,
 without the API key) and load it into every other tool you build.
 
 ### The dark bar at the top
@@ -820,7 +820,10 @@ Three ways, all in the sidebar and in Settings → Data:
   that applies to records the AI creates.
 
 - **JSON import** — a flat array replaces the active entity's records; an object keyed by entity
-  replaces several at once. This is the format `Export JSON` writes, so it round-trips.
+  replaces several at once. This is the format `Export JSON` writes, so it round-trips. Every
+  incoming record runs through the same type and rule check as the CSV import, plus an id check:
+  a missing or duplicate identifier rejects the record. The import is **atomic** — one violation
+  rejects the whole file, because the trail and the audit log key records by id.
 
 - **The AI assistant**, on an explicit instruction, can create records from an attached document.
   See [The AI assistant](#the-ai-assistant).
@@ -903,7 +906,7 @@ src/settings.jsx       settings page
 src/dashboard.jsx      dashboard tiles (stat, bar, donut) — no charting library
 src/hint.jsx           the example-prompt boxes
 plugin/                installable skill for Claude Code and Codex (see plugin/README.md)
-examples/              seven complete domains, ready to copy over src/domain.js
+examples/              eight complete domains, ready to copy over src/domain.js
 docs/demos/            the built demos, committed so they can be linked and downloaded
 scripts/demos.mjs      the demo list: example, colours, start page, blurb
 scripts/build-demo.mjs builds every entry of that list into docs/demos/<slug>/

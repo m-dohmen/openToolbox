@@ -125,11 +125,16 @@ rules: [
 ]
 ```
 
-The point is the single place it runs. **The form, the CSV import and AI-proposed changes all pass
-through the same check** — one rule in the schema hardens all three at once instead of being
-retrofitted in three places. In the form the objection appears under the offending field and the
-save is refused; in the import the row is skipped and named; the AI is told the `message` up front
-and gets it back as the reason if it proposes something that violates it.
+The point is the single place it runs. **The form, the CSV import, the wizard's
+CSV step and AI-proposed changes all pass through the same check** — one rule in
+the schema hardens all of them at once instead of being retrofitted in four
+places. In the form the objection appears under the offending field and the
+save is refused; in the import the row is skipped and named; the AI is told the
+`message` up front and gets it back as the reason if it proposes something that
+violates it. The JSON import runs every incoming record through the same type
+and rule check plus an id check (missing or duplicate ids are rejected); it is
+atomic — one violation rejects the whole file, because Trail-Diff and the audit
+log key records by id and cannot survive half-applied imports.
 
 Two details worth knowing when you write rules:
 
@@ -603,6 +608,17 @@ connection. That is a judgement call you may make yourself; do not quietly leave
   script and produces a 9 KB file that renders nothing.
 - **Do not weaken the SVG sanitiser or the action validation.** Both exist because the output file
   gets passed around.
+
+The first rule above is machine-checked, not aspirational: CI runs
+`node scripts/check-self-contained.mjs dist/index.html docs/demo docs/demos` on every build, and it
+fails on anything a renderer would fetch by itself — external `<script src=`, `<link href=`,
+`<img>`/`<image>`, `<iframe>` and media tags, `<use href>`, `srcset`, CSS `@import`, and CSS
+`url()` pointing at the network. Plain `<a href="https://…">` links are deliberate content and stay
+allowed. The GitHub Pages deploy (`pages.yml`) runs only after its own build job has passed the same
+check, so a broken main is never published. One residual gap is known and accepted for now: all
+repository activity shares one GitHub identity, so "CI green before merge" and "nobody merges their
+own PR" rest on review discipline rather than GitHub enforcement until required status checks and
+separate merge permissions exist (tracked in the project wiki, [Testing](https://github.com/m-dohmen/openToolbox/wiki/Testing)).
 
 ## When the user wants more than a list
 

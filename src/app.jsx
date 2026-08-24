@@ -28,6 +28,7 @@ import {
   materialize,
   writableFields,
   validateRecord,
+  screenImportRows,
 } from './lib/entities.js'
 import {
   matchesSearch,
@@ -908,8 +909,9 @@ function Workbench({
 
   /**
    * Sammel-Löschen nach bestätigter Rückfrage. Referenzgeschützte
-   * Datensätze werden vorher aussortiert und benannt - sie würden von
-   * applyActions ohnehin gelöscht, denn der Schutz lebt im Formular.
+   * Datensätze werden vorher aussortiert und benannt - applyActions
+   * würde sie ebenfalls zurückweisen, aber je Datensatz einzeln;
+   * das Vorsortieren hält die Meldung auf einen Schlag.
    */
   const runBulkDelete = () => {
     const ids = selectedVisible.map((r) => r[schema.idField])
@@ -1046,7 +1048,27 @@ function Workbench({
     }
   }
 
-  /** Ein flaches Array geht in die aktive Entität, ein Objekt je Entitätsschlüssel ersetzt mehrere auf einmal. */
+  /**
+   * JSON-Import: ein flaches Array geht in die aktive Entitaet, ein Objekt je
+   * Entitaetsschluessel ersetzt mehrere auf einmal. Beide Wege laufen durch
+   * dieselbe Siebung wie der CSV-Import; schon ein einziger Verstoss lehnt
+   * die GANZE Datei ab - atomarer Import. Ein halb uebernommener Bestand
+   * waere schlimmer als gar keiner, weil Trail-Diff und Aenderungsprotokoll
+   * nach Ids keyen und eine abgebrochene Uebernahme dort nicht zu erkennen
+   * waere.
+   */
+  function rejectJsonImport(problems) {
+    if (!problems.length) return
+    const lines = problems.slice(0, 2).map((p) => {
+      const where = tr('import.record', p.index + 1)
+      return p.message ? `${where}: ${p.message}` : tr(`actions.${p.code}`, where, ...(p.params ?? []))
+    })
+    const more = problems.length - lines.length
+    throw new Error(
+      tr('toast.jsonRejected', problems.length, lines.join(' · ') + (more > 0 ? ' ' + tr('import.andMore', more) : '')),
+    )
+  }
+
   async function importJson() {
     const file = await pickFile('.json,application/json')
     if (!file) return
@@ -1054,12 +1076,29 @@ function Workbench({
       const parsed = JSON.parse(await file.text())
       const incoming = Array.isArray(parsed) ? parsed : parsed.records
       if (Array.isArray(incoming)) {
-        mutate(incoming)
-        notify(tr('toast.recordsImported', incoming.length))
+        const { built, problems } = screenImportRows(entity, incoming, { entities: ENTITIES, recordsByEntity }, tr)
+        rejectJsonImport(problems)
+        mutate(built)
+        notify(tr('toast.recordsImported', built.length))
       } else if (incoming && typeof incoming === 'object') {
-        recordChange((all) => ({ ...all, ...incoming }))
+        const next = {}
+        let count = 0
+        const allProblems = []
+        for (const [key, rows] of Object.entries(incoming)) {
+          const target = ENTITIES[key]
+          // Eine Entitaet ohne Schema kann nicht geprueft werden - und ungepruefte
+          // Datensaetze kommen hier nicht mehr durch.
+          if (!target || !Array.isArray(rows)) {
+            throw new Error(tr('actions.unknownEntity', 'JSON', key, ENTITY_KEYS.join(', ')))
+          }
+          const { built, problems } = screenImportRows(target, rows, { entities: ENTITIES, recordsByEntity }, tr)
+          next[key] = built
+          count += built.length
+          allProblems.push(...problems)
+        }
+        rejectJsonImport(allProblems)
+        recordChange((all) => ({ ...all, ...next }))
         setDirty(true)
-        const count = Object.values(incoming).reduce((n, arr) => n + (arr?.length ?? 0), 0)
         notify(tr('toast.recordsImported', count))
       } else {
         throw new Error('No records array or entity map found')

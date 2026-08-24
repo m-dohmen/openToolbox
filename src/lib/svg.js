@@ -9,7 +9,7 @@
  * in den DOM gelangt. Was übrig bleibt, ist Vektorgrafik.
  */
 
-const FORBIDDEN_TAGS = ['script', 'foreignobject', 'iframe', 'object', 'embed', 'audio', 'video', 'set', 'animate', 'handler']
+const FORBIDDEN_TAGS = ['script', 'style', 'foreignobject', 'iframe', 'object', 'embed', 'audio', 'video', 'set', 'animate', 'handler']
 const URL_ATTRS = ['href', 'xlink:href', 'src', 'from', 'to', 'values']
 
 export const MAX_LOGO_BYTES = 250_000
@@ -37,6 +37,16 @@ export function sanitizeSvg(source) {
       }
       for (const attr of Array.from(child.attributes)) {
         const name = attr.name.toLowerCase()
+        // CSS im style-Attribut fliegt komplett raus, statt externe Muster
+        // einzeln zu jagen: url(), @import und protokoll-relative Adressen
+        // sind nur die bekannten Formen, und jede neue Variante würde erst
+        // nach einem Vorfall in die Prüfliste wandern. Färbung läuft über
+        // Präsentationsattribute (fill, stroke, stop-color) unverändert weiter.
+        if (name === 'style') {
+          removed.push(name)
+          child.removeAttribute(attr.name)
+          continue
+        }
         if (name.startsWith('on')) {
           removed.push(name)
           child.removeAttribute(attr.name)
@@ -59,7 +69,11 @@ export function sanitizeSvg(source) {
   walk(svg)
 
   for (const attr of Array.from(svg.attributes)) {
-    if (attr.name.toLowerCase().startsWith('on')) svg.removeAttribute(attr.name)
+    const name = attr.name.toLowerCase()
+    if (name === 'style' || name.startsWith('on')) {
+      removed.push(name)
+      svg.removeAttribute(attr.name)
+    }
   }
 
   // Feste Maße stören die Skalierung im Kopf und im Wasserzeichen.

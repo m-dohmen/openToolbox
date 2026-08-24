@@ -243,6 +243,13 @@ export function buildInstructions(entities, allowWrite) {
 
   const entityHint = single ? '' : ' Include "entity" naming which of the entities above each operation targets.'
   const refHint = single ? '' : ' For a reference-type field, give either the exact id or the target record\'s title text.'
+  /* Die Löschregel vorab mitliefern, statt sie dem Modell erst als
+     Beanstandung zu zeigen: ein Vorschlag, der einen referenzierten
+     Datensatz entfernt, wird zurückgewiesen - das soll es gar nicht erst
+     versuchen. Nur dort, wo Reference-Felder existieren. */
+  const deleteGuard = entries.some(([, e]) => e.schema.fields.some((f) => f.type === 'reference'))
+    ? ' A delete is rejected while any other record still references the target - propose removing those records first.'
+    : ''
 
   return (
     `${base}\n\n` +
@@ -250,7 +257,7 @@ export function buildInstructions(entities, allowWrite) {
     `with the language tag "aktionen" containing a JSON array. Allowed operations:${entityHint}\n` +
     `  {"op":"create"${single ? '' : ',"entity":"…"'},"record":{…fields…}}\n` +
     `  {"op":"update"${single ? '' : ',"entity":"…"'},"id":"…","changes":{…changed fields only…}}\n` +
-    `  {"op":"delete"${single ? '' : ',"entity":"…"'},"id":"…"}\n` +
+    `  {"op":"delete"${single ? '' : ',"entity":"…"'},"id":"…"}${deleteGuard}\n` +
     `Identifiers for new records are assigned by the application, do not invent them.${refHint} Explain ` +
     'your proposal briefly in plain text before the block. For plain questions, append no block.'
   )

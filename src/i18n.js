@@ -189,6 +189,8 @@ const STRINGS = {
     'toast.configAppliedPlain': 'Configuration applied — not saved yet.',
     'toast.importCancelled': (msg) => `Import cancelled: ${msg}`,
     'toast.recordsImported': (n) => `${n} ${plural(n, 'record', 'records')} imported.`,
+    'toast.jsonRejected': (count, sample) =>
+      `Import rejected — ${count} ${plural(count, 'objection', 'objections')}: ${sample}`,
     'toast.bulkUpdated': (n) => `${n} ${plural(n, 'record', 'records')} updated.`,
     'toast.bulkSkipped': (n, reason) => `${n} not changed: ${reason}`,
     'toast.bulkDeleted': (n) => `${n} ${plural(n, 'record', 'records')} deleted.`,
@@ -224,6 +226,8 @@ const STRINGS = {
     'import.replace': 'replace all',
     'import.run': 'Import',
     'import.row': (n) => `Line ${n}`,
+    'import.record': (n) => `Record ${n}`,
+    'import.andMore': (n) => `…plus ${n} more.`,
     'import.needsTitle': (where, titleField) => `${where}: no ${titleField}, line skipped.`,
     'import.nothingMapped': 'No column is assigned to a field.',
     'import.empty': 'The file contains no data rows.',
@@ -280,12 +284,17 @@ const STRINGS = {
     'actions.notDate': (where, raw) => `${where}: "${raw}" is not a date in YYYY-MM-DD format.`,
     'actions.notReference': (where, raw, label) =>
       `${where}: "${raw}" does not match any existing ${label}.`,
+    'actions.notRecord': (where) => `${where} is not a record object.`,
+    'actions.noId': (where, idField) => `${where}: missing ${idField}.`,
+    'actions.duplicateId': (where, id) => `${where}: "${id}" appears twice in the file.`,
     'actions.unknownEntity': (where, entity, known) =>
       `${where}: "${entity}" is not a known entity. Allowed: ${known}.`,
     'actions.unknownOp': (where, op) => `${where}: "${op}" is not a known operation.`,
     'actions.created': (title, id) => `Created: ${title} (${id})`,
     'actions.needsTitle': (where, titleField) => `${where}: nothing is created without a ${titleField}.`,
     'actions.notFound': (where, id) => `${where}: ${id ? `"${id}"` : 'no id given'} — not found in the data.`,
+    'actions.blockedByReferences': (where, title, id, refs) =>
+      `${where}: ${title} (${id}) is still referenced by ${refs} and is not deleted.`,
     'actions.deleted': (title, id) => `Deleted: ${title} (${id})`,
     'actions.updated': (id, changes) => `Updated ${id} — ${changes}`,
     'actions.nothingToChange': (where, id) => `${where}: nothing to change on ${id}.`,
@@ -817,6 +826,8 @@ const STRINGS = {
     'toast.configAppliedPlain': 'Konfiguration angewandt — noch nicht gespeichert.',
     'toast.importCancelled': (msg) => `Import abgebrochen: ${msg}`,
     'toast.recordsImported': (n) => `${n} ${plural(n, 'Datensatz', 'Datensätze')} importiert.`,
+    'toast.jsonRejected': (count, sample) =>
+      `Import abgelehnt — ${count} ${plural(count, 'Beanstandung', 'Beanstandungen')}: ${sample}`,
     'toast.bulkUpdated': (n) => `${n} Datensätze aktualisiert.`,
     'toast.bulkSkipped': (n, reason) => `${n} nicht geändert: ${reason}`,
     'toast.bulkDeleted': (n) => `${n} Datensätze gelöscht.`,
@@ -852,6 +863,8 @@ const STRINGS = {
     'import.replace': 'alle ersetzen',
     'import.run': 'Importieren',
     'import.row': (n) => `Zeile ${n}`,
+    'import.record': (n) => `Datensatz ${n}`,
+    'import.andMore': (n) => `…plus ${n} weitere.`,
     'import.needsTitle': (where, titleField) => `${where}: kein ${titleField}, Zeile übersprungen.`,
     'import.nothingMapped': 'Keine Spalte ist einem Feld zugeordnet.',
     'import.empty': 'Die Datei enthält keine Datenzeilen.',
@@ -908,12 +921,17 @@ const STRINGS = {
     'actions.notDate': (where, raw) => `${where}: "${raw}" ist kein Datum im Format JJJJ-MM-TT.`,
     'actions.notReference': (where, raw, label) =>
       `${where}: "${raw}" passt zu keinem vorhandenen ${label}.`,
+    'actions.notRecord': (where) => `${where} ist kein Datensatz-Objekt.`,
+    'actions.noId': (where, idField) => `${where}: ${idField} fehlt.`,
+    'actions.duplicateId': (where, id) => `${where}: "${id}" kommt in der Datei doppelt vor.`,
     'actions.unknownEntity': (where, entity, known) =>
       `${where}: "${entity}" ist keine bekannte Entität. Erlaubt: ${known}.`,
     'actions.unknownOp': (where, op) => `${where}: "${op}" ist keine bekannte Operation.`,
     'actions.created': (title, id) => `Angelegt: ${title} (${id})`,
     'actions.needsTitle': (where, titleField) => `${where}: ohne ${titleField} wird nichts angelegt.`,
     'actions.notFound': (where, id) => `${where}: ${id ? `"${id}"` : 'keine Id angegeben'} — nicht in den Daten gefunden.`,
+    'actions.blockedByReferences': (where, title, id, refs) =>
+      `${where}: ${title} (${id}) wird noch referenziert von ${refs} und bleibt bestehen.`,
     'actions.deleted': (title, id) => `Gelöscht: ${title} (${id})`,
     'actions.updated': (id, changes) => `${id} aktualisiert — ${changes}`,
     'actions.nothingToChange': (where, id) => `${where}: nichts zu ändern an ${id}.`,

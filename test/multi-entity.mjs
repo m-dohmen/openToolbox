@@ -6,15 +6,15 @@
 // eine Entitaetsgrenze hinweg.
 import { chromium } from 'playwright'
 import { createServer } from 'node:http'
-import { execFileSync } from 'node:child_process'
 import { readFileSync, writeFileSync, mkdirSync, rmSync } from 'node:fs'
 import { resolve, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
+import { buildWithDomain, pidSuffix } from './domain-swap.mjs'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
-const domainPath = resolve(root, 'src/domain.js')
 const examplePath = resolve(root, 'examples/suppliers-certificates.domain.js')
-const outDir = resolve(root, 'dist-multi-entity')
+// Eigene Ausgabeverzeichnisse pro Prozess, siehe test/domain-swap.mjs.
+const outDir = resolve(root, 'dist-multi-entity' + pidSuffix)
 const dist = resolve(outDir, 'index.html')
 const tmp = resolve(root, 'test/.out')
 mkdirSync(tmp, { recursive: true })
@@ -26,13 +26,7 @@ const fail = (m) => {
 
 // Domain nur so kurz wie moeglich austauschen: Original sichern, Beispiel
 // reinkopieren, bauen, sofort zurueckschreiben - unabhaengig vom Buildergebnis.
-const originalDomain = readFileSync(domainPath, 'utf8')
-writeFileSync(domainPath, readFileSync(examplePath, 'utf8'))
-try {
-  execFileSync('npx', ['vite', 'build', '--outDir', 'dist-multi-entity'], { cwd: root, stdio: 'pipe' })
-} finally {
-  writeFileSync(domainPath, originalDomain)
-}
+buildWithDomain(examplePath, 'dist-multi-entity' + pidSuffix)
 console.log('0) Multi-Entity-Build erzeugt:', dist)
 
 const seen = []
@@ -65,7 +59,10 @@ const mock = createServer((req, res) => {
     res.end(JSON.stringify({ choices: [{ message: { role: 'assistant', content } }] }))
   })
 })
-await new Promise((r) => mock.listen(8898, '127.0.0.1', r))
+// Port 0 statt 8898, wie im Smoke-Test: ein fester Port wuerde jeden
+// gleichzeitigen zweiten Lauf mit EADDRINUSE abwerfen (OPEN-75).
+await new Promise((r) => mock.listen(0, '127.0.0.1', r))
+const mockBase = `http://127.0.0.1:${mock.address().port}`
 
 const browser = await chromium.launch()
 const ctx = await browser.newContext({ acceptDownloads: true, viewport: { width: 1280, height: 850 } })
@@ -189,7 +186,7 @@ await page.getByLabel('Settings').click()
 await page.waitForSelector('.settings')
 await page.getByText('off', { exact: true }).click()
 await page.waitForSelector('input[placeholder="https://…/openai/v1"]')
-await page.locator('input[placeholder="https://…/openai/v1"]').fill('http://127.0.0.1:8898/v1')
+await page.locator('input[placeholder="https://…/openai/v1"]').fill(mockBase + '/v1')
 await page.locator('input[placeholder="gpt-4o-mini"]').fill('mock-model')
 await page.locator('input[type="password"]').fill('test-key')
 await page.getByRole('button', { name: 'Back to the list' }).click()
@@ -342,16 +339,10 @@ if (!(await page.locator('.bulk-bar').count())) fail('Der fehlgeschlagene Lösch
  * dueDate und traegt alle drei Gruppen; ein Klick aus dem Dashboard heraus
  * muss zur richtigen Entitaet umschalten, genau wie der Reference-Chip oben.
  */
-const dueOutDir = resolve(root, 'dist-due-date-multi')
+const dueOutDir = resolve(root, 'dist-due-date-multi' + pidSuffix)
 const dueDist = resolve(dueOutDir, 'index.html')
 const dueMultiFixture = resolve(root, 'test/fixtures/due-date-multi.domain.js')
-const originalDomainForDue = readFileSync(domainPath, 'utf8')
-writeFileSync(domainPath, readFileSync(dueMultiFixture, 'utf8'))
-try {
-  execFileSync('npx', ['vite', 'build', '--outDir', 'dist-due-date-multi'], { cwd: root, stdio: 'pipe' })
-} finally {
-  writeFileSync(domainPath, originalDomainForDue)
-}
+buildWithDomain(dueMultiFixture, 'dist-due-date-multi' + pidSuffix)
 console.log('14) Faelligkeiten-Multi-Entity-Build erzeugt:', dueDist)
 
 // Eigener Browser-Context statt der gemeinsamen `ctx`: clock.install() friert
@@ -436,16 +427,10 @@ await page.waitForTimeout(150)
  * Suche trotzdem. Die andere Entität übt die Mehrfachauswahl einer
  * Aufzählung ohne Facettengruppe und dieselben Chips.
  */
-const sfOutDir = resolve(root, 'dist-search-negative')
+const sfOutDir = resolve(root, 'dist-search-negative' + pidSuffix)
 const sfDist = resolve(sfOutDir, 'index.html')
 const sfFixture = resolve(root, 'test/fixtures/search-filter-negative.domain.js')
-const originalDomainForSf = readFileSync(domainPath, 'utf8')
-writeFileSync(domainPath, readFileSync(sfFixture, 'utf8'))
-try {
-  execFileSync('npx', ['vite', 'build', '--outDir', 'dist-search-negative'], { cwd: root, stdio: 'pipe' })
-} finally {
-  writeFileSync(domainPath, originalDomainForSf)
-}
+buildWithDomain(sfFixture, 'dist-search-negative' + pidSuffix)
 console.log('19) Suche/Filter-Negativ-Build erzeugt:', sfDist)
 
 const sfPage = await ctx.newPage()
@@ -518,16 +503,10 @@ rmSync(sfOutDir, { recursive: true, force: true })
  * Entitaet ist. Der Klick auf eine Kachel muss zur Liste der deklarierenden
  * Entitaet springen, nicht zu der, die zuletzt aktiv war.
  */
-const metricsOutDir = resolve(root, 'dist-metrics-multi')
+const metricsOutDir = resolve(root, 'dist-metrics-multi' + pidSuffix)
 const metricsDist = resolve(metricsOutDir, 'index.html')
 const metricsFixture = resolve(root, 'test/fixtures/metrics-multi.domain.js')
-const originalDomainForMetrics = readFileSync(domainPath, 'utf8')
-writeFileSync(domainPath, readFileSync(metricsFixture, 'utf8'))
-try {
-  execFileSync('npx', ['vite', 'build', '--outDir', 'dist-metrics-multi'], { cwd: root, stdio: 'pipe' })
-} finally {
-  writeFileSync(domainPath, originalDomainForMetrics)
-}
+buildWithDomain(metricsFixture, 'dist-metrics-multi' + pidSuffix)
 console.log('25) Kennzahlen-Multi-Entity-Build erzeugt:', metricsDist)
 
 const metricsCtx = await browser.newContext({ viewport: { width: 1280, height: 850 } })
@@ -560,6 +539,81 @@ if (activeAfterMetricClick.toLowerCase() !== 'certificates') {
 }
 await metricsCtx.close()
 rmSync(metricsOutDir, { recursive: true, force: true })
+
+/*
+ * JSON-Import ueber Entitaetsgrenzen ({ records: { <entity>: [...] } }):
+ * dieselbe Pruefung wie beim CSV-Import - eine Referenz, die keinen
+ * Bestandsdatensatz aufloest, lehnt die GANZE Datei ab. Eine saubere Datei
+ * ersetzt die Datensaetze der genannten Entitaeten und loest Referenzen per
+ * Titel auf.
+ */
+const jsonPage = await ctx.newPage()
+jsonPage.on('pageerror', (e) => errors.push(String(e)))
+await jsonPage.goto('file://' + dist)
+await jsonPage.waitForSelector('.home, table tbody tr')
+if (await jsonPage.locator('.home').count()) await jsonPage.locator('.home__foot .btn--primary').click()
+await jsonPage.waitForSelector('table tbody tr')
+
+await jsonPage.evaluate(() => {
+  const original = HTMLInputElement.prototype.click
+  HTMLInputElement.prototype.click = function () {
+    if (this.type === 'file') { window.__jsonPicker = this; return }
+    return original.call(this)
+  }
+})
+await jsonPage.getByText('Import JSON', { exact: true }).click()
+await jsonPage.waitForFunction(() => window.__jsonPicker)
+// pickFile erzeugt je Aufruf ein neues Input-Element - der Handle wird vor
+// jeder Dateiuebergabe frisch aufgeloest.
+const pickJson = async (path) => {
+  await jsonPage.getByText('Import JSON', { exact: true }).click()
+  await jsonPage.waitForFunction(() => window.__jsonPicker)
+  const handle = await jsonPage.evaluateHandle(() => window.__jsonPicker)
+  await handle.asElement().setInputFiles(path)
+}
+
+const badCertJson = resolve(tmp, 'zertifikate-kaputt.json')
+writeFileSync(
+  badCertJson,
+  JSON.stringify({
+    records: {
+      certificates: [
+        { id: 'C-90', title: 'Broken cert', supplierId: 'Ghost supplier', type: 'ISO 27001', expiry: '2027-02-01' },
+      ],
+    },
+  }),
+)
+// Bestand unangetastet: der Zertifikats-Reiter zeigt vor und nach der
+// Ablehnung dieselbe Zahl.
+await jsonPage.locator('.entity-tabs > button', { hasText: 'certificates' }).click()
+await jsonPage.waitForSelector('table tbody tr')
+const certsBeforeReject = await jsonPage.locator('table tbody tr').count()
+await pickJson(badCertJson)
+await jsonPage.waitForSelector('.toast--error', { timeout: 5000 })
+console.log('28) JSON-Map-Import abgelehnt:', await jsonPage.locator('.toast--error').innerText())
+if ((await jsonPage.locator('table tbody tr').count()) !== certsBeforeReject) {
+  fail('Die abgelehnte JSON-Datei hat den Zertifikatsbestand veraendert')
+}
+
+const okCertJson = resolve(tmp, 'zertifikate-sauber.json')
+writeFileSync(
+  okCertJson,
+  JSON.stringify({
+    records: {
+      certificates: [
+        { id: 'C-91', title: 'Imported via JSON', supplierId: 'Nordwind IT GmbH', type: 'ISO 27001', expiry: '2027-03-01' },
+      ],
+    },
+  }),
+)
+await pickJson(okCertJson)
+await jsonPage.waitForTimeout(300)
+const jsonCertRows = await jsonPage.locator('table tbody tr').count()
+const certRowText = jsonCertRows ? await jsonPage.locator('table tbody tr').first().innerText() : ''
+console.log('    sauber importiert:', jsonCertRows, 'Zeile |', certRowText.replace(/\s+/g, ' '))
+if (jsonCertRows !== 1) fail('Der Map-Import hat die Entitaet nicht vollstaendig ersetzt (1 erwartet)')
+if (!certRowText.includes('Nordwind IT GmbH')) fail('Die Referenz wurde beim JSON-Import nicht per Titel aufgeloest')
+await jsonPage.close()
 
 console.log(errors.length ? '\nKonsolenfehler:\n' + errors.join('\n') : '\nKeine Konsolenfehler.')
 await browser.close()
