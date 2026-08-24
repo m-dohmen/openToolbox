@@ -6,7 +6,7 @@
 // eine Entitaetsgrenze hinweg.
 import { chromium } from 'playwright'
 import { createServer } from 'node:http'
-import { readFileSync, mkdirSync, rmSync } from 'node:fs'
+import { readFileSync, writeFileSync, mkdirSync, rmSync } from 'node:fs'
 import { resolve, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
 import { buildWithDomain, pidSuffix } from './domain-swap.mjs'
