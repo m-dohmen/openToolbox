@@ -20,6 +20,7 @@ import {
   resolveReferenceTitle,
   coerceField,
   findField,
+  findReferencingRecords,
   materialize,
   validateRecord,
 } from './entities.js'
@@ -111,6 +112,17 @@ export function applyActions(recordsByEntity, actions, entities, tr, defaultEnti
     }
 
     if (op === 'delete') {
+      /* Derselbe Schutz wie im Formular und beim Sammel-Löschen: ein
+         Datensatz, auf den noch ein Reference-Feld zeigt, wird nicht
+         entfernt - die Beanstandung nennt, was ihn hält. Geprüft wird
+         gegen `next`, den fortlaufenden Stand: löscht derselbe Vorschlag
+         zuvor die verweisenden Datensätze, gibt das das Ziel frei. */
+      const refs = findReferencingRecords(entities, next, entityKey, id)
+      if (refs.length) {
+        const names = refs.map((h) => `${h.record[h.entity.schema.titleField]} (${h.entity.schema.singular})`).join(', ')
+        problems.push(tr('actions.blockedByReferences', where, next[entityKey][position][schema.titleField], id, names))
+        return
+      }
       const [removed] = next[entityKey].splice(position, 1)
       done.push(tr('actions.deleted', removed[schema.titleField], id))
       return
