@@ -13,6 +13,11 @@
  * geldgetriebene unter den Beispielen: Budget, Angebotssumme, Schlussrechnung,
  * Abweichung — alles gerechnet, nichts doppelt gepflegt.
  *
+ * Sie ist zugleich die bevölkerungsreichste: 17 Angebote über acht Gewerke,
+ * damit sich Mehrfachauswahl und Sammelaktionen am echten Bestand zeigen
+ * lassen — der Alltag am Bau ist ja gerade der, viele Sätze desselben Zuschnitts
+ * auf einmal zu behandeln.
+ *
  * Alle Zahlen sind erfunden.
  */
 
@@ -117,8 +122,8 @@ export const ENTITIES = {
         ['G-04', 'Heizung: Wärmepumpe', 'Sanitär/Heizung', 'Angebote eingeholt', 38000, 0, 45, 100, 'Förderantrag läuft, Bescheid abwarten.'],
         ['G-05', 'Bäder (2)', 'Sanitär/Heizung', 'Angebote eingeholt', 24000, 0, 60, 110, ''],
         ['G-06', 'Estrich Erdgeschoss', 'Estrich', 'beauftragt', 9500, 0, 30, 40, ''],
-        ['G-07', 'Trockenbau Dachgeschoss', 'Trockenbau', 'noch nicht angefragt', 12000, 0, 75, 105, ''],
-        ['G-08', 'Malerarbeiten innen', 'Maler', 'noch nicht angefragt', 8000, 0, 120, 145, ''],
+        ['G-07', 'Trockenbau Dachgeschoss', 'Trockenbau', 'Angebote eingeholt', 12000, 0, 75, 105, ''],
+        ['G-08', 'Malerarbeiten innen', 'Maler', 'Angebote eingeholt', 8000, 0, 120, 145, ''],
         ['G-09', 'Bodenbeläge', 'Boden', 'noch nicht angefragt', 11000, 0, 130, 150, 'Eiche Landhausdiele als Wunsch, Preis prüfen.'],
         ['G-10', 'Terrasse und Zuwegung', 'Außenanlage', 'noch nicht angefragt', 14000, 0, 180, 210, ''],
       ].map(([id, name, trade, phase, budget, final, startDays, endDays, note]) => ({
@@ -211,6 +216,15 @@ export const ENTITIES = {
         // als Kopie eines der beiden vorliegenden Angebote (gleiche Struktur,
         // gleicher Gewerk-Verweis), nur Firma und Kontakt werden geändert.
         ['A-112', 'Heizungsbau Petersen', 'G-04', '', 0, null, null, 'angefragt', ''],
+        // Sammelaktions-Demo: genug Angebote, dass Auswählen lohnt. Je Gewerk
+        // liegt ein Cluster von „liegt vor“ — die unterlegenen Anbieter bekommen
+        // ihre Absage sammelweise, und die Regel prüft jeden Satz einzeln:
+        // ohne Begründung bleibt er außen vor und wird in der Meldung benannt.
+        ['A-113', 'Bäderhaus Elbe', 'G-05', '', 24100, -3, 45, 'liegt vor', ''],
+        ['A-114', 'Estrich Süd GmbH', 'G-06', 'R. Sander', 9600, -20, 18, 'abgelehnt', 'Kein Terminkontingent mehr in diesem Jahr.'],
+        ['A-115', 'Trockenbau Richter', 'G-07', 'U. Richter', 11400, -6, 50, 'liegt vor', 'Nur Komplettleistung, keine Teilgewerke.'],
+        ['A-116', 'Gips & Stahl Kowalski', 'G-07', '', 12300, -4, 55, 'liegt vor', ''],
+        ['A-117', 'Malermeister Roth', 'G-08', 'P. Roth', 7600, -2, 60, 'liegt vor', 'Anfahrtspauschale bereits enthalten.'],
       ].map(([id, company, tradeId, contact, amount, receivedDays, validDays, state, note]) => ({
         id,
         company,

@@ -177,6 +177,12 @@ steht die Frage, die jeder Bauherr zu spät stellt: **sind wir noch im Budget?**
 
 ## Was diese Demo zeigt
 
+- **Mehrfachauswahl und Sammelaktionen** — das Kontrollkästchen am Zeilenanfang wählt aus,
+  Umschalt+Klick nimmt einen ganzen Bereich dazu, der Kopf wählt alles Sichtbare. In der
+  Aktionsleiste darunter setzt der Status aller Gewählten auf einen Wert oder sie werden gemeinsam
+  gelöscht — ein Durchlauf, ein Protokollschritt, ein Strg+Z für alles. Zusammen mit dem Filter
+  „liegt vor" bekommen die unterlegenen Anbieter eines Gewerks ihre Absage in einem Rutsch; die
+  Regel bleibt auch im Schwarm wirksam: die Absage ohne Begründung wird übersprungen und benannt.
 - **Duplizieren** — Angebote je Gewerk wiederholen sich: das nächste entsteht als Kopie eines
   vorhandenen (Aktion im Zeilenmenü oder im offenen Datensatz), Gewerk-Verweis und Bindefrist
   bleiben stehen, geändert werden nur Firma, Kontakt und Summe. Die Kopie erscheint im
@@ -193,7 +199,7 @@ steht die Frage, die jeder Bauherr zu spät stellt: **sind wir noch im Budget?**
 
 ## Datos de ejemplo
 
-Añade Gewerke: 10, Angebote: 12 registros de ejemplo realistas para que el archivo no esté vacío al abrirlo. Invéntalos al estilo de los campos anteriores; son ilustración, no los datos del usuario. Dile que sus datos entran por **Import CSV → replace all**.
+Añade Gewerke: 10, Angebote: 17 registros de ejemplo realistas para que el archivo no esté vacío al abrirlo. Invéntalos al estilo de los campos anteriores; son ilustración, no los datos del usuario. Dile que sus datos entran por **Import CSV → replace all**.
 
 ## Terminado cuando
 
