@@ -145,6 +145,9 @@ dashboard · CSV import · change log · version numbers.**
   highlighted matches in the table, plus typed field filters in the sidebar with removable chips
   above it — session-only, none of it saved into the file — see
   [Searching and filtering](#searching-and-filtering).
+- **Sortable columns in every entity list** — click a heading to sort ascending, again for
+  descending, a third time back to the data-block order; comparisons follow the field type, and
+  empty values stay at the bottom either way — see [Sorting the lists](#sorting-the-lists).
 
 ## Quick start
 
@@ -662,6 +665,12 @@ and it finds what you can see rather than what is stored: attachments count by t
 only (the embedded base64 is noise, not text), reference fields by the title of the record they
 point at, calculated fields like any other — and the record id counts too.
 
+![Global search and field filters](docs/screenshots/search.png)
+
+One frame with the whole mechanism at work: a term that finds its matches in two entities, two
+field filters narrowing the list to two rows, and above the table the chips that carry each
+filter — with *clear all* next to them.
+
 Below the facet groups, the sidebar gains one filter per field worth filtering, shaped by its
 type: text matches on *contains*, an enum offers multi-select, numbers and dates take a from/to
 range. Fields that already run as facets stay quick filters with their counts — they keep doing
@@ -681,6 +690,34 @@ That is deliberate: browser storage is unreliable under `file://`, the embedded 
 only storage there is, and nothing about "which subset was I looking at" belongs in data someone
 else will open. A saved file never carries a filter inside it, so the copy you send on shows
 everything — exactly like its print view.
+
+## Sorting the lists
+
+Every column heading in an entity list is clickable. The first click sorts ascending, the second
+descending, and the third hands the order back to the data block — no fourth state, and a column
+does not remember its direction once you have moved on. Switching to another column also starts
+fresh at ascending. While a column sorts, its heading carries an arrow; it announces the direction
+as `ascending`/`descending` for screen readers as well. One thing to know upfront: when the file
+opens, every list already stands sorted ascending by its first column — that is the house default,
+not the data block. The third click therefore lands on the raw data-block order, which can look
+different from what you saw when you opened the file.
+
+The comparison follows the field type, not the characters on screen: numbers compare numerically
+(10 sorts after 9), dates chronologically — their ISO spelling compares lexically, which for dates
+is exactly chronologically — and text and enums compare as localized text in the current interface
+language, an enum's value being its label. A reference column sorts by the title of the record it
+points at rather than by the id behind it (you sort what you see), an attachment by its file name,
+and a calculated field by the value it produces — numerically when that value is a number.
+
+Records without a value in the sorted column stand at the bottom, in both directions. A missing
+value is not a small number and not an early date; left to the comparison it would drift to the
+top when descending, which is where nobody looks for "nothing". Equal values keep their
+data-block order, so ties never flicker between two positions.
+
+Search and field filters cut first, sorting then orders what remains — sorting can never bring
+back what the filters removed. And like everything view-related, the sort state lives only in the
+session: reload the file and the data-block order is back, and no sort is ever written into it.
+The copy you pass on opens the way the data stands.
 
 ## Getting data in
 

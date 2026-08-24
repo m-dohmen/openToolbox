@@ -736,6 +736,28 @@ tbody tr[data-selected="true"] td { background: var(--accent-soft); }
 .cell-title small { display: block; font-weight: 400; color: var(--muted); font-size: 12px; margin-top: 1px; }
 .cell-num { font-family: var(--mono); font-variant-numeric: tabular-nums; text-align: right; }
 
+/* Aktionsspalte am Zeilenende: schmal, der Knopf erscheint erst im Hover
+   zusammen mit der Zeilenmarkierung - eine Dauerleiste von Symbolen würde
+   die Tabelle lauter machen, als eine Aktion es verdient. */
+th.cell-action, td.cell-action { width: 2.5rem; padding-right: 8px; text-align: right; cursor: default; }
+th.cell-action:hover { background: none; }
+td.cell-action .iconbtn { opacity: 0; }
+tbody tr:hover td.cell-action .iconbtn,
+tbody tr:focus-within td.cell-action .iconbtn { opacity: 1; }
+.row-duplicate { width: 26px; height: 26px; font-size: 14px; border-color: transparent; background: none; }
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
 /* Berechnete Felder sind abgeleitet, nicht eingegeben - die leichte
    Zurücknahme sagt das, ohne sie unlesbar zu machen. */
 .cell-computed { color: var(--muted); }

@@ -133,6 +133,10 @@ genau eine Frage stellt: **wann wurde dieses Gerät zuletzt geprüft?**
 
 ## Was diese Demo zeigt
 
+- **Sortierbare Spalten** — ein Klick auf den Spaltenkopf ordnet: Zahlen nach Größe („Tage"
+  reicht von deutlich überfällig bis weit in die Zukunft), Daten chronologisch („Geprüft" spannt
+  zwei Jahre), Text alphabetisch; der dritte Klick stellt die Reihenfolge des Datenblocks wieder
+  her, leere Werte bleiben unten.
 - **Nichts wird summiert, alles gerechnet**: die Fälligkeit ergibt sich aus letzter Prüfung und
   Intervall, die Restzeit daraus, die rote Markierung wieder daraus.
 - **Regeln, die dem Ernstfall standhalten** — ein Ergebnis ohne Datum und Prüfer lässt sich nicht
@@ -144,7 +148,7 @@ genau eine Frage stellt: **wann wurde dieses Gerät zuletzt geprüft?**
 
 ## Données de démonstration
 
-Ajoute 12 enregistrements de démonstration réalistes pour que le fichier ne soit pas vide à l’ouverture. Invente-les dans l’esprit des champs ci-dessus ; ce sont des illustrations, pas les données de l’utilisateur. Dis-lui que ses propres données entrent par **Import CSV → replace all**.
+Ajoute 13 enregistrements de démonstration réalistes pour que le fichier ne soit pas vide à l’ouverture. Invente-les dans l’esprit des champs ci-dessus ; ce sont des illustrations, pas les données de l’utilisateur. Dis-lui que ses propres données entrent par **Import CSV → replace all**.
 
 ## Terminé quand
 

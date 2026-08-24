@@ -207,6 +207,10 @@ export const ENTITIES = {
         ['A-109', 'Sanitär Reinke', 'G-05', 'A. Reinke', 25900, -5, 40, 'liegt vor', ''],
         ['A-110', 'Bäderwelt Nord', 'G-05', '', 0, null, null, 'angefragt', 'Zweimal erinnert, bisher keine Rückmeldung.'],
         ['A-111', 'Estrich Behrens', 'G-06', 'S. Behrens', 9100, -22, 25, 'beauftragt', ''],
+        // Duplizier-Demo: dritte Anfrage zur Wärmepumpe — entsteht in der Regel
+        // als Kopie eines der beiden vorliegenden Angebote (gleiche Struktur,
+        // gleicher Gewerk-Verweis), nur Firma und Kontakt werden geändert.
+        ['A-112', 'Heizungsbau Petersen', 'G-04', '', 0, null, null, 'angefragt', ''],
       ].map(([id, company, tradeId, contact, amount, receivedDays, validDays, state, note]) => ({
         id,
         company,

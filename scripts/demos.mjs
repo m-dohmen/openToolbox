@@ -156,6 +156,10 @@ genau eine Frage stellt: **wann wurde dieses Gerät zuletzt geprüft?**
 
 ## Was diese Demo zeigt
 
+- **Sortierbare Spalten** — ein Klick auf den Spaltenkopf ordnet: Zahlen nach Größe („Tage"
+  reicht von deutlich überfällig bis weit in die Zukunft), Daten chronologisch („Geprüft" spannt
+  zwei Jahre), Text alphabetisch; der dritte Klick stellt die Reihenfolge des Datenblocks wieder
+  her, leere Werte bleiben unten.
 - **Nichts wird summiert, alles gerechnet**: die Fälligkeit ergibt sich aus letzter Prüfung und
   Intervall, die Restzeit daraus, die rote Markierung wieder daraus.
 - **Regeln, die dem Ernstfall standhalten** — ein Ergebnis ohne Datum und Prüfer lässt sich nicht
@@ -189,6 +193,10 @@ steht die Frage, die jeder Bauherr zu spät stellt: **sind wir noch im Budget?**
 
 ## Was diese Demo zeigt
 
+- **Duplizieren** — Angebote je Gewerk wiederholen sich: das nächste entsteht als Kopie eines
+  vorhandenen (Aktion im Zeilenmenü oder im offenen Datensatz), Gewerk-Verweis und Bindefrist
+  bleiben stehen, geändert werden nur Firma, Kontakt und Summe. Die Kopie erscheint im
+  Änderungsprotokoll und lässt sich mit Strg+Z wieder entfernen.
 - **Zwei Datenarten**: ein Angebot ohne sein Gewerk hat keine Aussage, ein Gewerk bekommt seine
   Zahl erst durch die Angebote.
 - **Die Auftragssumme wird nicht getippt**, sie steht im beauftragten Angebot und wird von dort

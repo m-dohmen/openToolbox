@@ -87,6 +87,9 @@ son anchuras CSS y el anillo es un único círculo SVG. Ambas vistas se imprimen
 - **Búsqueda global en todos los campos de todas las entidades**, en vivo, con el número de
   resultados en cada pestaña y coincidencias resaltadas; además filtros por tipo de campo en la
   barra lateral con etiquetas extraíbles — solo para la sesión, nada se guarda en el archivo.
+- **Columnas ordenables en cada lista de entidades**: un clic ordena ascendente, otro descendente
+  y un tercero devuelve el orden del bloque de datos; la comparación sigue el tipo de campo
+  (números numéricamente, fechas cronológicamente) y los valores vacíos quedan siempre al final.
 
 ## Inicio rápido
 
