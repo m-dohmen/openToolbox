@@ -408,11 +408,13 @@ großen Upload ablehnt, schlägt hier sofort zu — nicht erst bei der nächsten
 
 ## Daten hineinbekommen
 
-**CSV-Import mit Zuordnungsschritt**, in der Seitenleiste und unter Einstellungen → Daten. Datei
-wählen, und der Dialog listet jede gefundene Spalte neben einer Auswahlliste der Felder. Spalten,
-deren Überschrift zu einer Feldbeschriftung oder einem Feldschlüssel passt, sind vorbelegt — Groß-
-und Kleinschreibung sowie Satzzeichen werden dabei ignoriert. Alles andere ordnet man von Hand zu,
-nicht Zugeordnetes bleibt außen vor. Anhängen oder alles ersetzen.
+Drei Wege, alle in der Seitenleiste und unter Einstellungen → Daten:
+
+**CSV-Import mit Zuordnungsschritt.** Datei wählen, und der Dialog listet jede gefundene Spalte
+neben einer Auswahlliste der Felder. Spalten, deren Überschrift zu einer Feldbeschriftung oder einem
+Feldschlüssel passt, sind vorbelegt — Groß- und Kleinschreibung sowie Satzzeichen werden dabei
+ignoriert. Alles andere ordnet man von Hand zu, nicht Zugeordnetes bleibt außen vor. Anhängen oder
+alles ersetzen.
 
 Trennzeichen (`;`, Komma, Tabulator), Quoting und ein führendes BOM werden aus der Datei erkannt, ein
 Excel-Export funktioniert also ohne Vorbereitung. Jede Zelle läuft durch dieselbe Typprüfung wie ein
@@ -422,6 +424,19 @@ Zeile ohne Titel wird übersprungen statt halbleer importiert.
 
 Kennungen vergibt immer die Anwendung, nie die Datei — dieselbe Regel wie bei Datensätzen, die die
 KI anlegt.
+
+**JSON-Import.** Ein flaches Array ersetzt die Datensätze der aktiven Entität, ein Objekt mit einem
+Eintrag je Entitätsschlüssel gleich mehrere auf einmal. Es ist dasselbe Format, das *Export JSON*
+schreibt — eine exportierte Datei läuft so wieder zurück in das Werkzeug. Jeder eingehende Datensatz
+durchläuft dieselbe Typ- und Regelprüfung wie eine CSV-Zeile, dazu eine Id-Kontrolle: Ohne Id oder
+mit doppelter Id wird der Datensatz abgelehnt. Der Import ist **atomar** — ein einziger Verstoss
+lehnt die ganze Datei ab. Das ist Absicht: Die abgeleiteten Feldänderungen und das
+Änderungsprotokoll ordnen ihre Einträge per Id einem Datensatz zu, und ein halb übernommener Bestand
+wäre dort nicht mehr aufzulösen.
+
+**Der KI-Assistent** kann auf ausdrückliche Anweisung Datensätze aus einer beigelegten Datei
+vorschlagen. Textartige Anhänge (CSV, JSON, Markdown und ähnliche) liest er als zusätzlichen
+Kontext; übernommen wird ein Vorschlag erst nach Freigabe.
 
 ## Die Startseite
 
@@ -590,6 +605,17 @@ Datei erkennt, ohne sie zu öffnen. Standardmäßig leer, dann ändert sich nich
 **Das Änderungsprotokoll** schreibt je Speichervorgang einen Eintrag: Zeitstempel, Version und eine
 Notiz, die beim Speichern in einem kurzen Dialog abgefragt wird. Die Protokollansicht listet sie
 neueste zuerst, die Notizen bleiben nachträglich änderbar.
+
+Jeder Eintrag trägt zusätzlich **die Feldänderungen seit dem letzten Speichern**, automatisch
+abgeleitet — welcher Datensatz, welches Feld, vorher und nachher, dazu alles Angelegte und
+Gelöschte. Das beantwortet die Frage, die ein Audit tatsächlich stellt: nie „was hast du am
+Vierzehnten gemacht", sondern „was genau ist mit A-1041 zwischen 1.2 und 1.4 passiert". Öffnet man
+einen Datensatz, zeigt sein Formular dieselbe Historie, gefiltert auf diesen einen Datensatz.
+
+Abgeleitet statt erfasst — das ist der Punkt. Ein Protokoll, das von der Disziplin des Schreibenden
+abhängt, ist in genau dem Moment lückenhaft, in dem es gebraucht wird. Ein einzelner Eintrag fasst
+200 Änderungen; was darüber hinausgeht, wird gezählt statt still weggelassen („weitere Änderungen
+sind nicht aufgeführt").
 
 Die Einträge liegen bei den Datensätzen, nicht bei den Einstellungen — in einer verschlüsselten
 Datei steht das Protokoll damit **innerhalb** des Umschlags, wo Notizen wie „Budget nach
