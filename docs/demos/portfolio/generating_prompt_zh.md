@@ -62,6 +62,14 @@
 - **当** `r.start && r.end` → **则** `r.end >= r.start`
   **提示语:** „The planned end cannot be before the start.“
 
+**指标卡片**
+
+在该实体上从封闭目录声明——记录条数、数值字段的求和与平均值。渲染时计算，绝不存储。
+
+- **Running projects** — 记录条数（仅符合筛选条件的记录）: `r.phase !== 'Closed'` · „not yet closed“
+- **Spent so far** — `spent` (Spent in kEUR) 之和 · „kEUR, all projects“
+- **Average budget** — `budget` (Budget in kEUR) 的平均值 · „kEUR per project“
+
 ---
 
 实体键 `milestones` —— 一条记录是 **milestone**，多条是 **milestones**。
@@ -105,6 +113,13 @@
 
 - **当** `r.status !== 'open'` → **则** `owner`
   **提示语:** „A milestone that has started needs an owner.“
+
+**指标卡片**
+
+在该实体上从封闭目录声明——记录条数、数值字段的求和与平均值。渲染时计算，绝不存储。
+
+- **Milestones in progress** — 记录条数（仅符合筛选条件的记录）: `r.status === 'in progress'`
+- **Average effort** — `effort` (Effort in days) 的平均值 · „days per milestone“
 
 ---
 

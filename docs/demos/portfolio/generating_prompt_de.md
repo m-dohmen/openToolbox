@@ -62,6 +62,14 @@ Bedingungen zwischen Feldern. Sie müssen an einer Stelle greifen, damit Formula
 - **Wenn** `r.start && r.end` → **Dann** `r.end >= r.start`
   **Meldung:** „The planned end cannot be before the start.“
 
+**Kennzahl-Kacheln**
+
+An dieser Entität aus einem geschlossenen Katalog deklariert — count, Summe und Mittelwert über Zahlenfelder. Gerechnet beim Rendern, nie gespeichert.
+
+- **Running projects** — die Anzahl der Datensätze (nur Datensätze, die einem Filter entsprechen): `r.phase !== 'Closed'` · „not yet closed“
+- **Spent so far** — die Summe von `spent` (Spent in kEUR) · „kEUR, all projects“
+- **Average budget** — der Mittelwert von `budget` (Budget in kEUR) · „kEUR per project“
+
 ---
 
 Entitätsschlüssel `milestones` — ein Datensatz ist **milestone**, mehrere sind **milestones**.
@@ -105,6 +113,13 @@ Bedingungen zwischen Feldern. Sie müssen an einer Stelle greifen, damit Formula
 
 - **Wenn** `r.status !== 'open'` → **Dann** `owner`
   **Meldung:** „A milestone that has started needs an owner.“
+
+**Kennzahl-Kacheln**
+
+An dieser Entität aus einem geschlossenen Katalog deklariert — count, Summe und Mittelwert über Zahlenfelder. Gerechnet beim Rendern, nie gespeichert.
+
+- **Milestones in progress** — die Anzahl der Datensätze (nur Datensätze, die einem Filter entsprechen): `r.status === 'in progress'`
+- **Average effort** — der Mittelwert von `effort` (Effort in days) · „days per milestone“
 
 ---
 

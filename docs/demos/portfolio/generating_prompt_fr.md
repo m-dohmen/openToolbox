@@ -62,6 +62,14 @@ Conditions entre champs. Elles doivent s’appliquer en un seul endroit, afin qu
 - **Quand** `r.start && r.end` → **Alors** `r.end >= r.start`
   **Message:** „The planned end cannot be before the start.“
 
+**Mesures**
+
+Déclarées sur cette entité à partir d’un catalogue fermé : comptage, somme et moyenne sur des champs numériques. Calculées au rendu, jamais stockées.
+
+- **Running projects** — le nombre d’enregistrements (uniquement les enregistrements correspondant à un filtre): `r.phase !== 'Closed'` · „not yet closed“
+- **Spent so far** — la somme de `spent` (Spent in kEUR) · „kEUR, all projects“
+- **Average budget** — la moyenne de `budget` (Budget in kEUR) · „kEUR per project“
+
 ---
 
 Clé d’entité `milestones` — un enregistrement est **milestone**, plusieurs sont **milestones**.
@@ -105,6 +113,13 @@ Conditions entre champs. Elles doivent s’appliquer en un seul endroit, afin qu
 
 - **Quand** `r.status !== 'open'` → **Alors** `owner`
   **Message:** „A milestone that has started needs an owner.“
+
+**Mesures**
+
+Déclarées sur cette entité à partir d’un catalogue fermé : comptage, somme et moyenne sur des champs numériques. Calculées au rendu, jamais stockées.
+
+- **Milestones in progress** — le nombre d’enregistrements (uniquement les enregistrements correspondant à un filtre): `r.status === 'in progress'`
+- **Average effort** — la moyenne de `effort` (Effort in days) · „days per milestone“
 
 ---
 

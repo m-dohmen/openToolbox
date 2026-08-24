@@ -62,6 +62,14 @@
 - **条件** `r.start && r.end` → **要求** `r.end >= r.start`
   **メッセージ:** „The planned end cannot be before the start.“
 
+**指標タイル**
+
+このエンティティに閉じたカタログから宣言します——件数、数値フィールドの合計と平均。描画時に計算され、保存されません。
+
+- **Running projects** — 件数（フィルタに一致するレコードのみ）: `r.phase !== 'Closed'` · „not yet closed“
+- **Spent so far** — `spent` (Spent in kEUR) の合計 · „kEUR, all projects“
+- **Average budget** — `budget` (Budget in kEUR) の平均 · „kEUR per project“
+
 ---
 
 エンティティキー `milestones` — 1 件は **milestone**、複数は **milestones**。
@@ -105,6 +113,13 @@
 
 - **条件** `r.status !== 'open'` → **要求** `owner`
   **メッセージ:** „A milestone that has started needs an owner.“
+
+**指標タイル**
+
+このエンティティに閉じたカタログから宣言します——件数、数値フィールドの合計と平均。描画時に計算され、保存されません。
+
+- **Milestones in progress** — 件数（フィルタに一致するレコードのみ）: `r.status === 'in progress'`
+- **Average effort** — `effort` (Effort in days) の平均 · „days per milestone“
 
 ---
 

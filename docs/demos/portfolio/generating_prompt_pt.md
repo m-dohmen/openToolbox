@@ -62,6 +62,14 @@ Condições entre campos. Precisam valer em um único lugar, para que o formulá
 - **Quando** `r.start && r.end` → **Então** `r.end >= r.start`
   **Mensagem:** „The planned end cannot be before the start.“
 
+**Medidas**
+
+Declaradas nesta entidade a partir de um catálogo fechado: contagem, soma e média sobre campos numéricos. Calculadas ao renderizar, nunca armazenadas.
+
+- **Running projects** — a quantidade de registros (apenas registros que atendem a um filtro): `r.phase !== 'Closed'` · „not yet closed“
+- **Spent so far** — a soma de `spent` (Spent in kEUR) · „kEUR, all projects“
+- **Average budget** — a média de `budget` (Budget in kEUR) · „kEUR per project“
+
 ---
 
 Chave de entidade `milestones` — um registro é **milestone**, vários são **milestones**.
@@ -105,6 +113,13 @@ Condições entre campos. Precisam valer em um único lugar, para que o formulá
 
 - **Quando** `r.status !== 'open'` → **Então** `owner`
   **Mensagem:** „A milestone that has started needs an owner.“
+
+**Medidas**
+
+Declaradas nesta entidade a partir de um catálogo fechado: contagem, soma e média sobre campos numéricos. Calculadas ao renderizar, nunca armazenadas.
+
+- **Milestones in progress** — a quantidade de registros (apenas registros que atendem a um filtro): `r.status === 'in progress'`
+- **Average effort** — a média de `effort` (Effort in days) · „days per milestone“
 
 ---
 
