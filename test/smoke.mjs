@@ -21,7 +21,7 @@ import {
 import { readFileSync, writeFileSync, mkdirSync, rmSync } from 'node:fs'
 import { resolve, dirname } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { execFileSync } from 'node:child_process'
+import { buildWithDomain, pidSuffix } from './domain-swap.mjs'
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const dist = resolve(root, 'dist/index.html')
@@ -82,12 +82,17 @@ const fail = (m) => {
 }
 
 // Test-Logo mit absichtlich unsauberem Markup, um den SVG-Sanitiser zu pruefen.
+// Neben Skript und Event-Handlern tragen beide CSS-Vektoren externe Verweise
+// (OPEN-71): ein <style>-Element mit @import und ein style-Attribut mit url().
+const EXTERNAL = 'attacker.example'
 const logoFixture = resolve(tmp, 'logo.svg')
 writeFileSync(
   logoFixture,
-  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 40" onload="evil()">' +
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 40" onload="evil()" style="fill:url(https://attacker.example/root)">' +
     '<script>alert(1)</script>' +
+    '<style>@import url("https://attacker.example/track.css"); rect { fill: #f00 }</style>' +
     '<rect width="100" height="40" fill="#0e7c86" onclick="evil()" />' +
+    '<rect y="20" width="100" height="20" style="fill:url(\'https://attacker.example/pixel\')" />' +
     '</svg>',
 )
 
@@ -151,7 +156,12 @@ const mock = createServer((req, res) => {
     res.end(JSON.stringify({ choices: [{ message: { role: 'assistant', content } }] }))
   })
 })
-await new Promise((r) => mock.listen(8899, '127.0.0.1', r))
+// Port 0 statt 8899: der Kernel vergibt einen freien Port, damit zwei
+// gleichzeitige Laeufe derselben Suite nicht mit EADDRINUSE kollidieren
+// (OPEN-75). Der tatsaechliche Port steht nach dem Listen fest und wird
+// ueber mockBase an alle Stellen verteilt, die den Endpunkt brauchen.
+await new Promise((r) => mock.listen(0, '127.0.0.1', r))
+const mockBase = `http://127.0.0.1:${mock.address().port}`
 
 // Pfadaufbau: die haeufigste Fehlerquelle beim Einrichten
 const urlCases = [
@@ -1142,7 +1152,7 @@ await page5.getByLabel('Settings').click()
 await page5.waitForSelector('.settings')
 await page5.getByText('off', { exact: true }).click()
 await page5.waitForSelector('input[placeholder="https://…/openai/v1"]')
-await page5.locator('input[placeholder="https://…/openai/v1"]').fill('http://127.0.0.1:8899/v1')
+await page5.locator('input[placeholder="https://…/openai/v1"]').fill(mockBase + '/v1')
 await page5.locator('input[placeholder="gpt-4o-mini"]').fill('mock-model')
 await page5.locator('input[type="password"]').fill('test-key')
 
@@ -1224,8 +1234,7 @@ console.log('15) API-Schlüssel ohne Haken in der Datei auffindbar:', keyLeak)
 if (keyLeak) fail('API-Schluessel wurde ungefragt gespeichert')
 console.log('16) Dialekt in der Datei hinterlegt:', klartextSrc.includes('max_completion_tokens'))
 if (!klartextSrc.includes('max_completion_tokens')) fail('Dialekt wurde nicht mitgespeichert')
-const settingsKept =
-  klartextSrc.includes('mock-model') && klartextSrc.includes('127.0.0.1:8899')
+const settingsKept = klartextSrc.includes('mock-model') && klartextSrc.includes(mockBase)
 console.log('    Endpunkt und Modell mitgespeichert:', settingsKept)
 if (!settingsKept) fail('Einstellungen wurden nicht mitgespeichert')
 
@@ -1320,6 +1329,65 @@ if (await page9.locator('.modal').isVisible()) {
   await page9.waitForTimeout(200)
 }
 
+/*
+ * Direktprüfung des SVG-Reinigers (OPEN-71): die E2E-Prüfung weiter unten sieht
+ * nur den gerenderten DOM. Hier zählt, WAS der Reiniger als entfernt meldet,
+ * und dass legitime Grafik unangetastet bleibt. Das Modul braucht DOMParser und
+ * läuft deshalb im Seitenkontext; der Quelltext kommt unverändert aus
+ * src/lib/svg.js, nur die export-Markierung ist für new Function zu lösen.
+ */
+const sanitizerSource = readFileSync(resolve(root, 'src/lib/svg.js'), 'utf8')
+const runSanitizer = (input) =>
+  page9.evaluate(({ src, input }) => {
+    const make = new Function(src.replace(/^export /gm, '') + '\nreturn sanitizeSvg')
+    return make()(input)
+  }, { src: sanitizerSource, input })
+
+const styleElSvg =
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10">' +
+  '<style>@import url("https://attacker.example/track.css"); rect { fill: #f00 }</style>' +
+  '<rect width="10" height="10"/></svg>'
+const styleAttrSvg =
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10">' +
+  '<rect width="10" height="10" style=\'fill:url("https://attacker.example/x");stroke:#333\'/></svg>'
+const styleRootSvg =
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10" style=\'fill:url("https://attacker.example/root")\'>' +
+  '<rect width="10" height="10"/></svg>'
+const legitSvg =
+  '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10">' +
+  '<defs><linearGradient id="g"><stop offset="0" stop-color="#0e7c86"/><stop offset="1" stop-color="#8a2f5a"/></linearGradient></defs>' +
+  '<rect width="10" height="10" fill="url(#g)" stroke="#123456"/></svg>'
+
+const cleanedEl = await runSanitizer(styleElSvg)
+const cleanedAttr = await runSanitizer(styleAttrSvg)
+const cleanedRoot = await runSanitizer(styleRootSvg)
+const keptLegit = await runSanitizer(legitSvg)
+console.log(
+  '27a) Direktprüfung — style-Element:', JSON.stringify(cleanedEl.removed),
+  '| style-Attribut:', JSON.stringify(cleanedAttr.removed),
+  '| style am Wurzelelement:', JSON.stringify(cleanedRoot.removed),
+  '| legitim:', JSON.stringify(keptLegit.removed),
+)
+if (!cleanedEl.removed.includes('style')) fail('Das <style>-Element wurde nicht als entfernt gemeldet')
+if (/attacker\.example|<style|@import/i.test(cleanedEl.svg)) {
+  fail('Der Inhalt eines <style>-Elements hat den Reiniger überlebt')
+}
+if (!cleanedAttr.removed.includes('style')) fail('Das style-Attribut mit externer url() wurde nicht entfernt')
+if (/attacker\.example|url\(/i.test(cleanedAttr.svg)) {
+  fail('Ein externer CSS-Verweis im style-Attribut hat den Reiniger überlebt')
+}
+if (!cleanedRoot.removed.includes('style') && /attacker\.example/.test(cleanedRoot.svg)) {
+  fail('Ein externer CSS-Verweis am Wurzelelement hat den Reiniger überlebt')
+}
+if (
+  keptLegit.removed.length ||
+  !keptLegit.svg.includes('fill="url(#g)"') ||
+  !keptLegit.svg.includes('linearGradient') ||
+  !keptLegit.svg.includes('stroke="#123456"')
+) {
+  fail('Legitime SVG-Grafik wurde verändert oder beschädigt')
+}
+
 // Branding: Farben und hochgeladenes Logo
 await page9.locator('#c-accent').evaluate((el) => {
   el.value = '#8a2f5a'
@@ -1356,6 +1424,15 @@ const hasOnclick = await page9.evaluate(() =>
 console.log('    Logo an Stellen gerendert:', marks, '| script:', hasScript, '| onclick:', hasOnclick)
 if (hasScript || hasOnclick) fail('SVG wurde nicht bereinigt')
 if (marks < 2) fail('Logo ersetzt die Wortmarke nicht')
+// OPEN-71: auch die CSS-Vektoren duerfen das hochgeladene Logo ueberleben -
+// weder ein <style>-Element noch irgendein externer Verweis im Markup.
+const logoStyleCount = await page9.evaluate(() => document.querySelectorAll('.wordmark--logo style').length)
+const logoMarkup = await page9.evaluate(() =>
+  [...document.querySelectorAll('.wordmark--logo')].map((el) => el.innerHTML).join('\n'),
+)
+console.log('    <style> im gerenderten Logo:', logoStyleCount, '| externe Verweise:', /attacker\.example/.test(logoMarkup))
+if (logoStyleCount) fail('Ein <style>-Element hat das hochgeladene Logo überlebt')
+if (/attacker\.example/.test(logoMarkup)) fail('Ein externer CSS-Verweis hat das hochgeladene Logo überlebt')
 await page9.waitForTimeout(300)
 await page9.screenshot({ path: resolve(tmp, 'branding.png'), fullPage: false })
 
@@ -1571,17 +1648,10 @@ await page14.emulateMedia({ media: 'screen' })
  * test/multi-entity.mjs. Die Browser-Uhr wird auf einen festen Montag
  * gestellt, sonst haengt "diese Woche" vom Tag des Testlaufs ab.
  */
-const dueOutDir = resolve(root, 'dist-due-date')
+const dueOutDir = resolve(root, 'dist-due-date' + pidSuffix)
 const dueDist = resolve(dueOutDir, 'index.html')
-const domainPath = resolve(root, 'src/domain.js')
 const dueDomainFixture = resolve(root, 'test/fixtures/due-date.domain.js')
-const originalDomainForDue = readFileSync(domainPath, 'utf8')
-writeFileSync(domainPath, readFileSync(dueDomainFixture, 'utf8'))
-try {
-  execFileSync('npx', ['vite', 'build', '--outDir', 'dist-due-date'], { cwd: root, stdio: 'pipe' })
-} finally {
-  writeFileSync(domainPath, originalDomainForDue)
-}
+buildWithDomain(dueDomainFixture, 'dist-due-date' + pidSuffix)
 console.log('36a) Faelligkeiten-Build erzeugt:', dueDist)
 
 // Eigener Browser-Context statt der gemeinsamen `ctx`: clock.install() friert
@@ -1630,16 +1700,10 @@ rmSync(dueOutDir, { recursive: true, force: true })
  * 6 Datensaetze, davon 5 offen; Summe 26.5; Mittelwert 26.5/6 = 4.416.. -> 4.42;
  * offen: Summe 20.5, Mittelwert 20.5/5 = 4.1 -> "4.10" (zwei Nachkommastellen).
  */
-const metricsOutDir = resolve(root, 'dist-metrics')
+const metricsOutDir = resolve(root, 'dist-metrics' + pidSuffix)
 const metricsDist = resolve(metricsOutDir, 'index.html')
 const metricsFixture = resolve(root, 'test/fixtures/metrics.domain.js')
-const originalDomainForMetrics = readFileSync(domainPath, 'utf8')
-writeFileSync(domainPath, readFileSync(metricsFixture, 'utf8'))
-try {
-  execFileSync('npx', ['vite', 'build', '--outDir', 'dist-metrics'], { cwd: root, stdio: 'pipe' })
-} finally {
-  writeFileSync(domainPath, originalDomainForMetrics)
-}
+buildWithDomain(metricsFixture, 'dist-metrics' + pidSuffix)
 console.log('36e) Kennzahlen-Build erzeugt:', metricsDist)
 
 const metricsCtx = await browser.newContext({ viewport: { width: 1280, height: 850 } })
@@ -1718,14 +1782,9 @@ rmSync(metricsOutDir, { recursive: true, force: true })
  * Summe ueber ein Textfeld, avg ohne Feld. Die gueltige Deklaration muss daneben
  * weiterlaufen, und das Werkzeug selbst bleibt bedienbar.
  */
-const invalidOutDir = resolve(root, 'dist-metrics-invalid')
+const invalidOutDir = resolve(root, 'dist-metrics-invalid' + pidSuffix)
 const invalidDist = resolve(invalidOutDir, 'index.html')
-writeFileSync(domainPath, readFileSync(resolve(root, 'test/fixtures/metrics-invalid.domain.js'), 'utf8'))
-try {
-  execFileSync('npx', ['vite', 'build', '--outDir', 'dist-metrics-invalid'], { cwd: root, stdio: 'pipe' })
-} finally {
-  writeFileSync(domainPath, originalDomainForMetrics)
-}
+buildWithDomain(resolve(root, 'test/fixtures/metrics-invalid.domain.js'), 'dist-metrics-invalid' + pidSuffix)
 console.log('36j) Build mit ungueltigen Deklarationen erzeugt:', invalidDist)
 
 const invalidCtx = await browser.newContext({ viewport: { width: 1280, height: 850 } })

@@ -609,6 +609,17 @@ connection. That is a judgement call you may make yourself; do not quietly leave
 - **Do not weaken the SVG sanitiser or the action validation.** Both exist because the output file
   gets passed around.
 
+The first rule above is machine-checked, not aspirational: CI runs
+`node scripts/check-self-contained.mjs dist/index.html docs/demo docs/demos` on every build, and it
+fails on anything a renderer would fetch by itself — external `<script src=`, `<link href=`,
+`<img>`/`<image>`, `<iframe>` and media tags, `<use href>`, `srcset`, CSS `@import`, and CSS
+`url()` pointing at the network. Plain `<a href="https://…">` links are deliberate content and stay
+allowed. The GitHub Pages deploy (`pages.yml`) runs only after its own build job has passed the same
+check, so a broken main is never published. One residual gap is known and accepted for now: all
+repository activity shares one GitHub identity, so "CI green before merge" and "nobody merges their
+own PR" rest on review discipline rather than GitHub enforcement until required status checks and
+separate merge permissions exist (tracked in the project wiki, [Testing](https://github.com/m-dohmen/openToolbox/wiki/Testing)).
+
 ## When the user wants more than a list
 
 openToolbox is a records-with-fields tool. If the request is a calculator, a canvas, a diagram

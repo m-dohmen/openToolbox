@@ -293,6 +293,8 @@ const STRINGS = {
     'actions.created': (title, id) => `Created: ${title} (${id})`,
     'actions.needsTitle': (where, titleField) => `${where}: nothing is created without a ${titleField}.`,
     'actions.notFound': (where, id) => `${where}: ${id ? `"${id}"` : 'no id given'} — not found in the data.`,
+    'actions.blockedByReferences': (where, title, id, refs) =>
+      `${where}: ${title} (${id}) is still referenced by ${refs} and is not deleted.`,
     'actions.deleted': (title, id) => `Deleted: ${title} (${id})`,
     'actions.updated': (id, changes) => `Updated ${id} — ${changes}`,
     'actions.nothingToChange': (where, id) => `${where}: nothing to change on ${id}.`,
@@ -928,6 +930,8 @@ const STRINGS = {
     'actions.created': (title, id) => `Angelegt: ${title} (${id})`,
     'actions.needsTitle': (where, titleField) => `${where}: ohne ${titleField} wird nichts angelegt.`,
     'actions.notFound': (where, id) => `${where}: ${id ? `"${id}"` : 'keine Id angegeben'} — nicht in den Daten gefunden.`,
+    'actions.blockedByReferences': (where, title, id, refs) =>
+      `${where}: ${title} (${id}) wird noch referenziert von ${refs} und bleibt bestehen.`,
     'actions.deleted': (title, id) => `Gelöscht: ${title} (${id})`,
     'actions.updated': (id, changes) => `${id} aktualisiert — ${changes}`,
     'actions.nothingToChange': (where, id) => `${where}: nichts zu ändern an ${id}.`,
