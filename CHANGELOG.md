@@ -188,6 +188,6 @@ and stored in the payload.
 
 [0.15.0]: https://github.com/m-dohmen/openToolbox/releases/tag/v0.15.0
 [0.14.0]: https://github.com/m-dohmen/openToolbox/releases/tag/v0.14.0
-[Unreleased]: https://github.com/m-dohmen/openToolbox/compare/v0.15.0...HEAD
+[Unreleased]: https://github.com/m-dohmen/openToolbox/compare/v0.16.1...HEAD
 [#65]: https://github.com/m-dohmen/openToolbox/pull/65
 [#66]: https://github.com/m-dohmen/openToolbox/pull/66
