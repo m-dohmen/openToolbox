@@ -666,6 +666,21 @@ const STRINGS = {
     'settings.probeReachable': (answer) => `Endpoint reachable. Reply: ${answer}`,
     'settings.logoApplied': 'Logo applied.',
     'settings.logoAppliedRemoved': (removed) => `Logo applied. Removed for safety: ${removed}.`,
+    'settings.views': 'Saved views',
+    'settings.viewsHint':
+      'Named combinations of search, filters and sorting. Survive saving and reopening the file. ' +
+      'Two files with the same view keep the most recent change when merged.',
+    'views.empty': 'No views saved yet. Configure a search, filter or sort above the list, then capture it below.',
+    'views.capture': 'Save current view',
+    'views.capturePlaceholder': (entity) => `Name the view (${entity})…`,
+    'views.captureHint': 'Change the search, filter or sort first, then capture.',
+    'views.rename': 'Rename',
+    'views.isStart': 'Applied on open',
+    'views.setStart': 'Open with this view',
+    'views.sortBy': (key) => `sorted by ${key}`,
+    'view.label': 'Choose a saved view',
+    'view.none': 'No saved view',
+    'view.saved': (name) => `View “${name}” saved.`,
   },
 
   de: {
@@ -1317,6 +1332,21 @@ const STRINGS = {
     'settings.probeReachable': (answer) => `Endpunkt erreichbar. Antwort: ${answer}`,
     'settings.logoApplied': 'Logo übernommen.',
     'settings.logoAppliedRemoved': (removed) => `Logo übernommen. Zur Sicherheit entfernt: ${removed}.`,
+    'settings.views': 'Gespeicherte Ansichten',
+    'settings.viewsHint':
+      'Benannte Kombinationen aus Suche, Filtern und Sortierung. Überstehen Speichern und Neuöffnen der Datei. ' +
+      'Zwei Dateien mit derselben Ansicht behalten beim Abgleich die letzte Änderung.',
+    'views.empty': 'Noch keine Ansichten gespeichert. Suche, Filter oder Sortierung oben einstellen und hier ablegen.',
+    'views.capture': 'Aktuelle Ansicht speichern',
+    'views.capturePlaceholder': (entity) => `Name der Ansicht (${entity}) …`,
+    'views.captureHint': 'Erst Suche, Filter oder Sortierung ändern, dann ablegen.',
+    'views.rename': 'Umbenennen',
+    'views.isStart': 'Beim Öffnen anwenden',
+    'views.setStart': 'Mit dieser Ansicht öffnen',
+    'views.sortBy': (key) => `sortiert nach ${key}`,
+    'view.label': 'Gespeicherte Ansicht wählen',
+    'view.none': 'Keine gespeicherte Ansicht',
+    'view.saved': (name) => `Ansicht „${name}“ gespeichert.`,
   },
 }
 

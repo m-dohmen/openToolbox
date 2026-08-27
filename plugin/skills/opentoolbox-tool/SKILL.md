@@ -71,6 +71,11 @@ Three things to raise yourself, because users rarely ask for them and all three 
   overview numbers first — how many records, what they weigh in total, what averages out. See
   `AGENTS.md` for the closed catalog; like the due-date widget, a declaration alone unlocks the
   dashboard view.
+- **Saved views** (`views` on the schema) whenever the same combination of search, filters and
+  sort gets rebuilt by hand every time the file opens — "my open items", "overdue this quarter".
+  They ship as a dropdown at the list head; recipients capture their own under the same names,
+  stored in the data block. Merge of two files is by name, last write wins. The shape and the
+  start-view flag are in `AGENTS.md`; do not copy them here.
 
 If they have a spreadsheet of real data, ask for a few header rows: naming the fields the way their
 columns are named makes the built-in CSV import map them correctly on the first try. Do **not** paste

@@ -120,6 +120,125 @@ function LinkEditor({ links, tr, onChange, onNote }) {
   )
 }
 
+/**
+ * Sichten-Liste: jede Zeile Name, kurze Vorschau (Suche / Sortierung),
+ * Start-Markierung, Umbenennen und Löschen. Am Ende ein Eingabefeld, das
+ * eine neue Sicht aus dem aktuellen Sitzungszustand ablegt - die Funktion
+ * kommt vom Aufrufer, weil nur der den laufenden Suchbegriff kennt.
+ */
+function ViewsEditor({
+  views,
+  startView,
+  onAdd,
+  onRename,
+  onDelete,
+  onSetStart,
+  onCapture,
+  canCapture,
+  activeEntityLabel,
+  tr,
+}) {
+  const [newName, setNewName] = useState('')
+  const capture = () => {
+    const name = newName.trim()
+    if (!name) return
+    onCapture(name)
+    setNewName('')
+  }
+  return (
+    <div class="views-editor">
+      {views.length === 0 && <p class="note">{tr('views.empty')}</p>}
+      {views.map((v) => (
+        <ViewsRow
+          key={v.name}
+          view={v}
+          isStart={v.name === startView}
+          onRename={(newName) => onRename(v.name, newName)}
+          onDelete={() => onDelete(v.name)}
+          onSetStart={() => onSetStart(v.name === startView ? '' : v.name)}
+          tr={tr}
+        />
+      ))}
+      <div class="views-editor__add">
+        <input
+          placeholder={tr('views.capturePlaceholder', activeEntityLabel)}
+          value={newName}
+          onInput={(e) => setNewName(e.currentTarget.value)}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') capture()
+          }}
+        />
+        <button
+          class="btn"
+          type="button"
+          disabled={!newName.trim() || !canCapture}
+          title={canCapture ? '' : tr('views.captureHint')}
+          onClick={capture}
+        >
+          {tr('views.capture')}
+        </button>
+      </div>
+    </div>
+  )
+}
+
+/** Eine Zeile in der Sichten-Liste. Eingabe nur sichtbar im Rename-Modus. */
+function ViewsRow({ view, isStart, onRename, onDelete, onSetStart, tr }) {
+  const [editing, setEditing] = useState(false)
+  const [draft, setDraft] = useState(view.name)
+  const summary = [
+    view.query ? `“${view.query}”` : null,
+    view.sort?.key ? tr('views.sortBy', view.sort.key) : null,
+  ]
+    .filter(Boolean)
+    .join(' · ')
+  const commit = () => {
+    const next = draft.trim()
+    if (next && next !== view.name) onRename(next)
+    setEditing(false)
+    setDraft(next || view.name)
+  }
+  return (
+    <div class="views-row">
+      <div class="views-row__main">
+        {editing ? (
+          <input
+            value={draft}
+            onInput={(e) => setDraft(e.currentTarget.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') commit()
+              if (e.key === 'Escape') {
+                setDraft(view.name)
+                setEditing(false)
+              }
+            }}
+            onBlur={commit}
+            autoFocus
+          />
+        ) : (
+          <button class="views-row__name" type="button" onClick={() => setEditing(true)}>
+            {view.name}
+          </button>
+        )}
+        {summary && <span class="views-row__summary">{summary}</span>}
+      </div>
+      <div class="views-row__actions">
+        <Toggle
+          checked={isStart}
+          onChange={() => onSetStart()}
+          label={isStart ? tr('views.isStart') : tr('views.setStart')}
+        />
+        <button class="btn" type="button" onClick={() => setEditing((v) => !v)}>
+          {editing ? tr('common.cancel') : tr('views.rename')}
+        </button>
+        <button class="btn btn--danger" type="button" onClick={onDelete}>
+          {tr('common.remove')}
+        </button>
+      </div>
+    </div>
+  )
+}
+
 export function SettingsPage({
   settings,
   onChange,
@@ -145,6 +264,15 @@ export function SettingsPage({
   onProtect,
   onUnlock,
   onRemoveProtection,
+  views = [],
+  startView = '',
+  onAddView,
+  onRenameView,
+  onDeleteView,
+  onSetStartView,
+  onCaptureView,
+  canCapture = false,
+  activeEntityLabel = '',
 }) {
   const tr = translator(settings.locale)
   const [probe, setProbe] = useState({ state: 'idle', message: '' })
@@ -427,6 +555,23 @@ export function SettingsPage({
               onInput={(e) => set('copyrightUrl')(e.currentTarget.value.trim())}
             />
           </Row>
+        </section>
+
+        <section>
+          <p class="label">{tr('settings.views')}</p>
+          <p class="note">{tr('settings.viewsHint')}</p>
+          <ViewsEditor
+            views={views}
+            startView={startView}
+            onAdd={onAddView}
+            onRename={onRenameView}
+            onDelete={onDeleteView}
+            onSetStart={onSetStartView}
+            onCapture={onCaptureView}
+            canCapture={canCapture}
+            activeEntityLabel={activeEntityLabel}
+            tr={tr}
+          />
         </section>
 
         <section>

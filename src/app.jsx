@@ -50,6 +50,7 @@ import { HomeView } from './home.jsx'
 import { extractPayload, diffAll, applyMerge } from './lib/merge.js'
 import { diffTrail, trailFor } from './lib/trail.js'
 import { pushHistory } from './lib/history.js'
+import { applyView, mergeViewsWithDefaults } from './lib/views.js'
 import {
   readAttachment,
   usedBytes,
@@ -232,6 +233,14 @@ const DEFAULT_SETTINGS = {
   colors: DEFAULT_COLORS,
   brand: DEFAULT_BRAND,
   ai: AI_DEFAULTS,
+  /* Gespeicherte Ansichten pro Datei - vom Anwender angelegt oder umbenannt.
+     Schema-Vorschläge stehen in src/domain.js und werden nicht in der Datei
+     abgelegt, weil sie bei jedem Schemawechsel mitwandern sollen. Merge: gleicher
+     Name = letzter Stand gewinnt. */
+  views: [],
+  /* Name der Sicht, die beim Laden automatisch angewendet wird. Leer heißt:
+     die Datei öffnet ohne voreingestellte Suche/Filter/Sortierung. */
+  startView: '',
 }
 
 const today = () => new Date().toISOString().slice(0, 10)
@@ -439,6 +448,14 @@ function Workbench({
   const [unlocked, setUnlocked] = useState(false)
   const [lockDialog, setLockDialog] = useState(null)
   const [merge, setMerge] = useState(null)
+  /* Name der aktuell angewendeten Sicht oder '', wenn die Liste ohne Schablone
+     steht. Steht bewusst hier, nicht in settings: das Dropdown ist Sitzungs-
+     zustand, das Verschieben oder Speichern einer Sicht gehört dagegen in die
+     Einstellungen und damit in den Datenblock. */
+  const [activeView, setActiveView] = useState('')
+  /* Markiert, ob die Start-Ansicht schon angewendet wurde; verhindert, dass ein
+     Re-Render (Sprache, Theme) die automatische Anwendung wieder anwirft. */
+  const startApplied = useRef(false)
   /* Der zuletzt gespeicherte Stand, um beim naechsten Speichern dagegen zu
      diffen. Liegt bewusst nur im Speicher: in die Datei gehoert das Ergebnis
      des Vergleichs, nicht noch eine zweite Kopie aller Datensaetze. */
@@ -562,6 +579,63 @@ function Workbench({
     setDirty(true)
   }
 
+  /* Sichten-Verwaltung aus den Einstellungen: hinzufügen, umbenennen,
+     entfernen, als Start-Ansicht markieren. Die Persistenz läuft über
+     settings.views / settings.startView - dasselbe Schema, in dem auch der
+     Auto-Apply oben liest. */
+  const addView = (view) => {
+    if (!view?.name) return
+    setSettings((s) => {
+      const existing = s.views ?? []
+      const filtered = existing.filter((v) => v.name !== view.name)
+      return { ...s, views: [...filtered, view] }
+    })
+    setDirty(true)
+    notify(tr('view.saved', view.name))
+  }
+
+  const renameView = (oldName, newName) => {
+    if (!oldName || !newName || oldName === newName) return
+    setSettings((s) => {
+      const list = (s.views ?? []).map((v) =>
+        v.name === oldName ? { ...v, name: newName } : v,
+      )
+      const start = s.startView === oldName ? newName : s.startView
+      return { ...s, views: list, startView: start }
+    })
+    if (activeView === oldName) setActiveView(newName)
+    setDirty(true)
+  }
+
+  const deleteView = (name) => {
+    if (!name) return
+    setSettings((s) => {
+      const list = (s.views ?? []).filter((v) => v.name !== name)
+      const start = s.startView === name ? '' : s.startView
+      return { ...s, views: list, startView: start }
+    })
+    if (activeView === name) setActiveView('')
+    setDirty(true)
+  }
+
+  const setStartView = (name) => {
+    setSettings((s) => ({ ...s, startView: name || '' }))
+    setDirty(true)
+  }
+
+  /** Aus dem aktuellen Sitzungs-Zustand eine Sicht machen und ablegen. */
+  const captureCurrentView = (name) => {
+    if (!name) return
+    const view = {
+      name,
+      query,
+      filters: filters,
+      sort,
+      entity: activeKey,
+    }
+    addView(view)
+  }
+
   /* Farbschema und Zeilenhöhe hängen am Wurzelelement, damit auch die
      festpositionierten Ebenen (Panel, Dialog, Wasserzeichen) sie erben. */
   /* Das aufgelöste Schema wird auch als Zustand gehalten, nicht nur ans
@@ -603,12 +677,44 @@ function Workbench({
   }, [])
 
   /* Berichtskopien haben keine Schreibpfade - falls jemand die Einstellungs-
-     Seite direkt ansteuert (Tastatur, alter Bookmark), brechen wir auf die
+     Seite direkt ansteuern (Tastatur, alter Bookmark), brechen wir auf die
      Liste zurueck, statt dort etwas zum Klicken anzubieten. */
   useEffect(() => {
     if (!readOnly) return
     if (view === 'settings' || view === 'wizard' || view === 'home') setView('list')
   }, [readOnly, view])
+
+  /* Start-Ansicht genau einmal pro Datei anwenden. Ein Re-Render (Sprache,
+     Theme, Sortier-Klick) darf sie nicht erneut spiegeln - sonst überschreibt
+     ein Klick auf einen Spaltenkopf die gerade laufende Sitzung. */
+  useEffect(() => {
+    if (startApplied.current) return
+    if (readOnly) return
+    const name = String(settings.startView ?? '').trim()
+    if (!name) {
+      startApplied.current = true
+      return
+    }
+    const view = (settings.views ?? []).find((v) => v.name === name)
+    if (!view) {
+      startApplied.current = true
+      return
+    }
+    const targetEntity = view.entity || activeKey
+    if (targetEntity !== activeKey) setActiveKey(targetEntity)
+    applyView(view, {
+      entityKey: activeKey,
+      setQuery,
+      setFacet,
+      setFiltersByEntity,
+      setSort,
+      fallbackSortKey: ENTITIES[activeKey].schema.list[0],
+    })
+    setActiveView(view.name)
+    startApplied.current = true
+    // absichtlich nur beim Mount - settings.startView wechselt nur ueber Settings.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   /* Gewählte Farben als Variablen am Wurzelelement — von dort erbt alles,
      auch der Dunkelmodus, weil der nur die Rollen neu zuordnet. */
@@ -730,6 +836,23 @@ function Workbench({
   }, [dirty])
 
   /* Ableitungen ------------------------------------------------ */
+
+  /* Effektive Sichten je Entität: Schema-Vorschläge unten, vom Anwender
+     gespeicherte Sichten oben. Beide Listen tragen denselben Namen als
+     Schlüssel, der merge-Helper entscheidet, wer gewinnt. */
+  const viewsByEntity = useMemo(() => {
+    const out = {}
+    for (const [key, ent] of Object.entries(ENTITIES)) {
+      out[key] = mergeViewsWithDefaults(ent.schema.views ?? [], settings.views ?? [])
+    }
+    return out
+  }, [settings.views])
+
+  /* Sichten der gerade aktiven Entität - das, was das Dropdown zeigt. */
+  const activeEntityViews = useMemo(
+    () => viewsByEntity[activeKey] ?? [],
+    [viewsByEntity, activeKey],
+  )
 
   const field = (key) => schema.fields.find((f) => f.key === key)
 
@@ -1283,7 +1406,16 @@ function Workbench({
 
       const theirs = normalizeRecordsByEntity(data.records)
       const diff = diffAll(ENTITIES, ENTITY_KEYS, recordsByEntity, theirs)
-      setMerge({ diff, fileName: file.name })
+      /* Sichten werden in derselben Bewegung mit übergeben - sie laufen
+         unabhängig vom Datensatzbestand durch den Merge (kein Auswahldialog
+         dazwischen), aber genau dann, wenn der Anwender auf "Übernehmen"
+         klickt, also wenn applyMerge ohnehin läuft. */
+      const theirsViews = Array.isArray(data.settings?.views) ? data.settings.views : []
+      setMerge({
+        diff,
+        fileName: file.name,
+        views: { mine: settings.views ?? [], theirs: theirsViews },
+      })
     } catch (err) {
       notify(tr('merge.failed', err.message), 'error')
     }
@@ -1394,8 +1526,43 @@ function Workbench({
             placeholder={tr('search.placeholder')}
             aria-label={tr('search.placeholder')}
             value={query}
-            onInput={(e) => setQuery(e.currentTarget.value)}
+            onInput={(e) => {
+              setQuery(e.currentTarget.value)
+              /* Sobald jemand tippt, ist die Sicht "frei" - das Dropdown zeigt
+                 wieder "keine", damit klar ist, dass die laufende Anzeige nicht
+                 mehr dem gespeicherten Zustand entspricht. */
+              setActiveView('')
+            }}
           />
+          {activeEntityViews.length > 0 && (
+            <select
+              class="view-select"
+              aria-label={tr('view.label')}
+              value={activeView}
+              onChange={(e) => {
+                const name = e.currentTarget.value
+                setActiveView(name)
+                if (!name) return
+                const v = activeEntityViews.find((x) => x.name === name)
+                if (!v) return
+                applyView(v, {
+                  entityKey: activeKey,
+                  setQuery,
+                  setFacet,
+                  setFiltersByEntity,
+                  setSort,
+                  fallbackSortKey: schema.list[0],
+                })
+              }}
+            >
+              <option value="">{tr('view.none')}</option>
+              {activeEntityViews.map((v) => (
+                <option key={v.name} value={v.name}>
+                  {v.name}
+                </option>
+              ))}
+            </select>
+          )}
         </div>
       )}
 
@@ -1440,6 +1607,15 @@ function Workbench({
             setUnlocked(false)
             notify(tr('toast.lockRemoved'))
           }}
+          views={settings.views ?? []}
+          startView={settings.startView ?? ''}
+          onAddView={addView}
+          onRenameView={renameView}
+          onDeleteView={deleteView}
+          onSetStartView={setStartView}
+          onCaptureView={captureCurrentView}
+          canCapture={Boolean(query || (filters && Object.keys(filters).length) || sort?.key !== schema.list[0])}
+          activeEntityLabel={schema.plural}
         />
       ) : (
       <>
@@ -1952,8 +2128,16 @@ function Workbench({
             tr={tr}
             onCancel={() => setMerge(null)}
             onApply={(picks) => {
-              const { next, counts } = applyMerge(ENTITIES, ENTITY_KEYS, recordsByEntity, merge.diff, picks)
+              const { next, counts, nextViews } = applyMerge(
+                ENTITIES,
+                ENTITY_KEYS,
+                recordsByEntity,
+                merge.diff,
+                picks,
+                { views: merge.views },
+              )
               recordChange(next)
+              if (nextViews) changeSettings({ views: nextViews })
               setDirty(true)
               setMerge(null)
               notify(tr('merge.done', counts.added, counts.changed, counts.removed))

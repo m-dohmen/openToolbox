@@ -14,6 +14,7 @@
  */
 
 import { writableFields } from './entities.js'
+import { mergeViews } from './views.js'
 
 /** Den Datenblock aus dem Quelltext einer anderen openToolbox-Datei ziehen. */
 export function extractPayload(html) {
@@ -85,8 +86,15 @@ export function diffAll(entities, entityKeys, mineByEntity, theirsByEntity) {
  * Wendet die Auswahl an. `picks` ist `{ [entityKey]: { added: Set, changed: Set,
  * removed: Set } }` - jeweils die Ids, die übernommen werden sollen. Was nicht
  * ausgewählt ist, bleibt wie es hier ist.
+ *
+ * Sichten laufen nicht über die Checkbox-Reihen: sie gehören zur Konfiguration
+ * und kennen keine "Auswahl je Satz". Stattdessen wird im selben Aufruf
+ * `views` mitgeliefert (`{ mine, theirs }`) und konfliktfrei zusammengeführt -
+ * gleicher Name = letzter Stand gewinnt, sonst bleibt alles auf seiner Seite.
+ * Das Ergebnis steht in `nextViews` und ist Sache des Aufrufers, der es in
+ * die Datei zurückschreibt.
  */
-export function applyMerge(entities, entityKeys, mineByEntity, diff, picks) {
+export function applyMerge(entities, entityKeys, mineByEntity, diff, picks, { views } = {}) {
   const next = {}
   const counts = { added: 0, changed: 0, removed: 0 }
 
@@ -117,5 +125,12 @@ export function applyMerge(entities, entityKeys, mineByEntity, diff, picks) {
     }
   }
 
-  return { next, counts }
+  /* Sichten mergen ist vom Datensatzbestand unabhängig: keine Auswahl, kein
+     "zuletzt verändert". Hier zählt nur der Name als Schlüssel, und die
+     "andere" Datei gewinnt, wenn beide etwas zu derselben Sicht sagen. */
+  const nextViews = views
+    ? mergeViews(views.mine ?? [], views.theirs ?? [])
+    : null
+
+  return { next, counts, nextViews }
 }

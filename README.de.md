@@ -501,6 +501,51 @@ Vertrauliche.
 
 Leerer Text heißt, dass es die Startseite nicht gibt.
 
+## Gespeicherte Ansichten
+
+Suche, Facetten, Feldfilter und Sortierung leben normalerweise nur in der Sitzung. Ein Werkzeug,
+das jeden Montag auf die gleiche Weise geöffnet wird — „meine offenen Punkte", „überfällig",
+„Q3" — zwingt den Empfänger, die Kombination jedes Mal von Hand neu aufzubauen. Ein `views`-Array
+im Schema benennt die Kombinationen, die das Dropdown am Listenkopf anbietet:
+
+```js
+export const SCHEMA = {
+  // …
+  views: [
+    {
+      name: 'Meine offenen Punkte',
+      query: '',
+      filters: { owner: { v: '', op: 'contains' } },
+      sort: { key: 'due', dir: 1 },
+    },
+    { name: 'Überfällig', query: '', filters: {}, sort: { key: 'due', dir: 1 } },
+  ],
+}
+```
+
+Jeder Eintrag hat genau die Gestalt der laufenden Liste: `query` ist die globale Suche, `filters`
+der Filterbereich in der Seitenleiste (`{ fieldKey: { v, op } }`), `sort` heißt `{ key, dir }`
+(`dir` ist `1` aufsteigend, `-1` absteigend), `entity` ist optional und zeigt bei mehreren
+Entitäten auf die richtige. Das Dropdown spiegelt die Werte in Suche, Facetten, Filter und
+Sortierung; die Sicht selbst ist nur eine Schablone und schreibt nichts in den Datenbestand.
+
+Die eigenen Sichten der Empfänger liegen aus zwei Gründen im Datenblock, nicht im Schema: das
+Schema ist nach der Auslieferung schreibgeschützt, und dieselbe Sicht in zwei Dateien muss nach
+Namen zusammenführbar sein. Gespeicherte Sichten stehen unter `settings.views`; das
+`views`-Array des Schemas ist der Katalog, `settings.views` ist, was die Empfänger tatsächlich
+verwenden. Beide werden gemischt: gleicher Name = die gespeicherte Sicht gewinnt.
+
+Ein einzelner `settings.startView` (Name einer Sicht) markiert diejenige, die beim Öffnen der
+Datei automatisch angewendet wird. Leer heißt: keine automatische Sicht. In den Einstellungen
+steht neben dem Anwendung-Block ein kleiner Editor: Liste der aktuellen Sichten mit Umbenennen,
+Löschen und „Mit dieser Ansicht öffnen"; darunter ein Eingabefeld, das die laufende Suche/Filter/
+Sortierung unter einem Namen ablegt (der Knopf leuchtet erst, wenn es etwas zu speichern gibt).
+
+Der Merge lebt in `src/lib/merge.js` und ist für den Aufrufer ein einzeiliger Zusatz: `applyMerge`
+nimmt optional `{ views: { mine, theirs } }`, läuft `mergeViews` und liefert das Ergebnis als
+`nextViews` neben den Daten. Zwei Dateien mit disjunkten Sichten mischen sich konfliktfrei; zwei
+Dateien mit derselben Sicht behalten die letzte Änderung der Gegenseite.
+
 ## Geführte Erfassung
 
 Liste und Formular setzen voraus, dass man das Werkzeug kennt. Wer die Datei bekommt, um *eine*

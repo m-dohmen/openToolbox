@@ -112,6 +112,10 @@ larguras em CSS e o anel é um único círculo SVG. As duas visões imprimem com
   derivação guardada fica desatualizada assim que uma das entradas muda, sem que ninguém perceba.
   Entram em ordenação, nos cartões de métricas `sum`/`avg` e na exportação CSV; no formulário são
   só de leitura e a IA é rejeitada pelo nome se tentar gravá-los.
+- **Vistas guardadas.** Declare `views` no esquema: cada entrada combina busca, filtros e
+  ordenação sob um nome que o menu suspenso junto ao campo de pesquisa aplica com um clique.
+  As vistas criadas pelo usuário e a vista inicial vivem no bloco de dados; ao mesclar dois
+  arquivos, as de mesmo nome mantêm a última edição.
 
 ## Início rápido
 

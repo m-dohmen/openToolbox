@@ -122,6 +122,10 @@ s'impriment en un PDF propre.
   ne s'en aperçoive. Ils participent au tri, aux tuiles d'indicateurs `sum`/`avg` et à l'export
   CSV ; dans le formulaire ils sont en lecture seule et l'IA est rejetée par nom si elle tente
   d'y écrire.
+- **Vues enregistrées.** Déclarez `views` dans le schéma : chaque entrée nomme une combinaison de
+  recherche, filtres et tri que le menu déroulant à côté du champ de recherche applique d'un
+  clic. Les vues créées par l'utilisateur et la vue de départ vivent dans le bloc de données ; à
+  la fusion de deux fichiers, celles qui portent le même nom gardent la dernière écriture.
 
 ## Démarrage rapide
 

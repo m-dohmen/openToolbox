@@ -114,6 +114,10 @@ son anchuras CSS y el anillo es un único círculo SVG. Ambas vistas se imprimen
   una derivación guardada queda obsoleta en cuanto cambia una entrada, y nadie se entera.
   Funcionan en columnas, en el orden, en cartones de métricas `sum`/`avg` y en la exportación
   CSV; en el formulario son de sólo lectura y la IA es rechazada por nombre si intenta escribirlos.
+- **Vistas guardadas.** Declara `views` en el esquema: cada entrada combina búsqueda, filtros y
+  orden con un nombre que aparece en el desplegable junto al buscador. Las vistas que el usuario
+  crea y la vista inicial se guardan en el bloque de datos; al fusionar dos archivos, las del
+  mismo nombre se quedan con la última edición.
 
 ## Inicio rápido
 
