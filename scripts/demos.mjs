@@ -239,6 +239,10 @@ Rückseite. Zwei Tage vor Abfahrt fehlt das Geld von vier Familien.
 
 - **Ein Bestand fast ohne Zahlen**: Zustände, Ja/Nein, ein offener Restbetrag, der sich selbst
   ausrechnet.
+- **Gespeicherte Ansichten** — drei Vorschläge im Dropdown am Listenkopf („Alle", „Zettel
+  ausstehend", „Geld offen"), die morgens und vor jeder Überweisung dieselbe Tastaturabfolge
+  ersparen. Eigene Sichten legt man in den Einstellungen an; eine davon als Start-Ansicht markiert
+  öffnet die Datei immer in genau diesem Zustand.
 - **Regeln, die dem Alltag folgen** — wo Medizinisches steht, muss eine Telefonnummer daneben
   stehen.
 - **Der Grund, warum diese Datei verschlüsselt gehört**: hier stehen Gesundheitsangaben von

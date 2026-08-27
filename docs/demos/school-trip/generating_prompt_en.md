@@ -11,7 +11,7 @@ Use the **openToolbox** template: https://github.com/m-dohmen/openToolbox. Read 
 
 ## The problem this solves
 
-A class trip is coming up. 28 forms go out, 19 come back, three without a signature, one with an allergy written on the back. Two days before departure the money from four families is still missing. The class teacher keeps this in a sheet she is not allowed to share, because allergies and swimming ability are in it. Almost nothing here is a number — it is a set of states, and the only sum that matters is what is still outstanding.
+A class trip is coming up. 28 forms go out, 19 come back, three without a signature, one with an allergy written on the back. Two days before departure the money from four families is still missing. The class teacher keeps this in a sheet she is not allowed to share, because allergies and swimming ability are in it. Almost nothing here is a number — it is a set of states, and the only sum that matters is what is still outstanding. The recurring questions every Monday morning ("whose form is still missing?", "who has not paid?") are the same ones every week — they belong on the list head as saved views, not rebuilt by hand each time.
 
 ## What it has to be at the end
 
@@ -73,6 +73,16 @@ Conditions between fields. They must be enforced in one place so that the edit f
 - **When** `Boolean(r.medical?.trim())` → **Then** `phone`
   **Message:** „Wo Medizinisches steht, muss eine Telefonnummer daneben stehen.“
 
+**Saved views**
+
+Named combinations of query, field filters and sort, offered by the dropdown at the list head. What is declared here is what the tool ships with — recipients save their own additions under `settings.views`. Merge: same name = last edit wins.
+
+`name` (unique), `query` (same as the search box), `filters` (`{ field: spec }`, where a spec with just `v` sets the matching facet and a spec with `op` sets a field filter), and `sort` (`{ key, dir }`, `dir` is `1` or `-1`). `entity` is optional and reserved for multi-entity.
+
+- preset: **Alle** — —; sort: `name ↑`
+- preset: **Zettel ausstehend** — Einverständnis = ausstehend; sort: `name ↑`
+- preset: **Geld offen** — Zahlung = offen; sort: `open ↓`
+
 ## Dashboard
 
 Tiles over the whole record set, not the filtered view.
@@ -127,6 +137,10 @@ Rückseite. Zwei Tage vor Abfahrt fehlt das Geld von vier Familien.
 
 - **Ein Bestand fast ohne Zahlen**: Zustände, Ja/Nein, ein offener Restbetrag, der sich selbst
   ausrechnet.
+- **Gespeicherte Ansichten** — drei Vorschläge im Dropdown am Listenkopf („Alle", „Zettel
+  ausstehend", „Geld offen"), die morgens und vor jeder Überweisung dieselbe Tastaturabfolge
+  ersparen. Eigene Sichten legt man in den Einstellungen an; eine davon als Start-Ansicht markiert
+  öffnet die Datei immer in genau diesem Zustand.
 - **Regeln, die dem Alltag folgen** — wo Medizinisches steht, muss eine Telefonnummer daneben
   stehen.
 - **Der Grund, warum diese Datei verschlüsselt gehört**: hier stehen Gesundheitsangaben von

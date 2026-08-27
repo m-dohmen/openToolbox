@@ -152,10 +152,39 @@ function entitySection(key, entity, t, single, multi) {
     out.push('')
   }
 
+  if (s.views?.length) {
+    out.push(`**${t.savedViews}**`, '', t.savedViewsIntro, '')
+    out.push(t.savedViewsFields, '')
+    for (const v of s.views) {
+      const filters = describeViewFilters(v, s)
+      const sort =
+        v.sort?.key ? `${v.sort.key}${v.sort.dir === -1 ? ' ↓' : ' ↑'}` : '—'
+      out.push(`- ${fill(t.savedViewPreset, v.name)} — ${filters}; sort: \`${sort}\``)
+    }
+    out.push('')
+  }
+
   out.push(...metricsLines(s, t))
 
   if (multi) out.push('---', '')
   return out
+}
+
+/** Beschreibung der Filter einer gespeicherten Sicht fuer den Aufbau-Prompt.
+    Feldname plus Wert reichen - op und Detail braucht der Agent nicht zu
+    kennen, er uebernimmt sie ohnehin aus dem Schema der Demo. */
+function describeViewFilters(view, schema) {
+  const parts = []
+  for (const [key, spec] of Object.entries(view.filters ?? {})) {
+    if (spec == null) continue
+    const fieldLabel = schema.fields.find((f) => f.key === key)?.label ?? key
+    if ('op' in spec && spec.v !== undefined && spec.v !== '') {
+      parts.push(`${fieldLabel} \`contains\` „${spec.v}“`)
+    } else if ('v' in spec) {
+      parts.push(`${fieldLabel} = ${spec.v}`)
+    }
+  }
+  return parts.length ? parts.join(', ') : '—'
 }
 
 function tileLine(tile, t, entities, defaultKey) {

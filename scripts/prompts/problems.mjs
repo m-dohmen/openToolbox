@@ -239,39 +239,54 @@ export const PROBLEMS = {
       'an allergy written on the back. Two days before departure the money from four families is ' +
       'still missing. The class teacher keeps this in a sheet she is not allowed to share, because ' +
       'allergies and swimming ability are in it. Almost nothing here is a number — it is a set of ' +
-      'states, and the only sum that matters is what is still outstanding.',
+      'states, and the only sum that matters is what is still outstanding. The recurring questions ' +
+      'every Monday morning ("whose form is still missing?", "who has not paid?") are the same ones ' +
+      'every week — they belong on the list head as saved views, not rebuilt by hand each time.',
     de:
       'Eine Klassenfahrt steht an. 28 Zettel gehen raus, 19 kommen zurück, drei ohne Unterschrift, ' +
       'einer mit einer Allergie auf der Rückseite. Zwei Tage vor Abfahrt fehlt das Geld von vier ' +
       'Familien. Die Klassenlehrerin führt das in einer Tabelle, die sie nicht teilen darf, weil ' +
       'Allergien und Schwimmfähigkeit darin stehen. Fast nichts daran ist eine Zahl — es sind ' +
-      'Zustände, und die einzige Summe, auf die es ankommt, ist der offene Rest.',
+      'Zustände, und die einzige Summe, auf die es ankommt, ist der offene Rest. Die Fragen ' +
+      'jedes Montagmorgen („wessen Zettel fehlt noch?", „wer hat nicht gezahlt?") wiederholen sich ' +
+      'wochenweise — sie gehören als gespeicherte Ansichten an den Listenkopf, nicht jede Woche ' +
+      'von Hand zusammengeklickt.',
     es:
       'Se acerca un viaje de fin de curso. Salen 28 autorizaciones, vuelven 19, tres sin firma, una ' +
       'con una alergia anotada al dorso. Dos días antes de salir falta el dinero de cuatro familias. ' +
       'La tutora lo lleva en una hoja que no puede compartir, porque contiene alergias y si el niño ' +
       'sabe nadar. Casi nada de esto es un número: son estados, y la única suma que importa es lo ' +
-      'que queda pendiente.',
+      'que queda pendiente. Las preguntas de cada lunes ("¿de quién falta el justificante?", ' +
+      '“¿quién no ha pagado?”) son las mismas semana tras semana — pertenecen a la cabecera ' +
+      'como vistas guardadas, no se reconstruyen a mano cada vez.',
     fr:
       'Un voyage scolaire approche. 28 autorisations partent, 19 reviennent, trois sans signature, ' +
       'une avec une allergie notée au dos. Deux jours avant le départ, l’argent de quatre familles ' +
       'manque encore. L’enseignante tient cela dans un tableau qu’elle n’a pas le droit de ' +
       'partager, parce qu’il contient des allergies et le niveau de natation. Presque rien ici n’est ' +
-      'un nombre : ce sont des états, et la seule somme qui compte est le reste dû.',
+      'un nombre : ce sont des états, et la seule somme qui compte est le reste dû. Les questions ' +
+      'du lundi matin (« qui n’a pas rendu l’autorisation ? », « qui n’a pas payé ? ») sont les ' +
+      'mêmes chaque semaine — elles ont leur place en tête de liste comme vues enregistrées, et ' +
+      'non reconstruites à la main à chaque ouverture.',
     pt:
       'Uma excursão escolar se aproxima. Saem 28 autorizações, voltam 19, três sem assinatura, uma ' +
       'com uma alergia anotada no verso. Dois dias antes da partida falta o dinheiro de quatro ' +
       'famílias. A professora mantém isso numa planilha que não pode compartilhar, porque contém ' +
       'alergias e se a criança sabe nadar. Quase nada aqui é número: são estados, e a única soma ' +
-      'que importa é o que ainda falta pagar.',
+      'que importa é o que ainda falta pagar. As perguntas de cada segunda-feira ("de quem falta a ' +
+      'autorização?", "quem ainda não pagou?") são as mesmas todas as semanas — pertencem ao topo ' +
+      'da lista como vistas guardadas, não reconstruídas à mão a cada vez.',
     zh:
       '班级要出游了。发出去 28 张回执，收回 19 张，其中三张没签名，一张在背面写着过敏情况。出发前两天，' +
       '还有四个家庭的钱没交。班主任把这些记在一张不能给别人看的表里 —— 因为里面写着过敏和会不会游泳。' +
-      '这里几乎没有什么是数字，全是状态；唯一要紧的求和，是还差多少钱。',
+      '这里几乎没有什么是数字，全是状态；唯一要紧的求和，是还差多少钱。每个周一早上反复出现的问题（"谁的回执还' +
+      '没交？""谁还没付钱？"）每周都问一遍 —— 它们属于列表顶部的「保存视图」，而不是每次手动重新搭。',
     ja:
       '校外学習が近づいています。28 枚の用紙を配り、19 枚が戻り、うち 3 枚は署名なし、1 枚は裏にアレルギーが' +
       '書かれています。出発 2 日前になっても 4 家庭からの集金が終わりません。担任はこれを、共有できない表で' +
       '管理しています。アレルギーや泳力が書かれているからです。ここにはほとんど数値がありません。' +
-      'あるのは状態で、意味のある合計は「あといくら足りないか」だけです。',
+      'あるのは状態で、意味のある合計は「あといくら足りないか」だけです。毎週月曜の朝に出る問い（' +
+      '「どの家庭の用紙がまだ？」「誰がまだ払っていない？」）は毎週同じです——リストの頭の上に「保存ビュー」として ' +
+      '置くものであって、毎回手で組み直すものではありません。',
   },
 }

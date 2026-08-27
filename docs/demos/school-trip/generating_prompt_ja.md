@@ -11,7 +11,7 @@
 
 ## 背景にある問題
 
-校外学習が近づいています。28 枚の用紙を配り、19 枚が戻り、うち 3 枚は署名なし、1 枚は裏にアレルギーが書かれています。出発 2 日前になっても 4 家庭からの集金が終わりません。担任はこれを、共有できない表で管理しています。アレルギーや泳力が書かれているからです。ここにはほとんど数値がありません。あるのは状態で、意味のある合計は「あといくら足りないか」だけです。
+校外学習が近づいています。28 枚の用紙を配り、19 枚が戻り、うち 3 枚は署名なし、1 枚は裏にアレルギーが書かれています。出発 2 日前になっても 4 家庭からの集金が終わりません。担任はこれを、共有できない表で管理しています。アレルギーや泳力が書かれているからです。ここにはほとんど数値がありません。あるのは状態で、意味のある合計は「あといくら足りないか」だけです。毎週月曜の朝に出る問い（「どの家庭の用紙がまだ？」「誰がまだ払っていない？」）は毎週同じです——リストの頭の上に「保存ビュー」として 置くものであって、毎回手で組み直すものではありません。
 
 ## 最終的に何が出来ていればよいか
 
@@ -73,6 +73,16 @@
 - **条件** `Boolean(r.medical?.trim())` → **要求** `phone`
   **メッセージ:** „Wo Medizinisches steht, muss eine Telefonnummer daneben stehen.“
 
+**保存ビュー**
+
+検索・絞り込み・並び替えをまとめた名前付きの組み合わせを、リスト先頭のドロップダウンで提供します。ここで宣言したものがツールに同梱されます。受取側独自のビューは `settings.views` に保存されます。マージ：同じ名前では最後に編集した側が勝ちます。
+
+`name`（一意）、`query`（検索ボックスと同じ）、`filters`（`{ フィールド: spec }`。`v` のみの `spec` は同名ファセットを起動し、`op` 付きの `spec` はフィールドフィルタ）、`sort`（`{ key, dir }`、`dir` は `1` か `-1`）。`entity` は任意で、複数エンティティ用に予約されています。
+
+- プリセット：**Alle** — —; sort: `name ↑`
+- プリセット：**Zettel ausstehend** — Einverständnis = ausstehend; sort: `name ↑`
+- プリセット：**Geld offen** — Zahlung = offen; sort: `open ↓`
+
 ## ダッシュボード
 
 絞り込み後ではなく、レコード全体を対象とするタイルです。
@@ -127,6 +137,10 @@ Rückseite. Zwei Tage vor Abfahrt fehlt das Geld von vier Familien.
 
 - **Ein Bestand fast ohne Zahlen**: Zustände, Ja/Nein, ein offener Restbetrag, der sich selbst
   ausrechnet.
+- **Gespeicherte Ansichten** — drei Vorschläge im Dropdown am Listenkopf („Alle", „Zettel
+  ausstehend", „Geld offen"), die morgens und vor jeder Überweisung dieselbe Tastaturabfolge
+  ersparen. Eigene Sichten legt man in den Einstellungen an; eine davon als Start-Ansicht markiert
+  öffnet die Datei immer in genau diesem Zustand.
 - **Regeln, die dem Alltag folgen** — wo Medizinisches steht, muss eine Telefonnummer daneben
   stehen.
 - **Der Grund, warum diese Datei verschlüsselt gehört**: hier stehen Gesundheitsangaben von

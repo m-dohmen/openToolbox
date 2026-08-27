@@ -31,6 +31,39 @@ export const SCHEMA = {
   list: ['name', 'guardian', 'consent', 'payment', 'paid', 'open', 'swim'],
   facets: ['consent', 'payment', 'swim'],
   totalField: 'paid',
+  /**
+   * Drei Sichten, die im Dropdown am Listenkopf stehen. Sie decken den
+   * typischen Wochenrhythmus ab: morgens „was fehlt an Zetteln?", vor der
+   * nächsten Überweisung „welche Kinder haben noch nicht gezahlt?", und
+   * gelegentlich eine vollständige Durchsicht in alphabetischer Reihenfolge.
+   *
+   * Jede Sicht hier ist ein Vorschlag des Werkzeugbauers. Was die
+   * Klassenlehrerin daraus macht (umbenennen, ergänzen, eigene anlegen),
+   * wird in den Einstellungen daneben gespeichert und reist mit der Datei
+   * mit. Ein Beispiel für eine selbst angelegte Sicht entsteht, sobald sie
+   * im Editor auf „Aktuelle als Sicht speichern" klickt — das ist die
+   * zweite Hälfte des Features.
+   */
+  views: [
+    {
+      name: 'Alle',
+      query: '',
+      filters: {},
+      sort: { key: 'name', dir: 1 },
+    },
+    {
+      name: 'Zettel ausstehend',
+      query: '',
+      filters: { consent: { v: 'ausstehend' } },
+      sort: { key: 'name', dir: 1 },
+    },
+    {
+      name: 'Geld offen',
+      query: '',
+      filters: { payment: { v: 'offen' } },
+      sort: { key: 'open', dir: -1 },
+    },
+  ],
   fields: [
     { key: 'name', label: 'Kind', type: 'text', required: true },
     { key: 'guardian', label: 'Erziehungsberechtigte', short: 'Eltern', type: 'text' },

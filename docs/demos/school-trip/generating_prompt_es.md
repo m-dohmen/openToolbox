@@ -11,7 +11,7 @@ Usa la plantilla **openToolbox**: https://github.com/m-dohmen/openToolbox. Lee p
 
 ## El problema que resuelve
 
-Se acerca un viaje de fin de curso. Salen 28 autorizaciones, vuelven 19, tres sin firma, una con una alergia anotada al dorso. Dos días antes de salir falta el dinero de cuatro familias. La tutora lo lleva en una hoja que no puede compartir, porque contiene alergias y si el niño sabe nadar. Casi nada de esto es un número: son estados, y la única suma que importa es lo que queda pendiente.
+Se acerca un viaje de fin de curso. Salen 28 autorizaciones, vuelven 19, tres sin firma, una con una alergia anotada al dorso. Dos días antes de salir falta el dinero de cuatro familias. La tutora lo lleva en una hoja que no puede compartir, porque contiene alergias y si el niño sabe nadar. Casi nada de esto es un número: son estados, y la única suma que importa es lo que queda pendiente. Las preguntas de cada lunes ("¿de quién falta el justificante?", “¿quién no ha pagado?”) son las mismas semana tras semana — pertenecen a la cabecera como vistas guardadas, no se reconstruyen a mano cada vez.
 
 ## Qué debe quedar al final
 
@@ -73,6 +73,16 @@ Condiciones entre campos. Deben aplicarse en un único lugar para que el formula
 - **Cuando** `Boolean(r.medical?.trim())` → **Entonces** `phone`
   **Mensaje:** „Wo Medizinisches steht, muss eine Telefonnummer daneben stehen.“
 
+**Vistas guardadas**
+
+Combinaciones con nombre de búsqueda, filtros y orden, que ofrece el desplegable de la cabecera. Lo que aquí se declara es lo que la herramienta lleva de serie; las propias vistas del destinatario viven bajo `settings.views`. Fusión: mismo nombre = gana la última edición.
+
+`name` (único), `query` (como la caja de búsqueda), `filters` (`{ campo: spec }`, donde un `spec` con solo `v` activa el filtro rápido del mismo nombre y un `spec` con `op` es un filtro de campo) y `sort` (`{ key, dir }`, `dir` vale `1` o `-1`). `entity` es opcional y queda para múltiples entidades.
+
+- propuesta: **Alle** — —; sort: `name ↑`
+- propuesta: **Zettel ausstehend** — Einverständnis = ausstehend; sort: `name ↑`
+- propuesta: **Geld offen** — Zahlung = offen; sort: `open ↓`
+
 ## Panel
 
 Fichas sobre todo el conjunto de registros, no sobre la vista filtrada.
@@ -127,6 +137,10 @@ Rückseite. Zwei Tage vor Abfahrt fehlt das Geld von vier Familien.
 
 - **Ein Bestand fast ohne Zahlen**: Zustände, Ja/Nein, ein offener Restbetrag, der sich selbst
   ausrechnet.
+- **Gespeicherte Ansichten** — drei Vorschläge im Dropdown am Listenkopf („Alle", „Zettel
+  ausstehend", „Geld offen"), die morgens und vor jeder Überweisung dieselbe Tastaturabfolge
+  ersparen. Eigene Sichten legt man in den Einstellungen an; eine davon als Start-Ansicht markiert
+  öffnet die Datei immer in genau diesem Zustand.
 - **Regeln, die dem Alltag folgen** — wo Medizinisches steht, muss eine Telefonnummer daneben
   stehen.
 - **Der Grund, warum diese Datei verschlüsselt gehört**: hier stehen Gesundheitsangaben von
