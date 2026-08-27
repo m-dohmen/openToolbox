@@ -205,6 +205,9 @@ const DEFAULT_SETTINGS = {
      Datei zweisprachig, und eine eigene Angabe gewinnt trotzdem. */
   tagline: '',
   links: DEFAULT_LINKS,
+  /* Wird beim Export einer Berichtskopie gesetzt: schaltet Save/Undo/Wizard/
+     Proposals/Import/Merge sichtbar ab. Normalerweise false. */
+  readOnly: false,
   /* 'workbench' - Liste, Dashboard, alles. 'intake' - die Datei oeffnet direkt
      im Wizard, fuer Empfaenger, die genau eine Sache melden sollen. Ohne
      WIZARD-Export im Schema hat der Schalter keine Wirkung. */
@@ -318,6 +321,7 @@ export function App() {
       initialRecordsByEntity={recordsByEntity}
       initialLog={log}
       initialSettings={storedSettings}
+      initialReport={payload?.report ?? null}
       passphrase={passphrase}
       setPassphrase={setPassphrase}
       apiKey={apiKey}
@@ -383,6 +387,7 @@ function Workbench({
   initialRecordsByEntity,
   initialLog,
   initialSettings,
+  initialReport,
   passphrase,
   setPassphrase,
   apiKey,
@@ -393,12 +398,19 @@ function Workbench({
   const [recordsByEntity, setRecordsByEntity] = useState(initialRecordsByEntity)
   const [activeKey, setActiveKey] = useState(DEFAULT_ENTITY_KEY)
   const [settings, setSettings] = useState(initialSettings)
+  /* Berichtskopien lesen den Stempel aus dem Datenblock, nicht aus den
+     Einstellungen - er beschreibt die Datei selbst, nicht ihre Konfiguration. */
+  const [report, setReport] = useState(initialReport ?? null)
+  const readOnly = Boolean(settings.readOnly)
   const [view, setView] = useState(() => {
     /* Die Startseite ist genau dann der Einstieg, wenn jemand einen Text
        hinterlegt hat - auch im Erfassungsmodus. Gerade dort ist sie wichtig:
        wer eine Datei zugeschickt bekommt, um etwas zu melden, will zuerst
        wissen, warum. Von dort geht es dann in den Wizard statt in die Liste.
-       Ein leerer Willkommensschirm waere dagegen nur ein Klick. */
+       Ein leerer Willkommensschirm waere dagegen nur ein Klick.
+       In einer Berichtskopie gibt es weder Startseite noch Wizard - die Liste
+       ist der einzige sinnvolle Einstieg. */
+    if (initialSettings.readOnly) return 'list'
     if (String(initialSettings.home ?? '').trim()) return 'home'
     if (WIZARD && initialSettings.mode === 'intake') return 'wizard'
     return 'list'
@@ -528,12 +540,15 @@ function Workbench({
     setBulkEdit(null)
   }
 
-  /** Springt zu einem referenzierten Datensatz - Klick auf einen Reference-Chip. */
+  /** Springt zu einem referenzierten Datensatz - Klick auf einen Reference-Chip.
+      In einer Berichtskopie wechseln wir nur die Entitaet; das Formular waere
+      Schreiboberflaeche und bleibt deshalb zu. */
   const navigateReference = (targetKey, id) => {
+    switchEntity(targetKey)
+    if (readOnly) return
     const targetRecords = recordsByEntity[targetKey] ?? []
     const targetSchema = ENTITIES[targetKey].schema
     const found = targetRecords.find((r) => r[targetSchema.idField] === id)
-    switchEntity(targetKey)
     if (found) setDraft({ ...found })
   }
 
@@ -587,6 +602,14 @@ function Workbench({
     }
   }, [])
 
+  /* Berichtskopien haben keine Schreibpfade - falls jemand die Einstellungs-
+     Seite direkt ansteuert (Tastatur, alter Bookmark), brechen wir auf die
+     Liste zurueck, statt dort etwas zum Klicken anzubieten. */
+  useEffect(() => {
+    if (!readOnly) return
+    if (view === 'settings' || view === 'wizard' || view === 'home') setView('list')
+  }, [readOnly, view])
+
   /* Gewählte Farben als Variablen am Wurzelelement — von dort erbt alles,
      auch der Dunkelmodus, weil der nur die Rollen neu zuordnet. */
   useEffect(() => {
@@ -608,6 +631,7 @@ function Workbench({
    * Ausgeschaltet geht es direkt durch, wie vorher.
    */
   function requestSave() {
+    if (readOnly) return
     if (!settings.auditLog) return save()
     setSaveDialog({ version: settings.version ?? '', note: '' })
   }
@@ -672,13 +696,15 @@ function Workbench({
     const onKey = (e) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === 's') {
         e.preventDefault()
-        if (dirty) requestSave()
+        /* In einer Berichtskopie bleiben Tastenkuerzel ohne Schreibpfad. Wer
+           Strg+S drueckt, kann hoechstens stutzen - das ist der Punkt. */
+        if (dirty && !readOnly) requestSave()
       }
       if (e.key === 'Escape') {
         setDraft(null)
         setShowKey(false)
       }
-      if ((e.metaKey || e.ctrlKey) && !isEditableTarget(e.target)) {
+      if ((e.metaKey || e.ctrlKey) && !isEditableTarget(e.target) && !readOnly) {
         const key = e.key.toLowerCase()
         if (key === 'z' && !e.shiftKey) {
           e.preventDefault()
@@ -1003,6 +1029,52 @@ function Workbench({
     )
 
   /**
+   * Eine eigenstaendige HTML-Datei schreiben, die jede Ansicht ohne
+   * Schreibpfade zeigt. Setzt readOnly/ai.mode/AI konsequent auf false, packt
+   * den Stempel oben in den Datenblock und traegt sich selbst in das Protokoll
+   der Quelldatei ein - ohne diesen Eintrag waere spaeter nicht mehr
+   nachvollziehbar, wann welche Berichtskopie entstanden ist.
+   */
+  const exportReport = () => {
+    if (readOnly) return
+    const stamp = new Date().toISOString()
+    const recordsForSave = SINGLE ? recordsByEntity[DEFAULT_ENTITY_KEY] : recordsByEntity
+    /* Schreibflags ruecksetzen - die Kopie darf weder Einstellungen noch Daten
+       uebernehmen, die der Empfaenger noch beeinflussen koennte. */
+    const reportSettings = {
+      ...settings,
+      readOnly: true,
+      auditLog: false,
+      mode: 'workbench',
+      examplePrompts: false,
+      ai: { ...settings.ai, enabled: false },
+    }
+    const reportPayload = {
+      v: 1,
+      savedAt: stamp,
+      settings: reportSettings,
+      report: { at: stamp, version: settings.version ?? '' },
+      enc: false,
+      data: { records: recordsForSave, log },
+    }
+    const html = buildDocument(reportPayload)
+    const name = `${stem}-report-${today()}.html`
+    download(html, name, 'text/html')
+    /* Eintrag in das Protokoll der QUELLDATEI - ohne Speichern ist es erst
+       ein Vorsatz, mit dem naechsten save() wird er Teil der Datei. */
+    setLog((l) => [
+      ...l,
+      {
+        at: stamp,
+        version: settings.version ?? '',
+        note: tr('report.exported'),
+      },
+    ])
+    setDirty(true)
+    notify(tr('toast.reportExported', name))
+  }
+
+  /**
    * Eine Konfigurationsdatei kommt von außen und bringt zwei Dinge mit, die
    * unmittelbar in den DOM geschrieben werden: das Logo und die Symbole der
    * Verweise. Beide laufen hier durch denselben Reiniger wie beim Hochladen —
@@ -1242,6 +1314,9 @@ function Workbench({
 
   return (
     <div class="shell">
+      {readOnly && report && (
+        <ReportBanner report={report} locale={settings.locale} tr={tr} />
+      )}
       <FileBar
         attachments={
           ATTACHMENTS
@@ -1266,6 +1341,7 @@ function Workbench({
         canRedo={redoStack.length > 0}
         onUndo={undo}
         onRedo={redo}
+        readOnly={readOnly}
         locale={settings.locale}
         tr={tr}
       />
@@ -1283,19 +1359,23 @@ function Workbench({
           {settings.subtitle && <p>{settings.subtitle}</p>}
         </div>
         <div class="head__actions">
-          <button
-            class="iconbtn"
-            title={tr('app.settings')}
-            aria-label={tr('app.settings')}
-            aria-pressed={String(view === 'settings')}
-            onClick={() => setView(view === 'settings' ? 'list' : 'settings')}
-          >
-            <IconSettings />
-          </button>
+          {/* Berichtskopien sind schreibgeschuetzt - kein Einstellungs-Icon,
+              kein neuer Datensatz. Der Stempel oben macht den Zustand sichtbar. */}
+          {!readOnly && (
+            <button
+              class="iconbtn"
+              title={tr('app.settings')}
+              aria-label={tr('app.settings')}
+              aria-pressed={String(view === 'settings')}
+              onClick={() => setView(view === 'settings' ? 'list' : 'settings')}
+            >
+              <IconSettings />
+            </button>
+          )}
           {/* Im Erfassungsmodus ist der Wizard der Einstieg - ein zweiter,
               der an ihm vorbei ins Formular fuehrt, waere genau die Verwirrung,
               die der Modus vermeiden soll. */}
-          {!intake && (
+          {!intake && !readOnly && (
             <button class="btn btn--primary" onClick={() => { setView('list'); setDraft(entity.emptyRecord()) }}>
               {tr('app.new', schema.singular)}
             </button>
@@ -1382,7 +1462,7 @@ function Workbench({
             ))}
           {(SHOW_DASHBOARD_VIEW || settings.auditLog || WIZARD || homeText) && (
             <div class="entity-tabs__views">
-              {homeText && (
+              {homeText && !readOnly && (
                 <button
                   role="tab"
                   aria-selected={String(view === 'home')}
@@ -1407,7 +1487,7 @@ function Workbench({
                   {tr('view.dashboard')}
                 </button>
               )}
-              {WIZARD && (
+              {WIZARD && !readOnly && (
                 <button
                   role="tab"
                   aria-selected={String(view === 'wizard')}
@@ -1416,7 +1496,7 @@ function Workbench({
                   {tr('view.wizard')}
                 </button>
               )}
-              {settings.auditLog && (
+              {settings.auditLog && !readOnly && (
                 <button
                   role="tab"
                   aria-selected={String(view === 'log')}
@@ -1554,9 +1634,14 @@ function Workbench({
             <div class="linklist">
               <button onClick={exportCsv}>{tr('sidebar.csv')}</button>
               <button onClick={exportJson}>{tr('sidebar.exportJson')}</button>
-              <button onClick={importJson}>{tr('sidebar.importJson')}</button>
-              <button onClick={importCsv}>{tr('sidebar.importCsv')}</button>
-              <button onClick={mergeFile}>{tr('sidebar.merge')}</button>
+              {!readOnly && (
+                <>
+                  <button onClick={importJson}>{tr('sidebar.importJson')}</button>
+                  <button onClick={importCsv}>{tr('sidebar.importCsv')}</button>
+                  <button onClick={mergeFile}>{tr('sidebar.merge')}</button>
+                </>
+              )}
+              <button onClick={exportReport}>{tr('sidebar.reportExport')}</button>
             </div>
           </section>
         </aside>
@@ -1592,8 +1677,10 @@ function Workbench({
           </div>
 
           {/* Aktionsleiste der Mehrfachauswahl - nur solange etwas gewählt ist.
-              Der Wert-Setzen-Zweig erscheint nur bei Entitäten mit Aufzählfeld. */}
-          {selectedVisible.length > 0 && (
+              Der Wert-Setzen-Zweig erscheint nur bei Entitäten mit Aufzählfeld.
+              Berichtskopien kennen keine Mehrfachauswahl: wer nichts auswaehlen
+              kann, kann auch nichts sammtlich loeschen. */}
+          {!readOnly && selectedVisible.length > 0 && (
             <div class="bulk-bar" role="toolbar" aria-label={tr('bulk.selected', selectedVisible.length)}>
               <span class="bulk-bar__count">{tr('bulk.selected', selectedVisible.length)}</span>
               {enumFields.length > 0 && (
@@ -1652,9 +1739,11 @@ function Workbench({
             <div class="empty">
               <h2>{records.length ? tr('empty.noMatches') : tr('empty.nothingYet')}</h2>
               <p>{records.length ? tr('empty.noMatchesHint') : tr('empty.nothingYetHint')}</p>
-              <button class="btn btn--primary" onClick={() => setDraft(entity.emptyRecord())}>
-                {tr('app.new', schema.singular)}
-              </button>
+              {!readOnly && (
+                <button class="btn btn--primary" onClick={() => setDraft(entity.emptyRecord())}>
+                  {tr('app.new', schema.singular)}
+                </button>
+              )}
             </div>
           ) : (
             <div class="table-wrap">
@@ -1671,6 +1760,7 @@ function Workbench({
                         ref={(el) => el && (el.indeterminate = selectedVisible.length > 0 && !allVisibleSelected)}
                         onClick={(e) => e.stopPropagation()}
                         onChange={toggleAllVisible}
+                        disabled={readOnly}
                       />
                     </th>
                     <Th sort={sort} k={schema.idField} onSort={sortBy}>{tr('app.id')}</Th>
@@ -1686,7 +1776,7 @@ function Workbench({
                       </Th>
                     ))}
                     <th class="cell-action" scope="col">
-                      <span class="visually-hidden">{tr('drawer.duplicate')}</span>
+                      {!readOnly && <span class="visually-hidden">{tr('drawer.duplicate')}</span>}
                     </th>
                   </tr>
                 </thead>
@@ -1696,9 +1786,9 @@ function Workbench({
                       key={r[schema.idField]}
                       data-selected={draft?.[schema.idField] === r[schema.idField]}
                       data-checked={String(isRowSelected(r[schema.idField]))}
-                      onClick={() => setDraft({ ...r })}
-                      tabIndex={0}
-                      onKeyDown={(e) => e.key === 'Enter' && e.target.tagName !== 'INPUT' && setDraft({ ...r })}
+                      onClick={readOnly ? undefined : () => setDraft({ ...r })}
+                      tabIndex={readOnly ? -1 : 0}
+                      onKeyDown={readOnly ? undefined : (e) => e.key === 'Enter' && e.target.tagName !== 'INPUT' && setDraft({ ...r })}
                     >
                       {/* stopPropagation hält den Zeilenklick vom Drawer fern;
                           shiftKey gibt es nur am Klick, nicht am change-Event.
@@ -1709,6 +1799,7 @@ function Workbench({
                           type="checkbox"
                           aria-label={tr('bulk.selectRow', r[schema.titleField])}
                           checked={isRowSelected(r[schema.idField])}
+                          disabled={readOnly}
                           onClick={(e) => {
                             e.stopPropagation()
                             toggleRow(r[schema.idField], i, e.shiftKey)
@@ -1730,19 +1821,23 @@ function Workbench({
                         />
                       ))}
                       <td class="cell-action">
-                        {/* stopPropagation: der Klick gehoert der Aktion, nicht
-                            dem Zeilenwechsel ins Formular des Originals. */}
-                        <button
-                          class="iconbtn row-duplicate"
-                          title={`${tr('drawer.duplicate')}: ${r[schema.titleField]}`}
-                          aria-label={`${tr('drawer.duplicate')}: ${r[schema.titleField]}`}
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            duplicate(r[schema.idField])
-                          }}
-                        >
-                          <IconCopy />
-                        </button>
+                        {!readOnly && (
+                          <>
+                            {/* stopPropagation: der Klick gehoert der Aktion, nicht
+                                dem Zeilenwechsel ins Formular des Originals. */}
+                            <button
+                              class="iconbtn row-duplicate"
+                              title={`${tr('drawer.duplicate')}: ${r[schema.titleField]}`}
+                              aria-label={`${tr('drawer.duplicate')}: ${r[schema.titleField]}`}
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                duplicate(r[schema.idField])
+                              }}
+                            >
+                              <IconCopy />
+                            </button>
+                          </>
+                        )}
                       </td>
                     </tr>
                   ))}
@@ -1756,7 +1851,7 @@ function Workbench({
       </>
       )}
 
-      {settings.ai.enabled && (
+      {settings.ai.enabled && !readOnly && (
         <ChatDock
           config={settings.ai}
           apiKey={apiKey}
@@ -2098,6 +2193,28 @@ const AGE_KEYS = {
   years: 'filebar.ageYears',
 }
 
+/* Stempel oben auf einer Berichtskopie - Label, Version aus den Einstellungen,
+   Exportdatum aus dem Datenblock. Wer eine Berichtskopie sieht, soll
+   erkennen, dass sie kein Original ist, bevor er ueberhaupt liest. */
+function ReportBanner({ report, locale, tr }) {
+  const dateLocale = locale === 'de' ? 'de-DE' : 'en-US'
+  const stamp = report?.at
+    ? new Date(report.at).toLocaleString(dateLocale, { dateStyle: 'medium', timeStyle: 'short' })
+    : ''
+  return (
+    <div class="report-banner" role="note">
+      <div class="report-banner__inner">
+        <strong class="report-banner__label">{tr('report.bannerLabel')}</strong>
+        <span class="report-banner__hint">{tr('report.bannerHint')}</span>
+        <span class="report-banner__meta">
+          {tr('report.bannerVersion', report?.version ?? '')}
+          {stamp && <> · {tr('report.bannerDate', stamp)}</>}
+        </span>
+      </div>
+    </div>
+  )
+}
+
 function FileBar({
   name,
   tagline,
@@ -2115,6 +2232,7 @@ function FileBar({
   canRedo,
   onUndo,
   onRedo,
+  readOnly,
   locale,
   tr,
 }) {
@@ -2175,34 +2293,38 @@ function FileBar({
           ))}
         </span>
       )}
-      <span class="filebar__history">
-        <button
-          class="filebar__history-btn"
-          title={tr('filebar.undo')}
-          aria-label={tr('filebar.undo')}
-          disabled={!canUndo}
-          onClick={onUndo}
-        >
-          <IconUndo />
-        </button>
-        <button
-          class="filebar__history-btn"
-          title={tr('filebar.redo')}
-          aria-label={tr('filebar.redo')}
-          disabled={!canRedo}
-          onClick={onRedo}
-        >
-          <IconRedo />
-        </button>
-      </span>
-      <span class="filebar__state">
-        <span class={'dot ' + (dirty ? 'dot--dirty' : sealed ? 'dot--sealed' : '')} />
-        {dirty ? tr('filebar.unsaved') : sealed ? tr('filebar.encrypted') : tr('filebar.plain')}
-        <button class="filebar__save" data-dirty={String(dirty)} disabled={saving} onClick={onSave}>
-          <IconSave />
-          {saving ? tr('filebar.saving') : tr('common.save')}
-        </button>
-      </span>
+      {!readOnly && (
+        <span class="filebar__history">
+          <button
+            class="filebar__history-btn"
+            title={tr('filebar.undo')}
+            aria-label={tr('filebar.undo')}
+            disabled={!canUndo}
+            onClick={onUndo}
+          >
+            <IconUndo />
+          </button>
+          <button
+            class="filebar__history-btn"
+            title={tr('filebar.redo')}
+            aria-label={tr('filebar.redo')}
+            disabled={!canRedo}
+            onClick={onRedo}
+          >
+            <IconRedo />
+          </button>
+        </span>
+      )}
+      {!readOnly && (
+        <span class="filebar__state">
+          <span class={'dot ' + (dirty ? 'dot--dirty' : sealed ? 'dot--sealed' : '')} />
+          {dirty ? tr('filebar.unsaved') : sealed ? tr('filebar.encrypted') : tr('filebar.plain')}
+          <button class="filebar__save" data-dirty={String(dirty)} disabled={saving} onClick={onSave}>
+            <IconSave />
+            {saving ? tr('filebar.saving') : tr('common.save')}
+          </button>
+        </span>
+      )}
     </div>
   )
 }

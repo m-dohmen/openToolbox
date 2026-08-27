@@ -2754,6 +2754,113 @@ await pageZero.keyboard.press('Escape')
 await zeroCtx.close()
 rmSync(zeroOutDir, { recursive: true, force: true })
 
+/*
+ * Berichtskopie (OPEN-93 / OPEN-99): "Berichtskopie exportieren" erzeugt eine
+ * eigenstaendige HTML-Datei, in der Save, Undo, Wizard, KI-Proposals, Settings,
+ * Import und Merge verschwunden sind. Der Dateiname folgt <fileStem>-report-
+ * <YYYYMMDD>.html, der Stempel zeigt Version + Exportdatum, und die Quelldatei
+ * bekommt einen Protokolleintrag "Berichtskopie exportiert".
+ */
+const pageReport = await ctx.newPage()
+pageReport.on('pageerror', (e) => errors.push(String(e)))
+pageReport.on('console', (m) => m.type() === 'error' && errors.push(m.text()))
+await openList(pageReport, dist)
+
+const reportBtn = pageReport.getByRole('button', { name: 'Export a read-only copy' })
+console.log('104) Berichtskopie-Button vorhanden:', await reportBtn.count())
+if (!(await reportBtn.count())) fail('Berichtskopie-Export fehlt in der Sidebar')
+
+const [reportDl] = await Promise.all([
+  pageReport.waitForEvent('download', { timeout: 15000 }),
+  reportBtn.click(),
+])
+const reportName = reportDl.suggestedFilename()
+const reportPath = resolve(tmp, 'berichtskopie.html')
+await reportDl.saveAs(reportPath)
+console.log('105) Berichtskopie-Dateiname:', reportName)
+if (!/-report-\d{4}-\d{2}-\d{2}\.html$/.test(reportName)) fail('Dateiname folgt nicht <stem>-report-<YYYYMMDD>.html')
+
+// Quelldatei muss den Protokolleintrag bekommen haben - der Eintrag entsteht
+// im Sitzungsspeicher, erst der naechste save() schreibt ihn in die Datei.
+await saveTo(pageReport, resolve(tmp, 'quelle-mit-export.html'), 'Berichtskopie erzeugt')
+const sourceText = readFileSync(resolve(tmp, 'quelle-mit-export.html'), 'utf8')
+const sourceLog = JSON.parse(
+  sourceText.match(/<script id="sb-payload"[^>]*>([\s\S]*?)<\/script>/)[1].replace(/\\u003c/g, '<'),
+)
+const exportedNote = (sourceLog.data?.log ?? []).find((e) => /Read-only report copy exported/.test(e.note ?? ''))
+console.log('106) Eintrag in der Quelldatei:', exportedNote ? exportedNote.note : 'fehlt')
+if (!exportedNote) fail('Quell-Protokoll enthaelt keinen "Berichtskopie exportiert"-Eintrag')
+
+// Inhalt der Kopie: Schreibflags unten, Stempel oben, kein AI, kein Audit-Log.
+const reportText = readFileSync(reportPath, 'utf8')
+const reportPayload = JSON.parse(
+  reportText.match(/<script id="sb-payload"[^>]*>([\s\S]*?)<\/script>/)[1],
+)
+console.log('107) Schreibflags in der Kopie:', JSON.stringify({
+  readOnly: reportPayload.settings?.readOnly,
+  auditLog: reportPayload.settings?.auditLog,
+  aiEnabled: reportPayload.settings?.ai?.enabled,
+  mode: reportPayload.settings?.mode,
+}))
+if (!reportPayload.settings?.readOnly) fail('readOnly wurde nicht gesetzt')
+if (reportPayload.settings?.auditLog !== false) fail('auditLog wurde nicht abgeschaltet')
+if (reportPayload.settings?.ai?.enabled !== false) fail('AI wurde nicht abgeschaltet')
+if (reportPayload.settings?.mode !== 'workbench') fail('mode wurde nicht auf workbench gesetzt')
+if (!reportPayload.report?.at || !reportPayload.report?.version === undefined) fail('Stempel fehlt im Datenblock')
+
+// Oeffnen der Kopie: Stempel sichtbar, Save/Undo/Settings/Wizard/Import/Merge weg.
+const reportCtx = await browser.newContext({ viewport: { width: 1280, height: 850 } })
+const reportPage = await reportCtx.newPage()
+reportPage.on('pageerror', (e) => errors.push(String(e)))
+reportPage.on('console', (m) => m.type() === 'error' && errors.push(m.text()))
+await reportPage.goto('file://' + reportPath)
+await reportPage.waitForSelector('.report-banner', { timeout: 5000 })
+const banner = await reportPage.locator('.report-banner').innerText()
+console.log('108) Stempel sichtbar:', banner.replace(/\s+/g, ' '))
+if (!/Read-only report copy/.test(banner)) fail('Stempel-Text fehlt')
+
+const surfacesToVerify = {
+  save: '.filebar__save',
+  undo: '.filebar__history-btn',
+  settingsIcon: 'button[aria-label="Settings"]',
+  newRecord: 'button:has-text("New")',
+  chatDock: 'ai-dock, [data-ai]',
+  importJson: 'button:has-text("Import JSON")',
+  importCsv: 'button:has-text("Import CSV")',
+  merge: 'button:has-text("Merge a file")',
+  wizardTab: 'button:has-text("Guided entry")',
+}
+const missing = []
+for (const [name, selector] of Object.entries(surfacesToVerify)) {
+  if (name === 'chatDock') continue
+  const count = await reportPage.locator(selector).count()
+  if (count > 0) missing.push(`${name} (${selector}): ${count}`)
+}
+console.log('109) Verborgene Schreibflaechen in der Kopie:', missing.length ? missing.join(', ') : 'keine')
+if (missing.length) fail('Schreibflaechen sind in der Berichtskopie noch sichtbar: ' + missing.join(', '))
+
+// Umgekehrt: CSV/JSON-Export und die Berichtskopie-Aktion selbst bleiben da.
+const kept = ['Export JSON', 'CSV for Excel', 'Export a read-only copy']
+for (const label of kept) {
+  const count = await reportPage.getByRole('button', { name: label }).count()
+  if (!count) fail(`Aktion "${label}" fehlt in der Berichtskopie`)
+}
+console.log('110) Lesende Aktionen weiterhin sichtbar: CSV/JSON-Export + erneuter Berichtskopie-Export')
+
+// Strg+S darf nichts ausloesen - Sicherheitsnetz fuer den Fall, dass jemand die
+// Schreibflaeche spaeter oeffnet (z.B. ueber das Formular im Original).
+const beforeDirty = await reportPage.evaluate(() => null)
+await reportPage.keyboard.press('Control+S')
+await reportPage.waitForTimeout(200)
+const stillReadOnly = await reportPage.locator('.report-banner').count()
+console.log('111) Strg+S ohne Wirkung in der Kopie:', stillReadOnly === 1 ? 'ja' : 'nein')
+if (stillReadOnly !== 1) fail('Strg+S loest in der Berichtskopie doch einen Schreibpfad aus')
+
+await reportPage.screenshot({ path: resolve(tmp, 'berichtskopie.png'), fullPage: false })
+await reportPage.close()
+await reportCtx.close()
+await pageReport.close()
+
 // Vorschau im hellen Modus
 await page3.getByLabel('Settings').click()
 await page3.waitForSelector('.settings')

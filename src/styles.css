@@ -56,6 +56,26 @@ button, input, select, textarea { font-family: var(--font); font-size: inherit; 
 
 .shell { display: flex; flex-direction: column; height: 100%; }
 
+/* Stempel einer Berichtskopie: auffaellig, aber nicht laut - es geht um
+   Sichtbarkeit, nicht um Alarm. Eine Berichtskopie muss sich am Schriftbild
+   vom Original an unterscheiden, sobald sie sich oeffnet. */
+.report-banner {
+  background: var(--tone-accent-soft);
+  border-bottom: 1px solid var(--tone-accent);
+  color: var(--tone-accent-deep);
+  font-size: 13px;
+  padding: 8px 16px;
+}
+.report-banner__inner {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+  align-items: baseline;
+}
+.report-banner__label { font-weight: var(--tone-weight-bold); }
+.report-banner__hint { color: var(--muted); }
+.report-banner__meta { margin-left: auto; font-family: var(--mono); font-size: 12px; }
+
 /* ── Dateileiste ──────────────────────────────────────────────── */
 
 .filebar {
