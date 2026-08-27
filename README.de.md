@@ -708,6 +708,12 @@ Die Einträge liegen bei den Datensätzen, nicht bei den Einstellungen — in ei
 Datei steht das Protokoll damit **innerhalb** des Umschlags, wo Notizen wie „Budget nach
 Prüfungsfeststellung korrigiert" auch hingehören.
 
+Das ist das dateiinterne Protokoll. Die Versionsgeschichte auf Projektebene — was sich in welcher
+Version von openToolbox selbst geändert hat — steht in [`CHANGELOG.md`](CHANGELOG.md) im Repo-Root
+und in den [GitHub-Releases](https://github.com/m-dohmen/openToolbox/releases); das interne
+Protokoll beantwortet „was hat diese Datei getan", der Changelog beantwortet „was hat openToolbox
+getan".
+
 ### Wem die Copyright-Zeile gehört
 
 Der Hinweis am Fuß der Einstellungsseite ist eine Freitext-Einstellung, denn das Werkzeug, das man

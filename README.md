@@ -503,6 +503,11 @@ Entries live with the records, not with the settings — so in an encrypted file
 **inside** the envelope, where notes like "budget corrected after the audit finding" belong. Switch
 the log off in Settings and saving asks nothing.
 
+That is the per-file log. For the project-level release history — what changed in which version of
+openToolbox itself — see [`CHANGELOG.md`](CHANGELOG.md) at the repo root and the
+[GitHub releases](https://github.com/m-dohmen/openToolbox/releases); the in-app log answers "what
+did this file do", the changelog answers "what did openToolbox do".
+
 ### Who the copyright line belongs to
 
 The notice at the bottom of the settings page is a free-text setting, because the tool you build
