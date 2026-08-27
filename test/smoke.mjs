@@ -2993,7 +2993,8 @@ if (!reportPayload.settings?.readOnly) fail('readOnly wurde nicht gesetzt')
 if (reportPayload.settings?.auditLog !== false) fail('auditLog wurde nicht abgeschaltet')
 if (reportPayload.settings?.ai?.enabled !== false) fail('AI wurde nicht abgeschaltet')
 if (reportPayload.settings?.mode !== 'workbench') fail('mode wurde nicht auf workbench gesetzt')
-if (!reportPayload.report?.at || !reportPayload.report?.version === undefined) fail('Stempel fehlt im Datenblock')
+if (!reportPayload.report?.at) fail('report.at fehlt im Datenblock')
+if (reportPayload.report?.version === undefined) fail('report.version fehlt im Datenblock')
 
 // Oeffnen der Kopie: Stempel sichtbar, Save/Undo/Settings/Wizard/Import/Merge weg.
 const reportCtx = await browser.newContext({ viewport: { width: 1280, height: 850 } })
