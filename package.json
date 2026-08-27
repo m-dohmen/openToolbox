@@ -8,6 +8,7 @@
     "test": "node test/prompts-metrics.mjs && node test/actions-delete-guard.mjs && node test/timezone.mjs && node test/domain-swap-crash.mjs && node test/smoke.mjs && node test/multi-entity.mjs && node test/demos.mjs && node test/timezone-examples.mjs",
     "build:demo": "node scripts/build-demo.mjs && node scripts/demo-index.mjs && node scripts/build-prompts.mjs",
     "screenshots": "node scripts/screenshots.mjs",
+    "screenshots:report": "node scripts/screenshots-report.mjs",
     "social": "node scripts/social-preview.mjs",
     "demos:index": "node scripts/demo-index.mjs",
     "prompts": "node scripts/build-prompts.mjs",
