@@ -192,11 +192,20 @@ A field can also be **calculated** instead of stored:
 { key: 'score', label: 'Risk score', type: 'computed', compute: (r) => r.likelihood * r.impact }
 ```
 
-`compute(record)` runs on every render and the result is never written into the record — a stored
-derivation goes stale the moment one of its inputs changes, and nobody notices. It still sorts,
-searches, sums into the overview tile and lands in the CSV export like any other field; it is
-read-only in the form, and the AI is told so and rejected by name if it tries to set one. The
-shipped demo has one: *Days left*, counting down to the due date.
+`compute(record)` runs once per record per render pass and the result is memoised on the record
+for the lifetime of the page — a thousand records sorted, searched and exported still cost one
+call each, not one per pass. The result is never written into the record: a stored derivation goes
+stale the moment one of its inputs changes, and nobody notices. It still sorts, searches, sums
+into the overview tile and lands in the CSV export like any other field; it is read-only in the
+form, and the AI is told so and rejected by name if it tries to set one. The shipped demo has one:
+*Days left*, counting down to the due date.
+
+If `compute(record)` throws, the field renders as a dash and the console sees exactly one warning
+per unique combination of entity, field, record id and error message. The table does not stop; the
+same combination does not warn twice.
+
+A computed field whose `compute` returns a number stands in for a real number field in the closed
+`sum(field)` / `avg(field)` metric catalog, exactly the way `totalField` already accepts one.
 
 And conditions **between** fields go in `rules`:
 
