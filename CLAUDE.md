@@ -494,6 +494,34 @@ tell the user:
 Nothing is written to disk by merging — it changes the working set, and the file still has to be
 saved afterwards.
 
+## Handing out a read-only copy
+
+Sharing a working file hands the recipient the keys to it. **Export a read-only copy** in the sidebar
+makes a second HTML file with every write surface stripped: no Save, no Undo, no Redo, no Wizard, no
+AI proposals, no Import, no Merge, no Settings page, no row-edit drawer. The export action lives in
+the same `sidebar.exchange` group as the CSV/JSON export — it is a hand-out, not an edit path, and
+the rest of the sidebar stays where it always was.
+
+What changes between source and copy:
+
+- The copy carries `settings.readOnly: true`. The whole UI watches the flag and renders the
+  read-only variant: settings icon and New button hidden, undo/redo gone, bulk select disabled,
+  row click no longer opens the edit drawer. Reference chips still resolve, but only by switching
+  the entity — opening the referenced record would be a write surface.
+- A header banner sits above the file bar with the export label, the version carried from
+  `settings.version` and the export timestamp. The banner is the signal: a recipient who sees it
+  knows the file cannot be saved, even before they try.
+- The filename is `<fileStem>-report-<YYYY-MM-DD>.html`. The export always uses the same date
+  helper as a normal write — keep the two consistent so a search for `report-` lands only on copies.
+- The source's change log gets an entry `"Berichtskopie exportiert"` (or `"Read-only report copy
+  exported"` in English). It is added to the in-memory log at click time and lands on disk the next
+  time the source is saved; without that entry nobody can later tell which report came from which
+  revision.
+
+The same single-file build path produces both source and copy. The export is a plain
+`buildDocument(reportPayload)` over a payload where `auditLog`, `ai.enabled` and `mode` are forced
+to a safe default — no second bundle, no separate Vite entry.
+
 ## Getting the user's real data in
 
 You do not have to write an importer, and you should not paste the user's data into `seed()`.

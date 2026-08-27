@@ -181,6 +181,7 @@ const STRINGS = {
 
     'toast.savedHandle': 'Written back to the selected file.',
     'toast.savedAs': (name) => `Saved as ${name}.`,
+    'toast.reportExported': (name) => `Report copy exported as ${name}.`,
     'toast.saveError': (msg) => `Could not save: ${msg}`,
     'toast.changesApplied': (n) =>
       n === 1 ? '1 change applied — not saved yet.' : `${n} changes applied — not saved yet.`,
@@ -423,6 +424,16 @@ const STRINGS = {
       'Encryption protects the data, not access to the application. Roles and views in a file ' +
       'that runs locally would be surface only — whoever holds the file also holds the code.',
     'sidebar.merge': 'Merge a file',
+    'sidebar.reportExport': 'Export a read-only copy',
+
+    /* Stempel einer Berichtskopie - sichtbar in der exportierten Datei und
+       gleichzeitig der Vermerk im Aenderungsprotokoll der Quelldatei. */
+    'report.bannerLabel': 'Read-only report copy',
+    'report.bannerHint':
+      'This copy cannot be edited, saved, imported or merged. Print, hand out, archive.',
+    'report.bannerVersion': (v) => (v ? `Version ${v}` : 'no version'),
+    'report.bannerDate': (stamp) => `Exported ${stamp}`,
+    'report.exported': 'Read-only report copy exported',
     'settings.merge': 'Merge another copy',
     'settings.mergeHint':
       'Read a second copy of this tool and decide record by record what to take over. For files ' +
@@ -818,6 +829,7 @@ const STRINGS = {
 
     'toast.savedHandle': 'In die gewählte Datei zurückgeschrieben.',
     'toast.savedAs': (name) => `Gespeichert als ${name}.`,
+    'toast.reportExported': (name) => `Berichtskopie exportiert als ${name}.`,
     'toast.saveError': (msg) => `Speichern fehlgeschlagen: ${msg}`,
     'toast.changesApplied': (n) =>
       n === 1 ? '1 Änderung angewandt — noch nicht gespeichert.' : `${n} Änderungen angewandt — noch nicht gespeichert.`,
@@ -1060,6 +1072,15 @@ const STRINGS = {
       'Verschlüsselung schützt die Daten, nicht den Zugriff auf die Anwendung. Rollen und Ansichten ' +
       'in einer lokal laufenden Datei wären nur Oberfläche — wer die Datei hat, hat auch den Code.',
     'sidebar.merge': 'Datei abgleichen',
+    'sidebar.reportExport': 'Berichtskopie exportieren',
+
+    /* Stempel der Berichtskopie. */
+    'report.bannerLabel': 'Berichtskopie — schreibgeschützt',
+    'report.bannerHint':
+      'Diese Datei lässt sich nicht ändern, speichern, importieren oder abgleichen. Drucken, weitergeben, archivieren.',
+    'report.bannerVersion': (v) => (v ? `Version ${v}` : 'ohne Version'),
+    'report.bannerDate': (stamp) => `Exportiert am ${stamp}`,
+    'report.exported': 'Berichtskopie exportiert',
     'settings.merge': 'Zweite Kopie abgleichen',
     'settings.mergeHint':
       'Eine zweite Kopie dieses Werkzeugs einlesen und Datensatz für Datensatz entscheiden, was ' +
