@@ -11,6 +11,68 @@ Release notes for each version live on GitHub:
 
 Nothing yet.
 
+## [0.16.0] — 2026-08-27
+
+### Added
+
+- Sidebar action "Export a read-only copy" in the same exchange group as the
+  CSV and JSON export; click downloads an HTML file named
+  `<fileStem>-report-<YYYY-MM-DD>.html` with the export date baked into the
+  name ([#59](https://github.com/m-dohmen/openToolbox/pull/59)).
+- Header banner above the file bar on the exported copy: label, version from
+  `settings.version` and the export timestamp, so a recipient sees the
+  read-only signal before the table even loads ([#59](https://github.com/m-dohmen/openToolbox/pull/59)).
+- `settings.readOnly: true` on the exported payload flips the whole UI into a
+  hand-out variant: Save, Undo, Redo, the Wizard, AI dock, JSON/CSV import,
+  Merge, bulk-select and the row-edit drawer are all hidden; the sidebar
+  export action, the CSV/JSON export and reference-chip navigation stay
+  reachable ([#59](https://github.com/m-dohmen/openToolbox/pull/59)).
+- Source-side change-log entry "Berichtskopie exportiert" (or "Read-only
+  report copy exported" in English), added in memory at click time and
+  written to disk on the next save — without it nobody can tell later which
+  report came from which revision ([#59](https://github.com/m-dohmen/openToolbox/pull/59)).
+- Documentation section "Handing out a read-only copy" in `README.md` and
+  `README.de.md`, with feature bullet in the five short READMEs
+  ([#60](https://github.com/m-dohmen/openToolbox/pull/60)).
+- Wiki page `Handing-Out-a-Read-Only-Copy` linked from `_Sidebar.md` and
+  `Home.md`, documenting the filename scheme, the missing write surfaces
+  and the change-log entry ([#60](https://github.com/m-dohmen/openToolbox/pull/60)).
+- New screenshots `docs/screenshots/report-sidebar.png` and
+  `docs/screenshots/report-banner.png` referenced from both main READMEs,
+  so a reader sees the export entry point and the resulting banner without
+  having to reproduce the flow ([#62](https://github.com/m-dohmen/openToolbox/pull/62)).
+- Targeted `npm run screenshots:report` (script `scripts/screenshots-report.mjs`)
+  generates the two screenshots without touching the rest of the gallery
+  ([#62](https://github.com/m-dohmen/openToolbox/pull/62)).
+- New smoke steps 104–111 covering the export button, the filename pattern,
+  the change-log entry, the payload write flags, the banner text, the
+  absence of write surfaces in the copy, the survival of CSV/JSON export
+  and `Ctrl+S` being a no-op in the copy
+  ([#59](https://github.com/m-dohmen/openToolbox/pull/59)).
+- i18n keys for the export action, banner, toast and audit-log entry in
+  English and German ([#59](https://github.com/m-dohmen/openToolbox/pull/59)).
+
+### Changed
+
+- `npm test` runs the same nine suites; the `smoke` suite gained the eight
+  Berichtskopie steps 104–111 from PR #59, all green at the tag
+  ([#59](https://github.com/m-dohmen/openToolbox/pull/59)).
+
+### Not included (consciously)
+
+- The export flow copies the current file as-is; there is no redact-before-share
+  option. The read-only flag is the bound, and the recipient can still see
+  every field their file already contained.
+- No second Vite entry for the copy. Both source and export go through the
+  same `buildDocument(reportPayload)` call, so CI cannot drift the two apart.
+- No write-then-strip pipeline. `settings.readOnly: true` is on the copy
+  before any layout is rendered; exporting does not piggy-back on save.
+
+[0.16.0]: https://github.com/m-dohmen/openToolbox/releases/tag/v0.16.0
+[#59]: https://github.com/m-dohmen/openToolbox/pull/59
+[#60]: https://github.com/m-dohmen/openToolbox/pull/60
+[#62]: https://github.com/m-dohmen/openToolbox/pull/62
+
 ## [0.15.0] — 2026-08-27
 
 ### Added
