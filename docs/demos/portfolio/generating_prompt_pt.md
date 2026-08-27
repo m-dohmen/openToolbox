@@ -71,6 +71,7 @@ Declaradas nesta entidade a partir de um catálogo fechado: contagem, soma e mé
 - **Running projects** — a quantidade de registros (apenas registros que atendem a um filtro): `r.phase !== 'Closed'` · „not yet closed“
 - **Spent so far** — a soma de `spent` (Spent in kEUR) · „kEUR, all projects“
 - **Average budget** — a média de `budget` (Budget in kEUR) · „kEUR per project“
+- **Budget left** — a soma de `variance` (Budget left) · „kEUR remaining, computed“
 
 ---
 

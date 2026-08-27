@@ -71,6 +71,7 @@ An dieser Entität aus einem geschlossenen Katalog deklariert — count, Summe u
 - **Running projects** — die Anzahl der Datensätze (nur Datensätze, die einem Filter entsprechen): `r.phase !== 'Closed'` · „not yet closed“
 - **Spent so far** — die Summe von `spent` (Spent in kEUR) · „kEUR, all projects“
 - **Average budget** — der Mittelwert von `budget` (Budget in kEUR) · „kEUR per project“
+- **Budget left** — die Summe von `variance` (Budget left) · „kEUR remaining, computed“
 
 ---
 
