@@ -105,14 +105,8 @@ const STRINGS = {
 
     'entities.tabsLabel': 'Entities',
     'view.list': 'List',
-    'view.board': 'Board',
     'view.dashboard': 'Dashboard',
     'view.log': 'Change log',
-
-    'board.region': 'Board view',
-    'board.columnLabel': (value, count) => `${value}, ${count} ${count === 1 ? 'card' : 'cards'}`,
-    'board.limitHint': (limit, shown) =>
-      `Showing the first ${limit} of ${shown}. Switch to the table for the full list.`,
 
     'dashboard.dueDate.title': 'Due dates',
     'dashboard.dueDate.overdue': 'Overdue',
@@ -774,14 +768,8 @@ const STRINGS = {
 
     'entities.tabsLabel': 'Entitäten',
     'view.list': 'Liste',
-    'view.board': 'Kanban',
     'view.dashboard': 'Dashboard',
     'view.log': 'Änderungsprotokoll',
-
-    'board.region': 'Kanban-Ansicht',
-    'board.columnLabel': (value, count) => `${value}, ${count} ${count === 1 ? 'Karte' : 'Karten'}`,
-    'board.limitHint': (limit, shown) =>
-      `Die ersten ${limit} von ${shown} werden angezeigt. Für die volle Liste auf die Tabelle wechseln.`,
 
     'dashboard.dueDate.title': 'Fälligkeiten',
     'dashboard.dueDate.overdue': 'Überfällig',

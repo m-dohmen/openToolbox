@@ -587,31 +587,6 @@ und blendet Liste, Entitätsreiter und den „Neu"-Knopf aus. Dieselbe Datei wir
 Erfassungsbogen: Empfänger füllt aus, speichert, schickt zurück. `mode: 'intake'` in
 `DEFAULT_SETTINGS` liefert sie gleich so aus.
 
-## Kanban-Ansicht
-
-Eine `view.board`-Deklaration im Schema schaltet den Reiter neben „Liste" und „Dashboard" frei.
-Ohne sie gibt es die Ansicht nicht — dieselbe Haltung wie `DASHBOARD` und `WIZARD`. Karten wandern
-per Maus, Touch oder Tastatur zwischen den Spalten; jede Bewegung läuft durch denselben Pfad wie
-eine Formular-Änderung und landet deshalb im Änderungsprotokoll und im Undo/Redo-Stapel.
-
-```js
-export const SCHEMA = {
-  // …
-  view: {
-    board: {
-      columnField: 'status',                   // enum-Feld, das die Spalten bildet
-      cardFields: ['owner', 'due', 'effort'],  // optional: bis zu drei Felder je Karte
-      limit: 50,                                // optional: Obergrenze je Spalte (Standard 50)
-    },
-  },
-}
-```
-
-`columnField` muss auf ein enum-Feld zeigen; die Spaltenreihenfolge folgt der `values`-Liste im
-Schema. Datensätze mit leerem oder ungültigem Wert landen in einer kleinen Reserve rechts —
-eine Karte, die zu keiner Spalte gehört, wäre sonst unsichtbar. Berichtskopien (`settings.readOnly:
-true`) zeigen das Brett weiterhin, schalten Drag&Drop aber ab.
-
 ## Dashboard
 
 Optional, in `src/domain.js` als `DASHBOARD`-Export deklariert. Ohne ihn gibt es die Ansicht nicht.

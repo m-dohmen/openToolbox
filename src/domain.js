@@ -26,30 +26,6 @@ export const SCHEMA = {
   /** Number field summed up in the overview, null to hide the tile. */
   totalField: 'effort',
   /**
-   * Optionale Kanban-Ansicht. Eine `view.board`-Deklaration schaltet den Reiter
-   * neben "Liste" und "Dashboard" frei, sobald sie auf ein Aufzaehlfeld zeigt:
-   *
-   *   columnField   enum-Feld, das die Spalten bestimmt - Reihenfolge folgt
-   *                 der enum-Deklaration, nicht der Datenblock-Reihenfolge.
-   *   cardFields    Optional, bis zu drei Felder, die auf jeder Karte landen
-   *                 (zusaetzlich zum Titel). Ohne Angabe nimmt der Renderer die
-   *                 ersten drei lesbaren Schema-Felder abseits von Titel und
-   *                 Spalte.
-   *   limit         Obergrenze je Spalte (Standard 50). Wer mehr hat, sieht
-   *                 einen Hinweis-Banner und die ersten N Karten - wer alle
-   *                 sehen will, nutzt die Tabelle.
-   *
-   * Ohne diese Erklaerung gibt es die Ansicht nicht, genau wie beim Dashboard
-   * und beim Wizard: das Schema entscheidet, nicht eine Einstellung.
-   */
-  view: {
-    board: {
-      columnField: 'status',
-      cardFields: ['owner', 'due', 'effort'],
-      limit: 50,
-    },
-  },
-  /**
    * Gespeicherte Ansichten. Jede Sicht bündelt Suchbegriff, Feldfilter und
    * Sortierung zu einem benannten Satz, den das Dropdown am Listenkopf und
    * der Eintrag in den Einstellungen anbieten. Werte, die hier stehen, sind
