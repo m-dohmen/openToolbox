@@ -216,6 +216,12 @@ pedida numa caixa de diálogo curta na hora de salvar. As entradas ficam junto c
 junto com as configurações — assim, num arquivo criptografado, o registro fica **dentro** do
 envelope, que é onde uma nota como «orçamento corrigido após o apontamento da auditoria» deve estar.
 
+Este é o registo interno do arquivo. Para o histórico de versões ao nível do projeto — o que mudou
+em que versão do openToolbox propriamente dito — veja [`CHANGELOG.md`](CHANGELOG.md) na raiz do
+repositório e as [versões no GitHub](https://github.com/m-dohmen/openToolbox/releases); o registo
+dentro da aplicação responde a «o que este arquivo fez», o changelog responde a «o que o openToolbox
+fez».
+
 ## Prompts de exemplo
 
 O arquivo construído explica como modificá-lo. Nos pontos que normalmente se quer ajustar — o

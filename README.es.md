@@ -218,6 +218,12 @@ se pide en un diálogo breve al guardar. Las entradas viven junto a los registro
 ajustes, así que en un archivo cifrado el registro queda **dentro** del sobre cifrado, que es donde
 corresponde a una nota como «presupuesto corregido tras el hallazgo de auditoría».
 
+Este es el registro dentro del archivo. Para el historial de versiones a nivel de proyecto —qué
+cambió en qué versión de openToolbox mismo— véase [`CHANGELOG.md`](CHANGELOG.md) en la raíz del
+repositorio y las [publicaciones de GitHub](https://github.com/m-dohmen/openToolbox/releases); el
+registro dentro de la aplicación responde a «qué hizo este archivo», el changelog responde a «qué
+hizo openToolbox».
+
 ## Prompts de ejemplo
 
 El archivo construido explica cómo modificarse. En los puntos que normalmente se querrían ajustar

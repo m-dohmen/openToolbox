@@ -230,6 +230,12 @@ une courte boîte de dialogue au moment d'enregistrer. Les entrées sont rangée
 non avec les réglages : dans un fichier chiffré, le journal se trouve donc **à l'intérieur** de
 l'enveloppe, là où doit figurer une note comme « budget corrigé après le constat d'audit ».
 
+Voilà pour le journal interne au fichier. Pour l'historique des versions au niveau du projet — ce
+qui a changé dans quelle version d'openToolbox lui-même — voir [`CHANGELOG.md`](CHANGELOG.md) à la
+racine du dépôt et les [versions GitHub](https://github.com/m-dohmen/openToolbox/releases) ; le
+journal dans l'application répond à « qu'a fait ce fichier », le changelog répond à « qu'a fait
+openToolbox ».
+
 ## Exemples de prompts
 
 Le fichier construit explique comment le modifier. Aux endroits que l'on souhaite généralement
