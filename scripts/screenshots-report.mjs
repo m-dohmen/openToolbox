@@ -13,7 +13,7 @@
  *
  * - `docs/screenshots/report-sidebar.png` - die Quell-Datei mit Sidebar und
  *   sichtbarem Berichtskopie-Button in der Exchange-Gruppe.
- * - `docs/screenshots/report-copy.png` - die exportierte Berichtskopie mit
+ * - `docs/screenshots/report-banner.png` - die exportierte Berichtskopie mit
  *   Banner (Label / Version / Exportdatum) ueber der Dateileiste.
  */
 import { chromium } from 'playwright'
@@ -84,7 +84,7 @@ await page.waitForSelector('table tbody tr, .report-banner')
 await page.waitForTimeout(250)
 
 await page.screenshot({
-  path: resolve(out, 'report-copy.png'),
+  path: resolve(out, 'report-banner.png'),
 })
 
 /* Die heruntergeladene Datei aus dem Build-Artefakt-Pfad nach
@@ -93,4 +93,4 @@ await page.screenshot({
 copyFileSync(reportPath, resolve(tmpDir, 'shot-report.html'))
 
 await browser.close()
-console.log('Report screenshots written to docs/screenshots/report-sidebar.png and report-copy.png')
+console.log('Report screenshots written to docs/screenshots/report-sidebar.png and report-banner.png')
