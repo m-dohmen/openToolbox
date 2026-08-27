@@ -104,11 +104,19 @@ user has to keep up to date by hand:
 { key: 'score', label: 'Risk score', type: 'computed', compute: (r) => r.likelihood * r.impact }
 ```
 
-`compute(record)` runs on every render. The value is **never written into the record** — a stored
+`compute(record)` runs once per record per render pass and the result is memoised on the record
+object for the lifetime of the page. The value is **never written into the record** — a stored
 derivation goes stale the moment one of its inputs changes and nobody notices. It behaves like any
 other field in the table, in sorting, in search, in `totalField` and in the CSV export; it shows
 read-only in the form; and both the user and the AI are prevented from setting it (the AI is told
-it is read-only and a write is rejected by name).
+it is read-only and a write is rejected by name). Same posture in the metric catalog: a computed
+field whose `compute` returns a number stands in for a real number field in `sum(field)` and
+`avg(field)`.
+
+If `compute(record)` throws, the field renders as a dash and the console sees **one** warning per
+the unique combination of entity, field, record id and error message — the table does not stop, but
+neither does the error drown the developer in identical stack traces. The next render pass will try
+again.
 
 Use it for scores (`likelihood × impact`), remaining time, percentages, budget variance — anything
 a consultant would otherwise recompute in a spreadsheet and paste back in wrong.

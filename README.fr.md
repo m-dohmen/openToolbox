@@ -146,11 +146,23 @@ Un champ peut aussi être **calculé** plutôt que stocké :
 { key: 'score', label: 'Score de risque', type: 'computed', compute: (r) => r.likelihood * r.impact }
 ```
 
-`compute(record)` s'exécute à chaque rendu et le résultat **n'est jamais écrit dans
-l'enregistrement**. C'est tout l'intérêt : une valeur dérivée que l'on stocke devient fausse dès
-qu'une de ses entrées change, et personne ne s'en aperçoit. On peut malgré tout trier et chercher
-dessus, elle s'additionne dans la synthèse et figure dans l'export CSV ; dans le formulaire elle est
-en lecture seule, et l'IA en est informée et se voit refuser nommément toute tentative d'écriture.
+`compute(record)` s'exécute une fois par enregistrement à chaque passe de rendu, et le résultat
+est mémorisé sur l'enregistrement pour la durée de vie de la page — mille enregistrements triés,
+filtrés et exportés ne coûtent toujours qu'un appel par enregistrement et par champ, pas une vague
+par passe. Le résultat **n'est jamais écrit dans l'enregistrement**. C'est tout l'intérêt : une
+valeur dérivée que l'on stocke devient fausse dès qu'une de ses entrées change, et personne ne s'en
+aperçoit. On peut malgré tout trier et chercher dessus, elle s'additionne dans la synthèse et
+figure dans l'export CSV ; dans le formulaire elle est en lecture seule, et l'IA en est informée
+et se voit refuser nommément toute tentative d'écriture.
+
+Si `compute(record)` lève une exception, le champ s'affiche sous forme de tiret et la console
+émet **exactement un** avertissement par combinaison unique d'entité, de champ, d'identifiant
+d'enregistrement et de message d'erreur. Le tableau ne s'arrête pas ; la même combinaison ne
+réclame pas deux fois.
+
+Un champ calculé dont `compute` renvoie un nombre tient lieu de champ numérique réel dans le
+catalogue fermé de métriques `sum(field)` / `avg(field)`, exactement comme `totalField` l'accepte
+déjà.
 
 Ce seul schéma engendre les colonnes du tableau, le formulaire d'édition, les filtres latéraux,
 l'export CSV, les instructions envoyées au modèle d'IA et la validation de tout ce qu'il propose en

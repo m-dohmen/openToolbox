@@ -138,11 +138,21 @@ Um campo também pode ser **calculado** em vez de armazenado:
 { key: 'score', label: 'Pontuação de risco', type: 'computed', compute: (r) => r.likelihood * r.impact }
 ```
 
-`compute(record)` roda a cada renderização e o resultado **nunca é gravado no registro**. É
-justamente esse o ponto: um valor derivado que se armazena fica errado no instante em que uma de
-suas entradas muda, e ninguém percebe. Ainda assim dá para ordenar e pesquisar por ele, ele soma no
-resumo e aparece na exportação CSV; no formulário é somente leitura, e a IA é avisada disso e
-recusada nominalmente se tentar gravá-lo.
+`compute(record)` roda uma vez por registro a cada passada de renderização e o resultado fica
+memorizado no registro enquanto a página existir — mil registros ordenados, pesquisados e
+exportados continuam custando uma chamada por registro, não uma onda por passada. O resultado
+**nunca é gravado no registro**. É justamente esse o ponto: um valor derivado que se armazena fica
+errado no instante em que uma de suas entradas muda, e ninguém percebe. Ainda assim dá para
+ordenar e pesquisar por ele, ele soma no resumo e aparece na exportação CSV; no formulário é
+somente leitura, e a IA é avisada disso e recusada nominalmente se tentar gravá-lo.
+
+Se `compute(record)` lança, o campo aparece como um traço e o console exibe **exatamente um**
+aviso por combinação única de entidade, campo, id do registro e mensagem de erro. A tabela não
+para; a mesma combinação não avisa duas vezes.
+
+Um campo calculado cujo `compute` devolve um número toma o lugar de um campo numérico real no
+catálogo fechado de métricas `sum(field)` / `avg(field)`, do mesmo jeito que `totalField` já
+aceita.
 
 Só esse esquema já gera as colunas da tabela, o formulário de edição, os filtros laterais, a
 exportação CSV, as instruções enviadas ao modelo de IA e a validação de qualquer coisa que o modelo

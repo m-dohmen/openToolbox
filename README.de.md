@@ -203,11 +203,21 @@ Ein Feld kann auch **berechnet** statt gespeichert sein:
 { key: 'score', label: 'Risikowert', type: 'computed', compute: (r) => r.likelihood * r.impact }
 ```
 
-`compute(record)` läuft bei jeder Anzeige, das Ergebnis wird nie in den Datensatz geschrieben — eine
-gespeicherte Ableitung ist in dem Moment falsch, in dem sich eine ihrer Quellen ändert, und niemand
-merkt es. Sortieren, Suchen, Summieren in der Übersicht und der CSV-Export funktionieren trotzdem
-darauf; im Formular ist es schreibgeschützt, und die KI wird darauf hingewiesen und beim Versuch,
-es zu setzen, namentlich abgewiesen.
+`compute(record)` läuft einmal pro Datensatz und Anzeigevorgang, das Ergebnis wird für die
+Lebensdauer der Seite auf dem Datensatz memoisert — bei tausend Datensätzen mit Sortieren, Suchen
+und Export bleibt es bei einem Aufruf je Datensatz und Feld, nicht einer Welle pro Vorgang. Das
+Ergebnis wird nie in den Datensatz geschrieben — eine gespeicherte Ableitung ist in dem Moment
+falsch, in dem sich eine ihrer Quellen ändert, und niemand merkt es. Sortieren, Suchen, Summieren
+in der Übersicht und der CSV-Export funktionieren trotzdem darauf; im Formular ist es
+schreibgeschützt, und die KI wird darauf hingewiesen und beim Versuch, es zu setzen, namentlich
+abgewiesen.
+
+Wirft `compute(record)`, rendert das Feld als Strich und die Konsole sieht genau eine Warnung pro
+eindeutiger Kombination aus Entität, Feldname, Datensatz-Id und Fehlertext. Die Tabelle bleibt
+stehen; dieselbe Kombination meldet sich nicht zweimal.
+
+Ein berechnetes Feld, dessen `compute` eine Zahl liefert, ersetzt im geschlossenen `sum(field)` /
+`avg(field)`-Kennzahl-Katalog ein echtes Zahlenfeld — genauso wie `totalField` das schon akzeptiert.
 
 Bedingungen **zwischen** Feldern stehen in `rules`:
 
