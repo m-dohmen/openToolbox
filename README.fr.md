@@ -83,6 +83,15 @@ s'impriment en un PDF propre.
   pour ceux qui n'ont qu'une chose à signaler.
 - **Fusionner une copie renvoyée**, enregistrement par enregistrement, avec un comparatif champ par
   champ.
+- **Exporter une copie en lecture seule** (groupe d'échange de la barre latérale) : génère un
+  nouveau fichier HTML à partir de l'actuel, nommé `<fileStem>-report-<AAAA-MM-JJ>.html`, dont
+  toutes les surfaces d'écriture sont retirées — Enregistrer, Annuler, Rétablir, Nouveau,
+  Assistant, page Réglages, propositions d'IA, Import, Fusion, tiroir d'édition des lignes ;
+  une bannière au-dessus de la barre du fichier, portant la version et la date d'export, signale
+  que le fichier ne peut pas être enregistré ; le journal des modifications du fichier source
+  reçoit une entrée « Copie en lecture seule exportée », inscrite sur disque au prochain
+  enregistrement. La même construction en fichier unique produit les deux pièces ; il n'y a pas
+  de second point d'entrée Vite.
 - **Un journal des modifications au niveau du champ**, déduit automatiquement à chaque enregistrement : quel enregistrement, quel champ, avant et après.
 - **Des pièces jointes avec un budget de taille visible**, car un outil qu'on ne peut plus envoyer par courriel n'est plus cet outil.
 - **Une page d'accueil modifiable**, pour que le fichier s'explique avant d'afficher un tableau.

@@ -839,6 +839,36 @@ Three ways, all in the sidebar and in Settings → Data:
 - **The AI assistant**, on an explicit instruction, can create records from an attached document.
   See [The AI assistant](#the-ai-assistant).
 
+## Handing out a read-only copy
+
+A working file hands the recipient the keys to it — the same Save button, the same wizard, the same
+edit drawer. **Berichtskopie exportieren** / **Export a read-only copy** in the sidebar's exchange
+group makes a second HTML file with every write surface stripped, so what reaches the steering
+committee or the client is not the working file in disguise.
+
+![The sidebar with the export action](docs/screenshots/report-sidebar.png)
+
+![The exported copy with its read-only banner](docs/screenshots/report-banner.png)
+
+What changes between source and copy:
+
+- **The filename** is `<fileStem>-report-<YYYY-MM-DD>.html`. A quick `report-` search in the folder
+  lands only on copies, so they never get mistaken for the working file.
+- **The copy carries `settings.readOnly: true`.** Every place in the UI that would write — Save,
+  Undo, Redo, the Settings page, the Wizard, Import, Merge, the New button, bulk select, the
+  row-edit drawer — is hidden or disabled. Reference chips still resolve, but only by switching to
+  the referenced entity; opening a record there would be a write surface.
+- **A banner above the file bar** carries the export label, the version copied from
+  `settings.version`, and the export timestamp. The banner is the signal: a recipient who sees it
+  knows the file cannot be saved, before they try.
+- **The source's change log gets an entry** at click time — `"Berichtskopie exportiert"` /
+  `"Read-only report copy exported"` — which lands on disk the next time the source is saved.
+  Without that entry, nobody can later tell which report came from which revision.
+
+The same single-file build path produces both. The export is a plain `buildDocument(reportPayload)`
+over a payload where the write flags are forced to a safe default — no second bundle, no separate
+Vite entry. See [`AGENTS.md`](AGENTS.md) for the build-side details.
+
 ## Undo and redo
 
 Every create, edit and delete goes onto a history for the session — Ctrl/Cmd+Z undoes it, Ctrl/Cmd+Y

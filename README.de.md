@@ -448,6 +448,38 @@ wäre dort nicht mehr aufzulösen.
 vorschlagen. Textartige Anhänge (CSV, JSON, Markdown und ähnliche) liest er als zusätzlichen
 Kontext; übernommen wird ein Vorschlag erst nach Freigabe.
 
+## Berichtskopie exportieren
+
+Eine Arbeitsdatei gibt dem Empfänger die Schlüssel in die Hand — derselbe Speichern-Knopf,
+derselbe Wizard, dasselbe Formular. **Berichtskopie exportieren** in der Exchange-Gruppe der
+Seitenleiste schreibt eine zweite HTML-Datei, in der jede Schreibfläche entfernt ist. Was beim
+Lenkungskreis oder beim Kunden landet, ist nicht die Arbeitsdatei in harmloser Aufmachung.
+
+![Die Seitenleiste mit der Export-Aktion](docs/screenshots/report-sidebar.png)
+
+![Die exportierte Kopie mit dem Read-only-Banner](docs/screenshots/report-banner.png)
+
+Was sich zwischen Quelle und Kopie ändert:
+
+- **Der Dateiname** ist `<dateiStamm>-report-<JJJJ-MM-TT>.html`. Eine kurze Suche nach `report-`
+  im Ordner trifft nur Kopien — sie werden nicht mit der Arbeitsdatei verwechselt.
+- **Die Kopie trägt `settings.readOnly: true`.** Jede Stelle der Oberfläche, die schreiben würde —
+  Speichern, Rückgängig, Wiederholen, die Einstellungsseite, der Wizard, Import, Abgleich, der
+  „Neu …“-Knopf, die Mehrfachauswahl, der Datensatz-Drawer — wird versteckt oder gesperrt.
+  Referenz-Chips lassen sich weiter auflösen, aber nur durch Wechsel auf die referenzierte
+  Entität; dort einen Datensatz zu öffnen wäre eine Schreibfläche.
+- **Ein Banner über der Dateileiste** zeigt die Export-Beschriftung, die aus `settings.version`
+  übernommene Version und den Exportzeitpunkt. Das Banner ist das Signal: Wer es sieht, weiß, dass
+  die Datei nicht gespeichert werden kann — bevor er es versucht.
+- **Das Änderungsprotokoll der Quelle bekommt einen Eintrag** beim Klick — „Berichtskopie
+  exportiert“ — der beim nächsten Speichern der Quelle auf die Datei wandert. Ohne ihn kann
+  später niemand sagen, welcher Bericht aus welcher Revision stammt.
+
+Derselbe Single-File-Build liefert beide Seiten. Der Export ist ein einfaches
+`buildDocument(reportPayload)` über einen Datenblock, in dem die Schreibflags auf einen
+sicheren Standard gesetzt sind — kein zweites Bundle, kein zweiter Vite-Einstiegspunkt. Die
+bau­seitigen Details stehen in [`AGENTS.md`](AGENTS.md).
+
 ## Die Startseite
 
 Ein Werkzeug, das direkt auf einer Tabelle landet, setzt voraus, dass der Empfänger weiß, was er da
