@@ -548,8 +548,9 @@ not silently clipped: a banner appears above the column naming the limit and the
 the column shows only the first `limit` cards. Anyone who wants the full set switches to the
 table.
 
-Touch uses Pointer Events; the same keyboard arrows cover an attached keyboard on iPad. There is
-no second entry point and no new dependency - the board ships inside the same single-file build.
+Touch uses the HTML5 drag-and-drop API, which works natively on iPadOS 15.4+; the same keyboard
+arrows cover an attached keyboard on iPad. There is no second entry point and no new dependency -
+the board ships inside the same single-file build.
 
 ## Optional second file
 
