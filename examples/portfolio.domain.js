@@ -62,11 +62,14 @@ export const ENTITIES = {
       totalField: 'budget',
       /* Kennzahl-Kacheln: die Zahlen, die ein Lenkungskreis zuerst sehen will.
          count mit Kriterium, Summe und Mittelwert - gerechnet beim Rendern,
-         nicht gespeichert. Alle Formen des geschlossenen Katalogs kommen vor. */
+         nicht gespeichert. Alle Formen des geschlossenen Katalogs kommen vor,
+         die letzte Spalte zeigt, dass ein computed-Feld genau so verarbeitet
+         wird wie ein gespeichertes (sum(computed) ist sum(field)). */
       metrics: [
         { op: 'count', filter: (r) => r.phase !== 'Closed', label: 'Running projects', caption: 'not yet closed' },
         { op: 'sum', field: 'spent', label: 'Spent so far', caption: 'kEUR, all projects' },
         { op: 'avg', field: 'budget', label: 'Average budget', caption: 'kEUR per project' },
+        { op: 'sum', field: 'variance', label: 'Budget left', caption: 'kEUR remaining, computed' },
       ],
       fields: [
         { key: 'name', label: 'Project', type: 'text', required: true },

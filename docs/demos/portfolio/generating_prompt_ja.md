@@ -71,6 +71,7 @@
 - **Running projects** — 件数（フィルタに一致するレコードのみ）: `r.phase !== 'Closed'` · „not yet closed“
 - **Spent so far** — `spent` (Spent in kEUR) の合計 · „kEUR, all projects“
 - **Average budget** — `budget` (Budget in kEUR) の平均 · „kEUR per project“
+- **Budget left** — `variance` (Budget left) の合計 · „kEUR remaining, computed“
 
 ---
 

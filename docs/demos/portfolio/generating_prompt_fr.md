@@ -71,6 +71,7 @@ Déclarées sur cette entité à partir d’un catalogue fermé : comptage, somm
 - **Running projects** — le nombre d’enregistrements (uniquement les enregistrements correspondant à un filtre): `r.phase !== 'Closed'` · „not yet closed“
 - **Spent so far** — la somme de `spent` (Spent in kEUR) · „kEUR, all projects“
 - **Average budget** — la moyenne de `budget` (Budget in kEUR) · „kEUR per project“
+- **Budget left** — la somme de `variance` (Budget left) · „kEUR remaining, computed“
 
 ---
 

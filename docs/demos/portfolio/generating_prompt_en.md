@@ -71,6 +71,7 @@ Declared on this entity from a closed catalog — count, sum and average over nu
 - **Running projects** — the number of records (only records matching a filter): `r.phase !== 'Closed'` · „not yet closed“
 - **Spent so far** — the sum of `spent` (Spent in kEUR) · „kEUR, all projects“
 - **Average budget** — the average of `budget` (Budget in kEUR) · „kEUR per project“
+- **Budget left** — the sum of `variance` (Budget left) · „kEUR remaining, computed“
 
 ---
 

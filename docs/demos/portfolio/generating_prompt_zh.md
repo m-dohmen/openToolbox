@@ -71,6 +71,7 @@
 - **Running projects** — 记录条数（仅符合筛选条件的记录）: `r.phase !== 'Closed'` · „not yet closed“
 - **Spent so far** — `spent` (Spent in kEUR) 之和 · „kEUR, all projects“
 - **Average budget** — `budget` (Budget in kEUR) 的平均值 · „kEUR per project“
+- **Budget left** — `variance` (Budget left) 之和 · „kEUR remaining, computed“
 
 ---
 
