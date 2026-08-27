@@ -448,6 +448,61 @@ Details worth knowing:
   with the reason in the interface language. A metric that quietly switches itself off is noticed
   only when somebody misses the number.
 
+## Optional: saved views
+
+Search, facets, field filters and sort live only in the session today. A tool that gets opened the
+same way every Monday morning ("my open items", "overdue", "this quarter") makes the recipient
+rebuild that combination by hand each time. A `views` array on the schema declares named
+combinations the dropdown at the list head offers — they ship with the tool and the recipient
+never has to know they exist as a feature:
+
+```js
+export const SCHEMA = {
+  // …
+  views: [
+    {
+      name: 'Open of mine',
+      query: '',
+      filters: { owner: { v: '', op: 'contains' } },
+      sort: { key: 'due', dir: 1 },
+    },
+    {
+      name: 'Overdue',
+      query: '',
+      filters: {},
+      sort: { key: 'due', dir: 1 },
+    },
+  ],
+}
+```
+
+Each entry holds the same shape the running list uses: `query` is the global search input,
+`filters` is the field-filter bag from the sidebar (`{ key: { v, op } }`), `sort` is
+`{ key, dir }` (`dir` is `1` ascending, `-1` descending) and `entity` is optional — it points at
+the entity the view belongs to when there is more than one. Anything the dropdown sets lands in the
+**session** (query, facets, `filtersByEntity`, sort), not in the record set; the view itself is
+just a named template.
+
+Two reasons the recipient's own views live elsewhere: schema files are read-only once shipped, and
+the same view in two files has to merge by name. Stored views sit in the data block under
+`settings.views`; the schema's `views` array is the catalogue, the file's `views` is what the
+recipient has actually used. Both are merged in `lib/views.js`: same name = stored view wins.
+
+A single `settings.startView` (the name of a view) marks the one that auto-applies when the file
+opens — the same way `mode: 'intake'` opens straight into the wizard. Empty string means no
+auto-applied view. The Settings page has a small editor next to the application block: list of
+current views with rename, delete and "open with this view"; one input at the bottom that captures
+the running search/filter/sort under a chosen name (the capture button only lights up when there
+is actually something to capture).
+
+The merge is in `lib/merge.js` and is intentionally one-line from the caller's side: `applyMerge`
+takes an optional `{ views: { mine, theirs } }`, runs `mergeViews`, and returns the result as
+`nextViews` alongside the data. Two files with disjoint view lists merge without conflict; two
+files with the same view name keep the other side's last edit. A renamed or removed view in one
+file is just a new entry in the merged set — there is no delete signal across files because the
+recipient that never used the view never saved it, and dropping a shared view on a single merge
+would surprise the other side.
+
 ## Optional second file
 
 `src/app.jsx` — only if the user needs something the schema cannot express: an extra sidebar

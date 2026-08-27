@@ -25,6 +25,34 @@ export const SCHEMA = {
   facets: ['status', 'area'],
   /** Number field summed up in the overview, null to hide the tile. */
   totalField: 'effort',
+  /**
+   * Gespeicherte Ansichten. Jede Sicht bündelt Suchbegriff, Feldfilter und
+   * Sortierung zu einem benannten Satz, den das Dropdown am Listenkopf und
+   * der Eintrag in den Einstellungen anbieten. Werte, die hier stehen, sind
+   * die vom Werkzeugbauer mitgelieferten Vorschläge; was die Anwender daraus
+   * machen, wird in den Einstellungen daneben gespeichert und überlebt einen
+   * Speichervorgang. Merge: gleicher Name = letzter Stand gewinnt.
+   *
+   *   name      Anzeigename; frei wählbar, Eindeutigkeit pro Entität.
+   *   query     Volltextbegriff wie im Suchfeld oben.
+   *   filters   Feldfilter wie im Bereich darunter: { fieldKey: spec }.
+   *   sort      Sortierung: { key, dir }. dir ist 1 oder -1.
+   *   entity    Optional, hält die Tür offen für mehrere Entitäten.
+   */
+  views: [
+    {
+      name: 'My open items',
+      query: '',
+      filters: { owner: { v: '', op: 'contains' } },
+      sort: { key: 'due', dir: 1 },
+    },
+    {
+      name: 'Overdue',
+      query: '',
+      filters: {},
+      sort: { key: 'due', dir: 1 },
+    },
+  ],
   fields: [
     { key: 'title', label: 'Title', type: 'text', required: true },
     { key: 'area', label: 'Area', type: 'enum', values: AREAS },

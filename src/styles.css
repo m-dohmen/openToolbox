@@ -622,6 +622,20 @@ button, input, select, textarea { font-family: var(--font); font-size: inherit; 
   background: var(--panel);
 }
 .globalsearch .search { max-width: 460px; }
+/* Gespeicherte Ansicht - sitzt rechts neben der Suche, fällt auf ihre
+   natürliche Breite zurück, damit lange Sichtnamen nicht abgeschnitten werden. */
+.globalsearch .view-select {
+  height: 32px;
+  padding: 0 28px 0 10px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  color: var(--ink);
+  font: inherit;
+  font-size: 13.5px;
+  max-width: 280px;
+}
+.globalsearch .view-select:focus { border-color: var(--accent); outline: none; }
 
 /* Trefferzahl an den Entitäts-Reitern, solange global gesucht wird. */
 .tabcount {
@@ -1136,6 +1150,64 @@ tbody tr:focus-within td.cell-action .iconbtn { opacity: 1; }
 
 .suffixed { display: flex; align-items: center; gap: 7px; width: 100%; }
 .suffixed span { color: var(--muted); font-size: 13px; }
+
+/* Gespeicherte Ansichten: eine Zeile pro Sicht, daneben das Eingabefeld
+   zum Ablegen der aktuellen Suche/Filter/Sortierung. */
+.views-editor { display: grid; gap: 8px; margin-top: 12px; }
+.views-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--bg);
+}
+.views-row__main { flex: 1; display: grid; gap: 2px; }
+.views-row__name {
+  background: none;
+  border: 0;
+  padding: 0;
+  text-align: left;
+  color: var(--ink-strong);
+  font-weight: var(--tone-weight-bold);
+  font-size: 13.5px;
+  cursor: pointer;
+  width: max-content;
+}
+.views-row__name:hover { color: var(--accent); }
+.views-row__summary { color: var(--muted); font-size: 12px; }
+.views-row__actions { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; justify-content: flex-end; }
+.views-row__actions input {
+  height: 30px;
+  padding: 0 10px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  color: var(--ink);
+  font: inherit;
+  font-size: 13.5px;
+  min-width: 180px;
+}
+.views-row__actions input:focus { border-color: var(--accent); outline: none; }
+.views-editor__add {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  margin-top: 4px;
+}
+.views-editor__add input {
+  flex: 1;
+  height: 32px;
+  padding: 0 12px;
+  background: var(--bg);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  color: var(--ink);
+  font: inherit;
+  font-size: 13.5px;
+}
+.views-editor__add input:focus { border-color: var(--accent); outline: none; }
 
 .note {
   margin: 12px 0 0;

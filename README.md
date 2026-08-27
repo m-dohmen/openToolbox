@@ -299,6 +299,51 @@ readable before anyone unlocks the file: right for "what is this", wrong for any
 
 Empty text means there is no start page at all.
 
+## Saved views
+
+Search, facets, field filters and sorting live only in the session by default. A tool that gets
+opened the same way every Monday morning — "my open items", "overdue", "this quarter" — makes the
+recipient rebuild that combination by hand each time. A `views` array on the schema declares named
+combinations the dropdown at the list head offers:
+
+```js
+export const SCHEMA = {
+  // …
+  views: [
+    {
+      name: 'Open of mine',
+      query: '',
+      filters: { owner: { v: '', op: 'contains' } },
+      sort: { key: 'due', dir: 1 },
+    },
+    { name: 'Overdue', query: '', filters: {}, sort: { key: 'due', dir: 1 } },
+  ],
+}
+```
+
+Each entry holds the same shape the running list uses: `query` is the global search input,
+`filters` is the field-filter bag from the sidebar (`{ fieldKey: { v, op } }`), `sort` is
+`{ key, dir }` (`dir` is `1` ascending, `-1` descending) and `entity` is optional — it points at
+the entity the view belongs to when there is more than one. Picking a view from the dropdown mirrors
+its values into query, facets, filters and sort; the view itself is just a named template and does
+not write into the record set.
+
+Two reasons the recipient's own views live in the data block, not on the schema: schema files are
+read-only once shipped, and the same view in two files has to merge by name. Stored views sit
+under `settings.views`; the schema's `views` array is the catalogue, the file's `views` is what
+the recipient has actually used. Both are merged: same name = the stored view wins.
+
+A single `settings.startView` (the name of a view) marks the one that auto-applies when the file
+opens. Empty means no auto-applied view. The Settings page has a small editor next to the
+application block: list of current views with rename, delete and "open with this view"; one input
+at the bottom that captures the running search/filter/sort under a chosen name (the capture button
+only lights up when there is actually something to capture).
+
+The merge lives in `src/lib/merge.js` and is intentionally one line from the caller's side:
+`applyMerge` takes an optional `{ views: { mine, theirs } }`, runs `mergeViews`, and returns the
+result as `nextViews` alongside the data. Two files with disjoint view lists merge without
+conflict; two files with the same view name keep the other side's last edit.
+
 ## Guided entry
 
 The list plus the edit form assume you know the tool. Someone who receives the file to report *one*
