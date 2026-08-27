@@ -9,7 +9,8 @@ import { translator } from '../src/i18n.js'
 import { relativeAge } from '../src/lib/time.js'
 import { groupByDueDate, hasDueDates } from '../src/lib/dueDate.js'
 import { HISTORY_LIMIT, pushHistory } from '../src/lib/history.js'
-import { normalizeEntities, screenImportRows } from '../src/lib/entities.js'
+import { normalizeEntities, screenImportRows, fieldValue, materialize } from '../src/lib/entities.js'
+import { validateMetrics, metricValue } from '../src/lib/metrics.js'
 import * as twoEntityDomain from '../examples/suppliers-certificates.domain.js'
 import {
   matchesSearch,
@@ -561,6 +562,192 @@ const impTr = translator('en')
   if (!texts.some((t) => t.includes('Title is required'))) fail('Pflichtfeldprüfung griff beim JSON-Import nicht')
   if (!texts.some((t) => t.includes('needs an owner'))) fail('Schema-Regel griff beim JSON-Import nicht')
 }
+
+/*
+ * Berechnete Felder — Memo, Fehlerverhalten, Metric-Anbindung. Reine
+ * Funktionen ohne Browser, deshalb vor dem Playwright-Block. Drei Faelle,
+ * die zusammen die OPEN-104-Zusicherung traegen: ein gutes Feld,
+ * ein werfendes Feld (mit eingefangener Konsole), und der Katalog
+ * sum/avg ueber ein berechnetes Feld.
+ */
+
+/* Berechnetes Feld mit Zahl-Ergebnis */
+const memoEntity = {
+  schema: {
+    idField: 'id', singular: 'item', plural: 'items', titleField: 'title',
+    list: ['title', 'score'], facets: [],
+    fields: [
+      { key: 'title', label: 'Title', type: 'text' },
+      { key: 'base', label: 'Base', type: 'number' },
+      { key: 'score', label: 'Score', type: 'computed', compute: (r) => Number(r.base) * 3 },
+    ],
+  },
+  isDone: () => false,
+  isOverdue: () => false,
+}
+const memoRecords = [
+  { id: 'M-1', title: 'Alpha', base: 5 },
+  { id: 'M-2', title: 'Beta', base: 7 },
+  { id: 'M-3', title: 'Gamma', base: 0 },
+]
+if (fieldValue(memoEntity, memoRecords[0], 'score') !== 15) fail('Berechnetes Feld lieferte nicht den erwarteten Wert')
+if (fieldValue(memoEntity, memoRecords[2], 'score') !== 0) fail('0 ist eine echte Antwort, nicht der Strichplatzhalter')
+
+/* Memo: derselbe Aufruf zweimal schaltet compute() still ab. */
+let memoCalls = 0
+const memoEntity2 = {
+  schema: {
+    idField: 'id', singular: 'item', plural: 'items', titleField: 'title',
+    fields: [
+      { key: 'base', label: 'Base', type: 'number' },
+      { key: 'doubled', label: 'Doubled', type: 'computed', compute: (r) => { memoCalls++; return Number(r.base) * 2 } },
+    ],
+  },
+  isDone: () => false,
+  isOverdue: () => false,
+}
+const memoRec = { id: 'X-1', base: 4 }
+fieldValue(memoEntity2, memoRec, 'doubled')
+fieldValue(memoEntity2, memoRec, 'doubled')
+fieldValue(memoEntity2, memoRec, 'doubled')
+console.log('0n) Berechnete Memo: Aufrufe fuer 3x fieldValue:', memoCalls)
+if (memoCalls !== 1) fail('Berechnetes Feld wurde nicht memoisiert (3 Aufrufe ergaben ' + memoCalls + ')')
+
+/* Formel wirft - Wert leer, Konsole sieht genau eine Warnung. */
+const warnings = []
+const origWarn = console.warn
+console.warn = (msg) => warnings.push(String(msg))
+const brokenEntity = {
+  schema: {
+    idField: 'id', singular: 'item', plural: 'items', titleField: 'title',
+    fields: [
+      { key: 'input', label: 'Input', type: 'number' },
+      { key: 'broken', label: 'Broken', type: 'computed', compute: () => { throw new Error('kaboom') } },
+    ],
+  },
+  isDone: () => false,
+  isOverdue: () => false,
+}
+const brokenRec = { id: 'B-1', input: 1 }
+const brokenVal = fieldValue(brokenEntity, brokenRec, 'broken')
+console.warn = origWarn
+console.log('0o) Werfende Formel: Wert =', JSON.stringify(brokenVal), '| Warnungen:', warnings.length, '| Text:', warnings[0])
+if (brokenVal !== '') fail('Werfende Formel hätte leeren Wert liefern müssen, war ' + JSON.stringify(brokenVal))
+if (warnings.length !== 1) fail('Genau eine Warnung erwartet, waren ' + warnings.length)
+if (!warnings[0].includes('broken') || !warnings[0].includes('B-1') || !warnings[0].includes('kaboom')) {
+  fail('Warnung enthaelt nicht Feldname, Record-Id und Fehlertext: ' + warnings[0])
+}
+/* Zweiter Aufruf mit demselben Datensatz und derselben Ausnahme - keine weitere Warnung. */
+const warnings2 = []
+console.warn = (msg) => warnings2.push(String(msg))
+fieldValue(brokenEntity, brokenRec, 'broken')
+fieldValue(brokenEntity, brokenRec, 'broken')
+console.warn = origWarn
+if (warnings2.length !== 0) fail('Zweite Warnung mit identischem Datensatz und Fehler wurde nicht unterdrueckt')
+
+/* materialize laeuft durch dasselbe Memo, ohne Wert zu wiederholen. */
+let matCalls = 0
+const matEntity = {
+  schema: {
+    idField: 'id', singular: 'item', plural: 'items', titleField: 'title',
+    fields: [
+      { key: 'base', label: 'Base', type: 'number' },
+      { key: 'triple', label: 'Triple', type: 'computed', compute: (r) => { matCalls++; return Number(r.base) * 3 } },
+    ],
+  },
+  isDone: () => false,
+  isOverdue: () => false,
+}
+const matRec = { id: 'T-1', base: 5 }
+materialize(matEntity, matRec)
+materialize(matEntity, matRec)
+console.log('0p) materialize-Cache:', matCalls, 'Aufruf(e)')
+if (matCalls !== 1) fail('materialize hätte memoisiert (Aufrufe: ' + matCalls + ')')
+
+/* sum und avg ueber ein berechnetes Feld gehen durch die Validation. */
+const metricSchema = {
+  idField: 'id', singular: 'item', plural: 'items', titleField: 'title',
+  facets: [],
+  metrics: [
+    { op: 'sum', field: 'score', label: 'Total score' },
+    { op: 'avg', field: 'score', label: 'Avg score' },
+  ],
+  fields: [
+    { key: 'title', label: 'Title', type: 'text' },
+    { key: 'base', label: 'Base', type: 'number' },
+    { key: 'score', label: 'Score', type: 'computed', compute: (r) => Number(r.base) * 3 },
+  ],
+}
+const metricEntity = { schema: metricSchema, isDone: () => false, isOverdue: () => false }
+const metricValidation = validateMetrics(metricSchema)
+console.log('0q) validateMetrics ueber computed:',
+  'metriken:', metricValidation.metrics.length,
+  '| beanstandungen:', metricValidation.issues.map((i) => i.code).join(',') || 'keine')
+if (metricValidation.issues.some((i) => i.code === 'notNumeric')) fail('validateMetrics wies sum(computed) zurueck')
+if (metricValidation.metrics.length !== 2) fail('Erwartet 2 akzeptierte Kennzahlen, waren ' + metricValidation.metrics.length)
+
+const metricRows = [
+  { id: 'K-1', title: 'A', base: 2 },
+  { id: 'K-2', title: 'B', base: 4 },
+  { id: 'K-3', title: 'C', base: 6 },
+]
+const sumScore = metricValue(metricEntity, metricRows, { op: 'sum', field: 'score' })
+const avgScore = metricValue(metricEntity, metricRows, { op: 'avg', field: 'score' })
+console.log('0r) sum/avg(computed): Σ =', sumScore, '| Ø =', avgScore)
+if (sumScore !== 36) fail('sum(computed) ergab ' + sumScore + ' statt 36')
+if (avgScore !== 12) fail('avg(computed) ergab ' + avgScore + ' statt 12')
+
+/* 1000 synthetische Datensaetze - das Memo muss den Render-Pfad spuerbar
+   verkuerzen. Ohne Memo wuerde jede Sortier- und Anzeigewelle das Feld fuer
+   jeden Datensatz neu rechnen, mit Memo genau einmal pro Datensatz und Feld.
+   Hier: 1000 Records, je zwei Felder -> 2000 Aufrufe statt 4000 nach dem
+   zweiten Lauf pro Feld. */
+const bigEntity = {
+  schema: {
+    idField: 'id', singular: 'item', plural: 'items', titleField: 'title',
+    fields: [
+      { key: 'a', label: 'A', type: 'number' },
+      { key: 'b', label: 'B', type: 'computed', compute: (r) => Number(r.a) + 1 },
+      { key: 'c', label: 'C', type: 'computed', compute: (r) => Number(r.a) * 2 },
+    ],
+  },
+  isDone: () => false,
+  isOverdue: () => false,
+}
+let bigCalls = 0
+const bigEntityCounted = {
+  schema: {
+    idField: 'id', singular: 'item', plural: 'items', titleField: 'title',
+    fields: [
+      { key: 'a', label: 'A', type: 'number' },
+      { key: 'b', label: 'B', type: 'computed', compute: (r) => { bigCalls++; return Number(r.a) + 1 } },
+      { key: 'c', label: 'C', type: 'computed', compute: (r) => { bigCalls++; return Number(r.a) * 2 } },
+    ],
+  },
+  isDone: () => false,
+  isOverdue: () => false,
+}
+const bigRecordsMemo = Array.from({ length: 1000 }, (_, i) => ({ id: 'M-' + i, a: i }))
+const bigRecordsCounted = Array.from({ length: 1000 }, (_, i) => ({ id: 'C-' + i, a: i }))
+const t0 = performance.now()
+for (const r of bigRecordsMemo) {
+  fieldValue(bigEntity, r, 'b')
+  fieldValue(bigEntity, r, 'c')
+}
+const t1 = performance.now()
+/* Vier Aufrufe pro Record, einer doppelt: ohne Cache 4x, mit Cache 2x pro Record.
+   Wir messen das Verhaeltnis. */
+for (const r of bigRecordsCounted) {
+  fieldValue(bigEntityCounted, r, 'b')
+  fieldValue(bigEntityCounted, r, 'c')
+  fieldValue(bigEntityCounted, r, 'b')
+  fieldValue(bigEntityCounted, r, 'c')
+}
+const t2 = performance.now()
+const expectedCalls = 2000 /* 1000 Records x 2 Felder, zweite Welle aus dem Memo */
+console.log(`0s) 1000 Datensaetze: memoisiert 2x (${(t1 - t0).toFixed(1)} ms) | 4x mit Memo-Schutz = ${bigCalls}/${expectedCalls} compute-Aufrufe in ${(t2 - t1).toFixed(1)} ms`)
+if (bigCalls !== expectedCalls) fail('Memo verhindert nicht den Wiederholungsaufruf: ' + bigCalls + ' statt ' + + expectedCalls)
+if ((t1 - t0) > 500) fail('1000x2 berechnete Feldaufrufe brauchen deutlich zu lange: ' + (t1 - t0).toFixed(1) + ' ms')
 
 const browser = await chromium.launch()
 const ctx = await browser.newContext({ acceptDownloads: true, viewport: { width: 1280, height: 850 } })

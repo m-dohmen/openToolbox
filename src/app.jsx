@@ -2576,9 +2576,10 @@ function FieldInput({ field: f, record: r, entity, entities, recordsByEntity, on
   const set = (e) => onChange(f.key, e.currentTarget.value)
 
   if (f.type === 'computed') {
+    const v = fieldValue(entity, r, f.key)
     return (
       <output id={id} class="field__computed">
-        {fieldValue(entity, r, f.key) || '—'}
+        {v === '' || v == null ? '—' : v}
       </output>
     )
   }

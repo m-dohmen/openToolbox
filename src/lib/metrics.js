@@ -47,7 +47,11 @@ export function validateMetrics(schema) {
         issues.push({ index, code: 'fieldMissing', params: [decl.field ?? ''] })
         continue
       }
-      if (field.type !== 'number') {
+      // Auch berechnete Felder, deren Formel eine Zahl liefert (Restlaufzeit,
+      // Score, prozentuale Auslastung) gehen in sum/avg - die eigentliche
+      // Probe ueberlasse ich fieldValue, das einen Fehler ohnehin zum Strich
+      // und einer einmaligen Warnung macht.
+      if (field.type !== 'number' && field.type !== 'computed') {
         issues.push({ index, code: 'notNumeric', params: [field.label] })
         continue
       }

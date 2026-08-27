@@ -51,22 +51,62 @@ export const findField = (schema, key) => schema.fields.find((f) => f.key === ke
 export const writableFields = (schema) => schema.fields.filter((f) => f.type !== 'computed')
 
 /**
+ * Pro Datensatz ein Memo der berechneten Werte. Wird beim ersten fieldValue-
+ * Aufruf gefüllt und bleibt hängen, bis der Datensatz vom Garbage Collector
+ * weggeräumt wird - jede Änderung im Formular legt einen neuen Objekt-Spread
+ * daneben, sodass veraltete Caches automatisch verschwinden. Damit kostet
+ * ein 1000er-Bestand mit drei berechneten Feldern pro Render nicht 3000
+ * Funktionsaufrufe, sondern nur so viele, wie Records wirklich neu sind.
+ */
+const computeCache = new WeakMap()
+
+/**
+ * Bereits gemeldete Fehler, damit eine kaputte Formel nicht 1000mal auf die
+ * Konsole schreibt. Schlüssel ist (Singular, Feldname, Id, Fehlertext) - ein
+ * neuer Datensatz, ein neues Feld oder eine andere Ausnahme führt zu einer
+ * neuen Warnung, alles andere bleibt still.
+ */
+const computeWarned = new Set()
+
+function warnComputedFailure(entity, record, field, err) {
+  const id = record[entity.schema.idField]
+  const sig = `${entity.schema.singular}/${field.key}/${id}/${err.message}`
+  if (computeWarned.has(sig)) return
+  computeWarned.add(sig)
+  console.warn(
+    `[computed] ${entity.schema.singular}.${field.key} for record ${id} threw: ${err.message}`,
+  )
+}
+
+/**
  * Wert eines Feldes. Berechnete Felder werden hier ausgerechnet und liegen
  * bewusst NIE im Datensatz: gespeicherte Ableitungen veralten in dem Moment,
  * in dem sich eine ihrer Quellen ändert, und niemand merkt es.
  *
  * `compute` stammt aus domain.js und ist damit ebenso vertrauenswürdig wie
- * isDone/isOverdue - eine kaputte Formel soll aber die Tabelle nicht sprengen,
- * deshalb der Fangarm.
+ * isDone/isOverdue - eine kaputte Formel soll aber die Tabelle nicht sprengen.
+ * Die Anzeige setzt einen leeren String ohnehin auf den Strichplatzhalter,
+ * sodass die Tabelle nur eine einmalige Warnung sieht und sonst nicht weiter belästigt wird.
  */
 export function fieldValue(entity, record, key) {
   const field = findField(entity.schema, key)
   if (field?.type !== 'computed') return record[key]
-  try {
-    return field.compute(record) ?? ''
-  } catch {
-    return ''
+  let entry = computeCache.get(record)
+  if (!entry) {
+    entry = new Map()
+    computeCache.set(record, entry)
   }
+  if (entry.has(key)) return entry.get(key)
+  let value
+  try {
+    const raw = field.compute(record)
+    value = raw === undefined || raw === null ? '' : raw
+  } catch (err) {
+    warnComputedFailure(entity, record, field, err)
+    value = ''
+  }
+  entry.set(key, value)
+  return value
 }
 
 /** Datensatz mit ausgerechneten Feldern - für Export, Sortierung, KI-Kontext. */
