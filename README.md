@@ -344,6 +344,31 @@ The merge lives in `src/lib/merge.js` and is intentionally one line from the cal
 result as `nextViews` alongside the data. Two files with disjoint view lists merge without
 conflict; two files with the same view name keep the other side's last edit.
 
+## Kanban board
+
+A `view.board` declaration on the schema adds a "Board" tab next to "List" and "Dashboard". Without
+it the view does not exist — same posture as `DASHBOARD` and `WIZARD`. Cards move between columns
+with the mouse, a touch gesture or the keyboard; every move goes through the same change path the
+form uses, so the change lands in the change log and in Undo/Redo.
+
+```js
+export const SCHEMA = {
+  // …
+  view: {
+    board: {
+      columnField: 'status',                   // enum field that becomes the columns
+      cardFields: ['owner', 'due', 'effort'],  // optional: up to three fields on each card
+      limit: 50,                                // optional: per-column card limit (default 50)
+    },
+  },
+}
+```
+
+`columnField` must point at an enum field; the columns take their values and their order straight
+from the schema's `values`. Records with an empty or out-of-list value land in an "Unassigned"
+reservoir at the right — a card that belongs to no column would otherwise be invisible. Read-only
+copies (`settings.readOnly: true`) still render the board, but disable dragging.
+
 ## Guided entry
 
 The list plus the edit form assume you know the tool. Someone who receives the file to report *one*
