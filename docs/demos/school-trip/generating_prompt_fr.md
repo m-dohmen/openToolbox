@@ -11,7 +11,7 @@ Utilise le modèle **openToolbox** : https://github.com/m-dohmen/openToolbox. Li
 
 ## Le problème traité
 
-Un voyage scolaire approche. 28 autorisations partent, 19 reviennent, trois sans signature, une avec une allergie notée au dos. Deux jours avant le départ, l’argent de quatre familles manque encore. L’enseignante tient cela dans un tableau qu’elle n’a pas le droit de partager, parce qu’il contient des allergies et le niveau de natation. Presque rien ici n’est un nombre : ce sont des états, et la seule somme qui compte est le reste dû.
+Un voyage scolaire approche. 28 autorisations partent, 19 reviennent, trois sans signature, une avec une allergie notée au dos. Deux jours avant le départ, l’argent de quatre familles manque encore. L’enseignante tient cela dans un tableau qu’elle n’a pas le droit de partager, parce qu’il contient des allergies et le niveau de natation. Presque rien ici n’est un nombre : ce sont des états, et la seule somme qui compte est le reste dû. Les questions du lundi matin (« qui n’a pas rendu l’autorisation ? », « qui n’a pas payé ? ») sont les mêmes chaque semaine — elles ont leur place en tête de liste comme vues enregistrées, et non reconstruites à la main à chaque ouverture.
 
 ## Ce qui doit exister à la fin
 
@@ -73,6 +73,16 @@ Conditions entre champs. Elles doivent s’appliquer en un seul endroit, afin qu
 - **Quand** `Boolean(r.medical?.trim())` → **Alors** `phone`
   **Message:** „Wo Medizinisches steht, muss eine Telefonnummer daneben stehen.“
 
+**Vues enregistrées**
+
+Combinaisons nommées de recherche, filtres et tri, proposées par le menu déroulant en tête de liste. Ce qui est déclaré ici est ce que l’outil embarque ; les propres vues du destinataire vivent sous `settings.views`. Fusion : même nom = la dernière édition gagne.
+
+`name` (unique), `query` (comme la zone de recherche), `filters` (`{ champ : spec }`, où un `spec` avec seulement `v` actionne le filtre rapide du même nom, et un `spec` avec `op` est un filtre de champ) et `sort` (`{ key, dir }`, `dir` vaut `1` ou `-1`). `entity` est optionnel et réservé au multi-entité.
+
+- proposition : **Alle** — —; sort: `name ↑`
+- proposition : **Zettel ausstehend** — Einverständnis = ausstehend; sort: `name ↑`
+- proposition : **Geld offen** — Zahlung = offen; sort: `open ↓`
+
 ## Tableau de bord
 
 Tuiles sur l’ensemble des enregistrements, pas sur la vue filtrée.
@@ -127,6 +137,10 @@ Rückseite. Zwei Tage vor Abfahrt fehlt das Geld von vier Familien.
 
 - **Ein Bestand fast ohne Zahlen**: Zustände, Ja/Nein, ein offener Restbetrag, der sich selbst
   ausrechnet.
+- **Gespeicherte Ansichten** — drei Vorschläge im Dropdown am Listenkopf („Alle", „Zettel
+  ausstehend", „Geld offen"), die morgens und vor jeder Überweisung dieselbe Tastaturabfolge
+  ersparen. Eigene Sichten legt man in den Einstellungen an; eine davon als Start-Ansicht markiert
+  öffnet die Datei immer in genau diesem Zustand.
 - **Regeln, die dem Alltag folgen** — wo Medizinisches steht, muss eine Telefonnummer daneben
   stehen.
 - **Der Grund, warum diese Datei verschlüsselt gehört**: hier stehen Gesundheitsangaben von

@@ -11,7 +11,7 @@ Nutze die Vorlage **openToolbox**: https://github.com/m-dohmen/openToolbox. Lies
 
 ## Das Problem dahinter
 
-Eine Klassenfahrt steht an. 28 Zettel gehen raus, 19 kommen zurück, drei ohne Unterschrift, einer mit einer Allergie auf der Rückseite. Zwei Tage vor Abfahrt fehlt das Geld von vier Familien. Die Klassenlehrerin führt das in einer Tabelle, die sie nicht teilen darf, weil Allergien und Schwimmfähigkeit darin stehen. Fast nichts daran ist eine Zahl — es sind Zustände, und die einzige Summe, auf die es ankommt, ist der offene Rest.
+Eine Klassenfahrt steht an. 28 Zettel gehen raus, 19 kommen zurück, drei ohne Unterschrift, einer mit einer Allergie auf der Rückseite. Zwei Tage vor Abfahrt fehlt das Geld von vier Familien. Die Klassenlehrerin führt das in einer Tabelle, die sie nicht teilen darf, weil Allergien und Schwimmfähigkeit darin stehen. Fast nichts daran ist eine Zahl — es sind Zustände, und die einzige Summe, auf die es ankommt, ist der offene Rest. Die Fragen jedes Montagmorgen („wessen Zettel fehlt noch?", „wer hat nicht gezahlt?") wiederholen sich wochenweise — sie gehören als gespeicherte Ansichten an den Listenkopf, nicht jede Woche von Hand zusammengeklickt.
 
 ## Was am Ende dastehen muss
 
@@ -73,6 +73,16 @@ Bedingungen zwischen Feldern. Sie müssen an einer Stelle greifen, damit Formula
 - **Wenn** `Boolean(r.medical?.trim())` → **Dann** `phone`
   **Meldung:** „Wo Medizinisches steht, muss eine Telefonnummer daneben stehen.“
 
+**Gespeicherte Ansichten**
+
+Benannte Kombinationen aus Suchbegriff, Feldfiltern und Sortierung, die das Dropdown am Listenkopf anbietet. Was hier steht, liefert das Werkzeug mit; eigene Sichten legen die Empfänger unter `settings.views` an. Merge: gleicher Name = letzter Stand gewinnt.
+
+`name` (eindeutig), `query` (wie das Suchfeld), `filters` (`{ field: spec }`, wobei `spec` mit nur `v` die gleichnamige Facette setzt, mit `op` einen Feldfilter) und `sort` (`{ key, dir }`, `dir` ist `1` oder `-1`). `entity` ist optional und der Multi-Entität vorbehalten.
+
+- Vorschlag: **Alle** — —; sort: `name ↑`
+- Vorschlag: **Zettel ausstehend** — Einverständnis = ausstehend; sort: `name ↑`
+- Vorschlag: **Geld offen** — Zahlung = offen; sort: `open ↓`
+
 ## Dashboard
 
 Kacheln über den gesamten Bestand, nicht über die gefilterte Ansicht.
@@ -127,6 +137,10 @@ Rückseite. Zwei Tage vor Abfahrt fehlt das Geld von vier Familien.
 
 - **Ein Bestand fast ohne Zahlen**: Zustände, Ja/Nein, ein offener Restbetrag, der sich selbst
   ausrechnet.
+- **Gespeicherte Ansichten** — drei Vorschläge im Dropdown am Listenkopf („Alle", „Zettel
+  ausstehend", „Geld offen"), die morgens und vor jeder Überweisung dieselbe Tastaturabfolge
+  ersparen. Eigene Sichten legt man in den Einstellungen an; eine davon als Start-Ansicht markiert
+  öffnet die Datei immer in genau diesem Zustand.
 - **Regeln, die dem Alltag folgen** — wo Medizinisches steht, muss eine Telefonnummer daneben
   stehen.
 - **Der Grund, warum diese Datei verschlüsselt gehört**: hier stehen Gesundheitsangaben von

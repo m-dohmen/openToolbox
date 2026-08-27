@@ -11,7 +11,7 @@
 
 ## 它解决的问题
 
-班级要出游了。发出去 28 张回执，收回 19 张，其中三张没签名，一张在背面写着过敏情况。出发前两天，还有四个家庭的钱没交。班主任把这些记在一张不能给别人看的表里 —— 因为里面写着过敏和会不会游泳。这里几乎没有什么是数字，全是状态；唯一要紧的求和，是还差多少钱。
+班级要出游了。发出去 28 张回执，收回 19 张，其中三张没签名，一张在背面写着过敏情况。出发前两天，还有四个家庭的钱没交。班主任把这些记在一张不能给别人看的表里 —— 因为里面写着过敏和会不会游泳。这里几乎没有什么是数字，全是状态；唯一要紧的求和，是还差多少钱。每个周一早上反复出现的问题（"谁的回执还没交？""谁还没付钱？"）每周都问一遍 —— 它们属于列表顶部的「保存视图」，而不是每次手动重新搭。
 
 ## 最终必须交付什么
 
@@ -73,6 +73,16 @@
 - **当** `Boolean(r.medical?.trim())` → **则** `phone`
   **提示语:** „Wo Medizinisches steht, muss eine Telefonnummer daneben stehen.“
 
+**保存视图**
+
+由列表头部的下拉框按名称提供的「搜索词 + 字段筛选 + 排序」组合。这里声明的就是工具自带的内容；使用者自己的视图保存在 `settings.views`。合并规则：同名以最后一次的修改为准。
+
+`name`（唯一）、`query`（与搜索框相同）、`filters`（`{ 字段: spec }`；只带 `v` 的 `spec` 触发同名快速筛选，带 `op` 的 `spec` 是字段筛选），以及 `sort`（`{ key, dir }`，`dir` 取 `1` 或 `-1`）。`entity` 是可选字段，为多实体预留。
+
+- 预设：**Alle** — —; sort: `name ↑`
+- 预设：**Zettel ausstehend** — Einverständnis = ausstehend; sort: `name ↑`
+- 预设：**Geld offen** — Zahlung = offen; sort: `open ↓`
+
 ## 仪表板
 
 统计整个记录集，而不是筛选后的视图。
@@ -127,6 +137,10 @@ Rückseite. Zwei Tage vor Abfahrt fehlt das Geld von vier Familien.
 
 - **Ein Bestand fast ohne Zahlen**: Zustände, Ja/Nein, ein offener Restbetrag, der sich selbst
   ausrechnet.
+- **Gespeicherte Ansichten** — drei Vorschläge im Dropdown am Listenkopf („Alle", „Zettel
+  ausstehend", „Geld offen"), die morgens und vor jeder Überweisung dieselbe Tastaturabfolge
+  ersparen. Eigene Sichten legt man in den Einstellungen an; eine davon als Start-Ansicht markiert
+  öffnet die Datei immer in genau diesem Zustand.
 - **Regeln, die dem Alltag folgen** — wo Medizinisches steht, muss eine Telefonnummer daneben
   stehen.
 - **Der Grund, warum diese Datei verschlüsselt gehört**: hier stehen Gesundheitsangaben von

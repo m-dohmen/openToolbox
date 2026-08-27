@@ -66,6 +66,16 @@ const L = {
     rulesIntro:
       'Conditions between fields. They must be enforced in one place so that the edit form, the CSV ' +
       'import and anything the AI proposes all pass through the same check.',
+    savedViews: 'Saved views',
+    savedViewsIntro:
+      'Named combinations of query, field filters and sort, offered by the dropdown at the list ' +
+      'head. What is declared here is what the tool ships with — recipients save their own ' +
+      'additions under `settings.views`. Merge: same name = last edit wins.',
+    savedViewsFields:
+      '`name` (unique), `query` (same as the search box), `filters` (`{ field: spec }`, where a ' +
+      'spec with just `v` sets the matching facet and a spec with `op` sets a field filter), and ' +
+      '`sort` (`{ key, dir }`, `dir` is `1` or `-1`). `entity` is optional and reserved for multi-entity.',
+    savedViewPreset: 'preset: **%s**',
     ruleWhen: 'When',
     ruleThen: 'Then',
     ruleMessage: 'Message',
@@ -195,6 +205,17 @@ const L = {
     rulesIntro:
       'Bedingungen zwischen Feldern. Sie müssen an einer Stelle greifen, damit Formular, CSV-Import ' +
       'und die Vorschläge der KI durch dieselbe Prüfung laufen.',
+    savedViews: 'Gespeicherte Ansichten',
+    savedViewsIntro:
+      'Benannte Kombinationen aus Suchbegriff, Feldfiltern und Sortierung, die das Dropdown am ' +
+      'Listenkopf anbietet. Was hier steht, liefert das Werkzeug mit; eigene Sichten legen die ' +
+      'Empfänger unter `settings.views` an. Merge: gleicher Name = letzter Stand gewinnt.',
+    savedViewsFields:
+      '`name` (eindeutig), `query` (wie das Suchfeld), `filters` (`{ field: spec }`, wobei `spec` ' +
+      'mit nur `v` die gleichnamige Facette setzt, mit `op` einen Feldfilter) und `sort` ' +
+      '(`{ key, dir }`, `dir` ist `1` oder `-1`). `entity` ist optional und der Multi-Entität ' +
+      'vorbehalten.',
+    savedViewPreset: 'Vorschlag: **%s**',
     ruleWhen: 'Wenn',
     ruleThen: 'Dann',
     ruleMessage: 'Meldung',
@@ -336,6 +357,18 @@ L.es = {
   ruleThen: 'Entonces',
   ruleMessage: 'Mensaje',
   ruleAlways: 'siempre',
+  savedViews: 'Vistas guardadas',
+  savedViewsIntro:
+    'Combinaciones con nombre de búsqueda, filtros y orden, que ofrece el desplegable de la ' +
+    'cabecera. Lo que aquí se declara es lo que la herramienta lleva de serie; las propias ' +
+    'vistas del destinatario viven bajo `settings.views`. Fusión: mismo nombre = gana la última ' +
+    'edición.',
+  savedViewsFields:
+    '`name` (único), `query` (como la caja de búsqueda), `filters` (`{ campo: spec }`, donde un ' +
+    '`spec` con solo `v` activa el filtro rápido del mismo nombre y un `spec` con `op` es un ' +
+    'filtro de campo) y `sort` (`{ key, dir }`, `dir` vale `1` o `-1`). `entity` es opcional y ' +
+    'queda para múltiples entidades.',
+  savedViewPreset: 'propuesta: **%s**',
   dashboard: 'Panel',
   dashboardIntro: 'Fichas sobre todo el conjunto de registros, no sobre la vista filtrada.',
   tileStat: 'Un número: %s',
@@ -467,6 +500,17 @@ L.fr = {
   ruleThen: 'Alors',
   ruleMessage: 'Message',
   ruleAlways: 'toujours',
+  savedViews: 'Vues enregistrées',
+  savedViewsIntro:
+    'Combinaisons nommées de recherche, filtres et tri, proposées par le menu déroulant en tête ' +
+    'de liste. Ce qui est déclaré ici est ce que l’outil embarque ; les propres vues du ' +
+    'destinataire vivent sous `settings.views`. Fusion : même nom = la dernière édition gagne.',
+  savedViewsFields:
+    '`name` (unique), `query` (comme la zone de recherche), `filters` (`{ champ : spec }`, où un ' +
+    '`spec` avec seulement `v` actionne le filtre rapide du même nom, et un `spec` avec `op` est ' +
+    'un filtre de champ) et `sort` (`{ key, dir }`, `dir` vaut `1` ou `-1`). `entity` est ' +
+    'optionnel et réservé au multi-entité.',
+  savedViewPreset: 'proposition : **%s**',
   dashboard: 'Tableau de bord',
   dashboardIntro: 'Tuiles sur l’ensemble des enregistrements, pas sur la vue filtrée.',
   tileStat: 'Un nombre : %s',
@@ -599,6 +643,17 @@ L.pt = {
   ruleThen: 'Então',
   ruleMessage: 'Mensagem',
   ruleAlways: 'sempre',
+  savedViews: 'Vistas guardadas',
+  savedViewsIntro:
+    'Combinações nomeadas de busca, filtros e ordenação, oferecidas pelo menu na cabeça da lista. ' +
+    'O que é declarado aqui é o que a ferramenta traz de fábrica; as vistas do destinatário ficam ' +
+    'em `settings.views`. Fusão: mesmo nome = ganha a última edição.',
+  savedViewsFields:
+    '`name` (único), `query` (como o campo de busca), `filters` (`{ campo: spec }`, onde um `spec` ' +
+    'com apenas `v` aciona o filtro rápido do mesmo nome e um `spec` com `op` é um filtro de ' +
+    'campo) e `sort` (`{ key, dir }`, `dir` vale `1` ou `-1`). `entity` é opcional e fica ' +
+    'reservado para múltiplas entidades.',
+  savedViewPreset: 'proposta: **%s**',
   dashboard: 'Painel',
   dashboardIntro: 'Blocos sobre todo o conjunto de registros, não sobre a visão filtrada.',
   tileStat: 'Um número: %s',
@@ -721,6 +776,15 @@ L.zh = {
   ruleThen: '则',
   ruleMessage: '提示语',
   ruleAlways: '始终',
+  savedViews: '保存视图',
+  savedViewsIntro:
+    '由列表头部的下拉框按名称提供的「搜索词 + 字段筛选 + 排序」组合。这里声明的就是工具自带的内容；' +
+    '使用者自己的视图保存在 `settings.views`。合并规则：同名以最后一次的修改为准。',
+  savedViewsFields:
+    '`name`（唯一）、`query`（与搜索框相同）、`filters`（`{ 字段: spec }`；只带 `v` 的 `spec` 触发同名快速' +
+    '筛选，带 `op` 的 `spec` 是字段筛选），以及 `sort`（`{ key, dir }`，`dir` 取 `1` 或 `-1`）。' +
+    '`entity` 是可选字段，为多实体预留。',
+  savedViewPreset: '预设：**%s**',
   dashboard: '仪表板',
   dashboardIntro: '统计整个记录集，而不是筛选后的视图。',
   tileStat: '一个数字：%s',
@@ -839,6 +903,16 @@ L.ja = {
   ruleThen: '要求',
   ruleMessage: 'メッセージ',
   ruleAlways: '常に',
+  savedViews: '保存ビュー',
+  savedViewsIntro:
+    '検索・絞り込み・並び替えをまとめた名前付きの組み合わせを、リスト先頭のドロップダウンで提供します。' +
+    'ここで宣言したものがツールに同梱されます。受取側独自のビューは `settings.views` に保存されます。' +
+    'マージ：同じ名前では最後に編集した側が勝ちます。',
+  savedViewsFields:
+    '`name`（一意）、`query`（検索ボックスと同じ）、`filters`（`{ フィールド: spec }`。`v` のみの ' +
+    '`spec` は同名ファセットを起動し、`op` 付きの `spec` はフィールドフィルタ）、`sort`（`{ key, dir }`、' +
+    '`dir` は `1` か `-1`）。`entity` は任意で、複数エンティティ用に予約されています。',
+  savedViewPreset: 'プリセット：**%s**',
   dashboard: 'ダッシュボード',
   dashboardIntro: '絞り込み後ではなく、レコード全体を対象とするタイルです。',
   tileStat: '数値 1 つ：%s',
