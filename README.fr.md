@@ -116,6 +116,12 @@ s'impriment en un PDF propre.
   devient une tuile — `count` (avec filtre optionnel), `sum(champ)` ou `avg(champ)` sur des champs
   numériques ; calcul local au rendu, rien n'entre dans les données ; un clic saute à la liste de
   l'entité ; les déclarations invalides sont rejetées nommément, pas en silence.
+- **Champs calculés (`computed`).** Déclarez `compute: (record) => value` dans le schéma : le
+  résultat est calculé et mémoïsé par enregistrement à chaque rendu, **jamais inscrit dans le
+  fichier** — une dérivation stockée devient fausse dès qu'une entrée change, sans que personne
+  ne s'en aperçoive. Ils participent au tri, aux tuiles d'indicateurs `sum`/`avg` et à l'export
+  CSV ; dans le formulaire ils sont en lecture seule et l'IA est rejetée par nom si elle tente
+  d'y écrire.
 
 ## Démarrage rapide
 

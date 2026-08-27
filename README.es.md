@@ -109,6 +109,11 @@ son anchuras CSS y el anillo es un único círculo SVG. Ambas vistas se imprimen
   tarjeta — `count` (con filtro opcional), `sum(campo)` o `avg(campo)` sobre campos numéricos;
   cálculo local al renderizar, nada entra en los datos; un clic salta a la lista de la entidad;
   las declaraciones inválidas se rechazan nombrándolas, no en silencio.
+- **Campos calculados (`computed`).** Declara `compute: (record) => value` en el esquema: el
+  resultado se calcula y memoiza por registro en cada render, **nunca se guarda en el archivo** —
+  una derivación guardada queda obsoleta en cuanto cambia una entrada, y nadie se entera.
+  Funcionan en columnas, en el orden, en cartones de métricas `sum`/`avg` y en la exportación
+  CSV; en el formulario son de sólo lectura y la IA es rechazada por nombre si intenta escribirlos.
 
 ## Inicio rápido
 
