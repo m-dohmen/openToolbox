@@ -78,6 +78,14 @@ larguras em CSS e o anel é um único círculo SVG. As duas visões imprimem com
 - **Um assistente de captura guiada** e um modo de recepção que abre o arquivo direto nele, para
   quem só precisa relatar uma coisa.
 - **Mesclar uma cópia devolvida**, registro a registro e com comparação campo a campo.
+- **Exportar uma cópia somente leitura** (grupo de troca da barra lateral): gera um novo arquivo
+  HTML a partir do atual, com nome `<fileStem>-report-<AAAA-MM-DD>.html`, do qual toda superfície
+  de gravação foi removida — Salvar, Desfazer, Refazer, Novo, Assistente, página de Configurações,
+  propostas de IA, Importar, Mesclar, gaveta de edição de linhas; um banner acima da barra do
+  arquivo, com a versão e a data de exportação, avisa que o arquivo não pode ser salvo; o registro
+  de alterações do arquivo de origem recebe uma entrada «Cópia somente leitura exportada», gravada
+  em disco no próximo salvamento. A mesma compilação em arquivo único produz as duas peças; não há
+  segundo ponto de entrada no Vite.
 - **Um registro de alterações em nível de campo**, deduzido automaticamente a cada gravação: qual registro, qual campo, antes e depois.
 - **Anexos com um orçamento de tamanho visível**, porque uma ferramenta que já não dá para enviar por e-mail deixa de ser esta ferramenta.
 - **Uma página inicial editável**, para que o arquivo se explique antes de mostrar uma tabela.

@@ -79,6 +79,14 @@ son anchuras CSS y el anillo es un único círculo SVG. Ambas vistas se imprimen
 - **Un asistente de captura guiada** y un modo de recepción que abre el archivo directamente en él,
   para quien solo tiene que reportar una cosa.
 - **Fusionar una copia devuelta**, registro por registro y con comparación campo a campo.
+- **Exportar una copia de solo lectura** (grupo de intercambio de la barra lateral): genera un nuevo
+  archivo HTML a partir del actual, con nombre `<fileStem>-report-<YYYY-MM-DD>.html`, y elimina toda
+  superficie de escritura — Guardar, Deshacer, Rehacer, Nuevo, Asistente, página de Ajustes,
+  propuestas de IA, Importar, Fusionar, cajón de edición de filas; un banner sobre la barra del
+  archivo, con la versión y la fecha de exportación, avisa de que no se puede guardar; el registro
+  de cambios del archivo origen recibe una entrada «Copia de solo lectura exportada» que se graba en
+  disco con el siguiente guardado. La misma compilación de archivo único produce ambas piezas; no
+  hay segundo punto de entrada en Vite.
 - **Un registro de cambios a nivel de campo**, deducido automáticamente en cada guardado: qué registro, qué campo, antes y después.
 - **Adjuntos con un presupuesto de tamaño visible**, porque una herramienta que ya no se puede enviar por correo deja de ser esta herramienta.
 - **Una página de inicio editable**, para que el archivo se explique antes de mostrar una tabla.
