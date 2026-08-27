@@ -11,6 +11,33 @@ Release notes for each version live on GitHub:
 
 Nothing yet.
 
+## [0.16.1] — 2026-08-27
+
+Documentation patch. Two additive changes that close a documentation gap
+left by v0.16.0 — no behaviour change, no API drift, no compat impact.
+
+### Added
+
+- `CHANGELOG.md` linked from the version section of `README.md` and
+  `README.de.md`, so a reader of either long README finds the project-wide
+  change log and the GitHub release notes without leaving the document
+  ([#70](https://github.com/m-dohmen/openToolbox/pull/70)).
+- Same paragraph added to the five short READMEs (`zh`, `es`, `fr`, `ja`,
+  `pt`), so a reader in any shipped language lands on the same hint
+  ([#71](https://github.com/m-dohmen/openToolbox/pull/71)).
+
+### Not included (consciously)
+
+- No content change in the short READMEs beyond the new paragraph; the
+  Changelog topic was deliberately not introduced into them, only linked
+  where their existing structure already mentions version history.
+- Wiki does not adopt the link — the Changelog topic does not exist there
+  and there is nothing to point at.
+- `AGENTS.md` and `CLAUDE.md` untouched, so the byte-identity check in CI
+  keeps matching the previous release.
+
+[0.16.1]: https://github.com/m-dohmen/openToolbox/releases/tag/v0.16.1
+
 ## [0.16.0] — 2026-08-27
 
 ### Added
