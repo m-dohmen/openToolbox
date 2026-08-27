@@ -45,6 +45,8 @@ import { IconSave, IconSettings, IconLink, IconPaperclipSmall, IconUndo, IconRed
 import { SettingsPage } from './settings.jsx'
 import { DashboardView } from './dashboard.jsx'
 import { WizardView } from './wizard.jsx'
+import { BoardView } from './board.jsx'
+import { validateBoardConfig, moveRecordInBoard } from './lib/board.js'
 import { MergeDialog } from './merge.jsx'
 import { HomeView } from './home.jsx'
 import { extractPayload, diffAll, applyMerge } from './lib/merge.js'
@@ -96,6 +98,14 @@ const ATTACHMENTS = hasAttachments(ENTITIES)
 /* Ohne WIZARD-Export gibt es die gefuehrte Erfassung schlicht nicht - wie beim
    Dashboard entscheidet die Domaene, nicht eine Einstellung. */
 const WIZARD = domainModule.WIZARD?.steps?.length ? domainModule.WIZARD : null
+/* Dieselbe Haltung fuer die Kanban-Ansicht: die Domaene erklaert sie ueber
+   `schema.view.board.columnField` (ein enum-Feld), und nur dann erscheint
+   der Reiter. Ohne die Erklaerung gibt es die Ansicht nicht - ein Werkzeug,
+   dessen enum-Felder keine Spalten sein sollen, soll davon nichts merken. */
+const BOARD_CONFIG_BY_ENTITY = Object.fromEntries(
+  ENTITY_KEYS.map((key) => [key, validateBoardConfig(ENTITIES[key].schema, ENTITIES[key].schema.view?.board)]),
+)
+const HAS_BOARD_VIEW = ENTITY_KEYS.some((key) => BOARD_CONFIG_BY_ENTITY[key])
 
 /** Legt eine geladene/gefehlte Datensatzmenge auf alle Entitäten um. */
 function normalizeRecordsByEntity(records) {
@@ -1619,14 +1629,14 @@ function Workbench({
         />
       ) : (
       <>
-      {!intake && (ENTITY_KEYS.length > 1 || SHOW_DASHBOARD_VIEW || settings.auditLog || WIZARD || homeText) && (
+      {!intake && (ENTITY_KEYS.length > 1 || SHOW_DASHBOARD_VIEW || HAS_BOARD_VIEW || settings.auditLog || WIZARD || homeText) && (
         <div class="entity-tabs" role="tablist" aria-label={tr('entities.tabsLabel')}>
           {ENTITY_KEYS.length > 1 &&
             ENTITY_KEYS.map((key) => (
               <button
                 key={key}
                 role="tab"
-                aria-selected={String(key === activeKey && view === 'list')}
+                aria-selected={String(key === activeKey && (view === 'list' || view === 'board'))}
                 onClick={() => {
                   setView('list')
                   switchEntity(key)
@@ -1654,6 +1664,15 @@ function Workbench({
               >
                 {tr('view.list')}
               </button>
+              {BOARD_CONFIG_BY_ENTITY[activeKey] && (
+                <button
+                  role="tab"
+                  aria-selected={String(view === 'board')}
+                  onClick={() => setView('board')}
+                >
+                  {tr('view.board')}
+                </button>
+              )}
               {SHOW_DASHBOARD_VIEW && (
                 <button
                   role="tab"
@@ -1921,6 +1940,28 @@ function Workbench({
                 </button>
               )}
             </div>
+          ) : view === 'board' && BOARD_CONFIG_BY_ENTITY[activeKey] ? (
+            <BoardView
+              schema={schema}
+              entity={entity}
+              records={visible}
+              config={BOARD_CONFIG_BY_ENTITY[activeKey]}
+              readOnly={readOnly}
+              q={query}
+              tr={tr}
+              onMove={(recordId, targetValue) => {
+                /* Drag&Drop laeuft durch den normalen Aenderungspfad:
+                   dieselbe mutate-Funktion wie das Formular, also landet
+                   die Bewegung im Undo/Redo-Stapel und im
+                   Aenderungsprotokoll. Read-only bleibt aussen vor. */
+                if (readOnly) return
+                const cfg = BOARD_CONFIG_BY_ENTITY[activeKey]
+                if (!cfg) return
+                const next = moveRecordInBoard(records, recordId, cfg.columnField, targetValue, schema)
+                if (next === records) return
+                mutate(next)
+              }}
+            />
           ) : (
             <div class="table-wrap">
               <table>
