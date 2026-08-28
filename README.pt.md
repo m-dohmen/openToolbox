@@ -66,6 +66,9 @@ larguras em CSS e o anel é um único círculo SVG. As duas visões imprimem com
 - **Painéis e folha de estilo para impressão**, porque análise costuma terminar num slide ou num anexo.
 - **Um widget de prazos no painel**, ativado com um único campo do esquema — atrasados, esta semana,
   próximos 30 dias — agregado entre todas as entidades que o declararem.
+- **Um quadro Kanban por entidade**, ativado com uma declaração `view.board` no esquema — os cartões
+  movem-se entre colunas com mouse, toque ou teclado, e cada movimento passa pelo mesmo caminho de
+  gravação do formulário, aparecendo tanto no Desfazer/Refazer quanto no registro de alterações.
 - **Um registro de alterações**, preenchido a cada gravação com data, versão e o que mudou.
 - **Prompts de exemplo embutidos**, para que quem receber o arquivo consiga mandar alterá-lo sem ter
   lido esta página.
