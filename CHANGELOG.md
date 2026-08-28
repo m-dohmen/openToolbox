@@ -92,6 +92,42 @@ Release notes for each version live on GitHub:
   the `view.board` activation snippet, the school-trip example, the
   keyboard and touch paths and the read-only banner
   ([`m-dohmen/openToolbox.wiki@f6bc17e`](https://github.com/m-dohmen/openToolbox.wiki/commit/f6bc17e)).
+- `chart`-Block in the dashboard export next to the existing `tiles`,
+  declared as `{ type: 'chart', kind: 'bar' | 'donut' | 'line', ... }`.
+  `validateChart` surfaces malformed declarations as an objection tile in
+  the grid instead of silently rendering nothing
+  ([#81](https://github.com/m-dohmen/openToolbox/pull/81)).
+- New inline-SVG chart renderer in `src/lib/charts.js` (229 lines) replaces
+  the previous CSS bars and single SVG ring with one consistent renderer;
+  `line` aggregates per month (`count` or `sum(field)`) and skips empty
+  months instead of overdrawing, and the `sanitizeSvg` contract is
+  enforced so no `script` / `on*` / external URL leaks into the renderer
+  output ([#81](https://github.com/m-dohmen/openToolbox/pull/81)).
+- `src/dashboard.jsx` (+234/-22) wires the renderer into the dashboard
+  grid; the accent colour and both themes run without manual intervention
+  and the print stylesheet switches to black-and-white hatching
+  ([#81](https://github.com/m-dohmen/openToolbox/pull/81)).
+- `test/charts.mjs` (229 lines, pure math — scaling, paths, aggregates,
+  validation) and `test/fixtures/charts.domain.js` cover the renderer
+  without a browser. `test/smoke.mjs` (+164/-3) integrates against the
+  fixture with a hand-counter check, and the previous `bars__fill`
+  assertion was switched to `style.fill` because the colour now lives in
+  the SVG `fill` attribute. `package.json` adds `node test/charts.mjs` to
+  the test chain ([#81](https://github.com/m-dohmen/openToolbox/pull/81)).
+- All seven demo HTML files (`docs/demo/index.html` and
+  `docs/demos/<demo>/index.html`) were rebuilt against the new bundle and
+  now render the chart toggle in the dashboard view
+  ([#81](https://github.com/m-dohmen/openToolbox/pull/81)).
+- `AGENTS.md` and `CLAUDE.md` gained an `Inline-SVG charts in the
+  dashboard`-section; the diff between the two remains byte-identical so
+  the CI guard keeps matching
+  ([#81](https://github.com/m-dohmen/openToolbox/pull/81)).
+- `README.md` and `README.de.md` carry a dashboard section that lists
+  `charts` next to `tiles`, names `kind: 'line'` as the fourth variant
+  and points at `validateChart` as the objection tile. `README.zh`,
+  `README.es`, `README.fr`, `README.ja` and `README.pt` each gained a
+  feature-list bullet for the chart block
+  ([#81](https://github.com/m-dohmen/openToolbox/pull/81)).
 
 ### Not included (consciously)
 
@@ -280,5 +316,6 @@ and stored in the payload.
 [#79]: https://github.com/m-dohmen/openToolbox/pull/79
 [#80]: https://github.com/m-dohmen/openToolbox/pull/80
 [#82]: https://github.com/m-dohmen/openToolbox/pull/82
+[#81]: https://github.com/m-dohmen/openToolbox/pull/81
 [#65]: https://github.com/m-dohmen/openToolbox/pull/65
 [#66]: https://github.com/m-dohmen/openToolbox/pull/66
