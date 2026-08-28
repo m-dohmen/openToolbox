@@ -171,7 +171,7 @@ fixture for the multi-entity test. Before writing one from scratch, open the clo
 | File | Shape worth stealing |
 | --- | --- |
 | `risk-register.domain.js` | The plainest single-entity domain. |
-| `portfolio.domain.js` | Two record types, a reference, money, a dashboard. |
+| `portfolio.domain.js` | Two record types, a reference, money, a dashboard with inline-SVG charts. |
 | `suppliers-certificates.domain.js` | Two record types, minimal — the reference mechanics alone. |
 | `ppwr-packaging.domain.js` | Computed fields that aggregate a *child* entity; rules that force a source for every estimate. |
 | `gdpr-processing.domain.js` | Almost no numbers — enums and free text; built for `mode: 'intake'`. |

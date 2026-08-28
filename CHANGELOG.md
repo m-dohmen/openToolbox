@@ -128,6 +128,25 @@ Release notes for each version live on GitHub:
   `README.es`, `README.fr`, `README.ja` and `README.pt` each gained a
   feature-list bullet for the chart block
   ([#81](https://github.com/m-dohmen/openToolbox/pull/81)).
+- `portfolio`-Demo gained a `charts` block in its `DASHBOARD` export
+  next to the existing `tiles`, so the live build shows the renderer in
+  use without any new copy: a `bar` chart "Projects by risk" (count over
+  `risk`) and a `line` chart "Projects landing by month" (count over
+  `projects.end`) — both backed by the seed data, neither typed by hand
+  ([#85](https://github.com/m-dohmen/openToolbox/pull/85)).
+- `docs/demo/index.html` and `docs/demos/portfolio/index.html` were
+  rebuilt against the new bundle and now render the chart row in the
+  portfolio dashboard; `npm run build:demo` stays diff-free across
+  consecutive runs so the gallery does not need a rebuild on every
+  unrelated change ([#85](https://github.com/m-dohmen/openToolbox/pull/85)).
+- New screenshot `docs/screenshots/portfolio-charts.png` shows the chart
+  row in the portfolio dashboard — bars and line in one clip — alongside
+  the existing gallery ([#85](https://github.com/m-dohmen/openToolbox/pull/85)).
+- Targeted `scripts/screenshots-portfolio-charts.mjs` regenerates the
+  portfolio-charts screenshot without touching the rest of the gallery,
+  mirroring the precedent `scripts/screenshots-school-trip-board.mjs`
+  set in 0.17.0 and `scripts/screenshots-report.mjs` set in 0.16.0
+  ([#85](https://github.com/m-dohmen/openToolbox/pull/85)).
 
 ### Not included (consciously)
 
