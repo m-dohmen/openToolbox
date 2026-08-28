@@ -71,6 +71,12 @@ Three things to raise yourself, because users rarely ask for them and all three 
   overview numbers first — how many records, what they weigh in total, what averages out. See
   `AGENTS.md` for the closed catalog; like the due-date widget, a declaration alone unlocks the
   dashboard view.
+- **Dashboard charts** (`DASHBOARD.charts`) whenever the steering-committee view needs more than
+  numbers — a bar/donut over an enum, or a monthly line over a date field. The `DASHBOARD` export
+  can carry a `charts` array alongside `tiles` (the old kinds keep working). The renderer lives in
+  `src/lib/charts.js`; the field schema (the three `kind`s, the closed `aggregate` catalog, the
+  rejection tiles) is documented in `AGENTS.md` under "Inline-SVG charts in the dashboard" — do
+  not duplicate it here.
 - **Saved views** (`views` on the schema) whenever the same combination of search, filters and
   sort gets rebuilt by hand every time the file opens — "my open items", "overdue this quarter".
   They ship as a dropdown at the list head; recipients capture their own under the same names,
