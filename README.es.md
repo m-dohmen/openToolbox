@@ -67,6 +67,9 @@ son anchuras CSS y el anillo es un único círculo SVG. Ambas vistas se imprimen
 - **Paneles e impresión**, porque el análisis suele acabar en una diapositiva o en un anexo.
 - **Un widget de fechas límite en el panel**, activado con un solo campo del esquema — vencidas,
   esta semana, próximos 30 días — agregado entre todas las entidades que lo declaran.
+- **Un tablero Kanban por entidad**, activado con una declaración `view.board` en el esquema — las
+  tarjetas se mueven entre columnas con ratón, toque o teclado, y cada movimiento pasa por el mismo
+  camino de escritura que el formulario, de modo que aparece en el historial y en Deshacer/Rehacer.
 - **Un registro de cambios**, rellenado en cada guardado con fecha, versión y qué cambió.
 - **Prompts de ejemplo incrustados**, para que quien reciba el archivo pueda hacerlo modificar sin
   haber leído esta página.

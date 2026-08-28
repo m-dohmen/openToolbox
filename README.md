@@ -121,6 +121,10 @@ dashboard · CSV import · change log · version numbers.**
   appendix — see [Dashboard](#dashboard).
 - **A due-date widget on the dashboard**, opt in with one schema field — overdue, this week, next
   30 days, across every entity that declares it — see [Due dates](#due-dates).
+- **A Kanban board per entity**, opt in with a `view.board` declaration on the schema — cards move
+  between columns with the mouse, touch or keyboard, and every move lands in [Undo/Redo](#undo-and-redo)
+  and in the [change log](#version-numbers-and-change-log) through the same write path the form uses
+  — see [Kanban board](#kanban-board).
 - **A change log**, filled on every save with date, version, your note and the field-level changes
   worked out automatically — see [Version numbers and change log](#version-numbers-and-change-log).
 - **Attachments with a visible size budget**, because a tool you cannot email is not this tool —
@@ -368,6 +372,23 @@ export const SCHEMA = {
 from the schema's `values`. Records with an empty or out-of-list value land in an "Unassigned"
 reservoir at the right — a card that belongs to no column would otherwise be invisible. Read-only
 copies (`settings.readOnly: true`) still render the board, but disable dragging.
+
+The list view stays the default. A small toggle at the head of the list switches between **List** and
+**Board**; without a `view.board` declaration only **List** is offered. The school-trip demo
+([`docs/demos/school-trip/`](docs/demos/school-trip/)) is the worked example — its
+`view.board.columnField: 'consent'` turns the three consent states into columns, and `cardFields:
+['guardian', 'phone', 'payment']` shows the contact path and the payment state under each pupil's
+name. A card drag from one column to another goes through the same `mutate` path the edit form uses,
+so the move lands in [Undo/Redo](#undo-and-redo) and in the [change log](#version-numbers-and-change-log)
+exactly like a form edit would. Keyboard: focus a card, arrow keys move the focus between columns,
+Enter commits the move, Escape aborts it — the pending move lives in the session, not the file, so
+an aborted move is not an undo. Touch uses the same HTML5 drag-and-drop path the desktop uses, which
+means iPad works without an extra dependency.
+
+![List and board side by side](docs/screenshots/school-trip-board-table.png)
+
+Read-only copies (`settings.readOnly: true`) keep showing the board but disable dragging — the
+gesture would just be a write surface pretending otherwise.
 
 ## Guided entry
 

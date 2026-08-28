@@ -127,6 +127,11 @@ Dashboard · CSV-Import · Änderungsprotokoll · Versionsnummern.**
 - **Ein Fälligkeiten-Widget im Dashboard**, mit einem Schema-Feld angeschaltet — überfällig, diese
   Woche, nächste 30 Tage, über alle Entitäten hinweg, die es deklarieren — siehe
   [Fälligkeiten](#fälligkeiten).
+- **Eine Kanban-Ansicht je Entität**, mit einer `view.board`-Deklaration im Schema aktiviert —
+  Karten wandern per Maus, Touch oder Tastatur zwischen den Spalten, jede Bewegung läuft über
+  denselben Schreibpfad wie das Formular und landet im
+  [Undo/Redo-Stapel](#rückgängig-und-wiederholen) und im
+  [Änderungsprotokoll](#versionen-und-änderungsprotokoll) — siehe [Kanban-Ansicht](#kanban-ansicht).
 - **Ein Änderungsprotokoll**, bei jedem Speichern gefüllt mit Datum, Version und dem, was sich
   geändert hat — siehe [Versionen und Änderungsprotokoll](#versionen-und-änderungsprotokoll).
 - **Beispiel-Prompts in der Datei**, damit der Empfänger sie ändern lassen kann, ohne diese Datei
@@ -611,6 +616,25 @@ export const SCHEMA = {
 Schema. Datensätze mit leerem oder ungültigem Wert landen in einer kleinen Reserve rechts —
 eine Karte, die zu keiner Spalte gehört, wäre sonst unsichtbar. Berichtskopien (`settings.readOnly:
 true`) zeigen das Brett weiterhin, schalten Drag&Drop aber ab.
+
+Die Listenansicht bleibt der Standard. Ein kleiner Umschalter am Kopf der Liste wechselt zwischen
+**Liste** und **Board**; ohne `view.board`-Deklaration gibt es nur **Liste**. Die Klassenfahrt-Demo
+([`docs/demos/school-trip/`](docs/demos/school-trip/)) ist das durchgespielte Beispiel — ihr
+`view.board.columnField: 'consent'` macht die drei Einverständniszustände zu Spalten, `cardFields:
+['guardian', 'phone', 'payment']` zeigt den Erreichbarkeitsweg und den Zahlungsstand unter dem
+Namen jedes Kindes. Eine Karten-Bewegung von einer Spalte in die andere läuft über denselben
+`mutate`-Pfad wie eine Formular-Änderung, also landet sie im
+[Undo/Redo-Stapel](#rückgängig-und-wiederholen) und im
+[Änderungsprotokoll](#versionen-und-änderungsprotokoll), genau wie eine Formular-Änderung. Tastatur:
+Karte fokussieren, Pfeiltasten wechseln den Fokus zwischen den Spalten, Enter bestätigt die
+Bewegung, Escape bricht sie ab — die offene Bewegung lebt in der Sitzung, nicht in der Datei, ein
+Abbruch ist also kein Undo. Touch nutzt denselben HTML5-Drag-and-Drop-Pfad wie der Desktop, das
+heißt iPad funktioniert ohne zusätzliche Abhängigkeit.
+
+![Liste und Brett nebeneinander](docs/screenshots/school-trip-board-table.png)
+
+Berichtskopien (`settings.readOnly: true`) zeigen das Brett weiter, schalten Drag&Drop aber ab —
+die Geste wäre sonst eine Schreibfläche, die so tut, als wäre sie keine.
 
 ## Dashboard
 

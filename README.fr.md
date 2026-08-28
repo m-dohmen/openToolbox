@@ -67,6 +67,10 @@ s'impriment en un PDF propre.
 - **Plusieurs types d'enregistrements et leurs relations**, quand un seul ne suffit pas.
 - **Un widget d'échéances dans le tableau de bord**, activé par un seul champ du schéma — en retard,
   cette semaine, les 30 prochains jours — agrégé sur toutes les entités qui le déclarent.
+- **Un tableau Kanban par entité**, activé par une déclaration `view.board` dans le schéma — les
+  cartes se déplacent entre colonnes à la souris, au toucher ou au clavier, et chaque déplacement
+  passe par le même chemin d'écriture que le formulaire, ce qui le fait apparaître dans
+  Annuler/Rétablir et dans le journal des modifications.
 - **Tableaux de bord et feuille de style d'impression**, parce qu'une analyse finit généralement en
   diapositive ou en annexe.
 - **Un journal des modifications**, alimenté à chaque enregistrement : date, version et ce qui a
