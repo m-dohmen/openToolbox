@@ -64,6 +64,24 @@ export const SCHEMA = {
       sort: { key: 'open', dir: -1 },
     },
   ],
+  /**
+   * Optionale Kanban-Sicht. Schaltet den Reiter „Board" neben „Liste" und
+   * „Dashboard" frei — Spalten folgen dem Einverständnis (ausstehend → liegt
+   * vor → verweigert). Wer morgens durch die Spalten zieht, sieht sofort, bei
+   * wem noch ein Zettel fehlt; ein Drag nach „liegt vor" trägt sich wie eine
+   * Formular-Änderung ins Änderungsprotokoll ein.
+   *
+   * Drei Kartenfelder reichen: wer unterschrieben hat (guardian), wie man
+   * diese Person erreicht (phone) und wo das Geld steht (payment). Schwimmen
+   * und Allergie sind hier zweitrangig — sie stehen in der Karten-Detailseite
+   * und in der Tabelle, ohne den Board zu überladen.
+   */
+  view: {
+    board: {
+      columnField: 'consent',
+      cardFields: ['guardian', 'phone', 'payment'],
+    },
+  },
   fields: [
     { key: 'name', label: 'Kind', type: 'text', required: true },
     { key: 'guardian', label: 'Erziehungsberechtigte', short: 'Eltern', type: 'text' },

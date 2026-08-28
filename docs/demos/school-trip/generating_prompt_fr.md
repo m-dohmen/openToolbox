@@ -11,7 +11,7 @@ Utilise le modèle **openToolbox** : https://github.com/m-dohmen/openToolbox. Li
 
 ## Le problème traité
 
-Un voyage scolaire approche. 28 autorisations partent, 19 reviennent, trois sans signature, une avec une allergie notée au dos. Deux jours avant le départ, l’argent de quatre familles manque encore. L’enseignante tient cela dans un tableau qu’elle n’a pas le droit de partager, parce qu’il contient des allergies et le niveau de natation. Presque rien ici n’est un nombre : ce sont des états, et la seule somme qui compte est le reste dû. Les questions du lundi matin (« qui n’a pas rendu l’autorisation ? », « qui n’a pas payé ? ») sont les mêmes chaque semaine — elles ont leur place en tête de liste comme vues enregistrées, et non reconstruites à la main à chaque ouverture.
+Un voyage scolaire approche. 28 autorisations partent, 19 reviennent, trois sans signature, une avec une allergie notée au dos. Deux jours avant le départ, l’argent de quatre familles manque encore. L’enseignante tient cela dans un tableau qu’elle n’a pas le droit de partager, parce qu’il contient des allergies et le niveau de natation. Presque rien ici n’est un nombre : ce sont des états, et la seule somme qui compte est le reste dû. Les questions du lundi matin (« qui n’a pas rendu l’autorisation ? », « qui n’a pas payé ? ») sont les mêmes chaque semaine — elles ont leur place en tête de liste comme vues enregistrées, et non reconstruites à la main à chaque ouverture. Le parcours du consentement est lui-même un petit Kanban : en attente → reçu → refusé, balayé de gauche à droite au fil des retours.
 
 ## Ce qui doit exister à la fin
 
@@ -83,6 +83,16 @@ Combinaisons nommées de recherche, filtres et tri, proposées par le menu déro
 - proposition : **Zettel ausstehend** — Einverständnis = ausstehend; sort: `name ↑`
 - proposition : **Geld offen** — Zahlung = offen; sort: `open ↓`
 
+**Tableau**
+
+Un Kanban facultatif par entité, ouvert depuis la barre d’onglets à côté de *Liste* et *Tableau de bord*. Sans cette déclaration, la vue n’existe pas — même posture que pour le tableau de bord et la saisie guidée : c’est la déclaration dans le schéma qui l’active.
+
+`columnField` (clé d’un champ enum existant — ses `values` définissent les colonnes dans cet ordre, la première valeur à gauche), `cardFields` (jusqu’à trois autres clés de champ affichées sous le titre de chaque carte ; omis, prend les trois premiers champs qui ne sont ni titre, ni colonne, ni calculé, ni pièce jointe) et `limit` (plafond de cartes par colonne, par défaut `50`). Faire glisser une carte vers une autre colonne passe par le même `mutate` que le formulaire — le mouvement entre dans la pile d’annulation et dans le journal des modifications. Les copies en lecture seule affichent le tableau sans glisser-déposer.
+
+- `columnField` — `consent` (Einverständnis); les colonnes viennent des `values` de l’enum, dans l’ordre déclaré.
+- `cardFields` — *Erziehungsberechtigte*, *Telefon für Notfälle*, *Zahlung*.
+- les enregistrements dont la valeur est vide ou n’est plus dans `values` aboutissent dans un petit réservoir « Non assignés » à droite.
+
 ## Tableau de bord
 
 Tuiles sur l’ensemble des enregistrements, pas sur la vue filtrée.
@@ -141,6 +151,10 @@ Rückseite. Zwei Tage vor Abfahrt fehlt das Geld von vier Familien.
   ausstehend", „Geld offen"), die morgens und vor jeder Überweisung dieselbe Tastaturabfolge
   ersparen. Eigene Sichten legt man in den Einstellungen an; eine davon als Start-Ansicht markiert
   öffnet die Datei immer in genau diesem Zustand.
+- **Kanban-Board** — der Reiter „Board" ordnet die Kinder nach Einverständnis (ausstehend, liegt
+  vor, verweigert). Eine Karte per Drag nach „liegt vor" verschieben trägt sich ins
+  Änderungsprotokoll ein und lässt sich mit Strg+Z zurücknehmen; die Tastatur übernehmen Pfeil-
+  und Eingabetaste.
 - **Regeln, die dem Alltag folgen** — wo Medizinisches steht, muss eine Telefonnummer daneben
   stehen.
 - **Der Grund, warum diese Datei verschlüsselt gehört**: hier stehen Gesundheitsangaben von

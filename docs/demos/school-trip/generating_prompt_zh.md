@@ -11,7 +11,7 @@
 
 ## 它解决的问题
 
-班级要出游了。发出去 28 张回执，收回 19 张，其中三张没签名，一张在背面写着过敏情况。出发前两天，还有四个家庭的钱没交。班主任把这些记在一张不能给别人看的表里 —— 因为里面写着过敏和会不会游泳。这里几乎没有什么是数字，全是状态；唯一要紧的求和，是还差多少钱。每个周一早上反复出现的问题（"谁的回执还没交？""谁还没付钱？"）每周都问一遍 —— 它们属于列表顶部的「保存视图」，而不是每次手动重新搭。
+班级要出游了。发出去 28 张回执，收回 19 张，其中三张没签名，一张在背面写着过敏情况。出发前两天，还有四个家庭的钱没交。班主任把这些记在一张不能给别人看的表里 —— 因为里面写着过敏和会不会游泳。这里几乎没有什么是数字，全是状态；唯一要紧的求和，是还差多少钱。每个周一早上反复出现的问题（"谁的回执还没交？""谁还没付钱？"）每周都问一遍 —— 它们属于列表顶部的「保存视图」，而不是每次手动重新搭。而「同意状态」本身就是一个小型 Kanban：待定 → 已收 → 拒绝 —— 回执一到，从左扫到右。
 
 ## 最终必须交付什么
 
@@ -83,6 +83,16 @@
 - 预设：**Zettel ausstehend** — Einverständnis = ausstehend; sort: `name ↑`
 - 预设：**Geld offen** — Zahlung = offen; sort: `open ↓`
 
+**看板**
+
+每个实体可选的看板视图，通过 *列表* 与 *仪表板* 旁边的标签栏打开。没有此声明时视图根本不存在——与仪表板和引导式录入同样的态度：由 schema 中的声明启用它。
+
+`columnField`（已存在的 enum 字段键——其 `values` 按声明顺序决定列，第一个值位于最左）、`cardFields`（最多三个其它字段键，显示在每张卡片标题下方；省略时取前三个非标题、非列、非计算、非附件字段）、`limit`（每列卡片上限，默认 `50`）。把一张卡片拖到另一列走的是表单同样的 `mutate` 路径——变更进入撤销栈和变更日志。只读副本上的看板禁用拖动。
+
+- `columnField` — `consent` (Einverständnis); 列由 enum 的 `values` 决定，按声明顺序排列.
+- `cardFields` — *Erziehungsberechtigte*, *Telefon für Notfälle*, *Zahlung*.
+- 字段值为空或已不在 `values` 中的记录，落到右侧一个小的「未分配」容器里.
+
 ## 仪表板
 
 统计整个记录集，而不是筛选后的视图。
@@ -141,6 +151,10 @@ Rückseite. Zwei Tage vor Abfahrt fehlt das Geld von vier Familien.
   ausstehend", „Geld offen"), die morgens und vor jeder Überweisung dieselbe Tastaturabfolge
   ersparen. Eigene Sichten legt man in den Einstellungen an; eine davon als Start-Ansicht markiert
   öffnet die Datei immer in genau diesem Zustand.
+- **Kanban-Board** — der Reiter „Board" ordnet die Kinder nach Einverständnis (ausstehend, liegt
+  vor, verweigert). Eine Karte per Drag nach „liegt vor" verschieben trägt sich ins
+  Änderungsprotokoll ein und lässt sich mit Strg+Z zurücknehmen; die Tastatur übernehmen Pfeil-
+  und Eingabetaste.
 - **Regeln, die dem Alltag folgen** — wo Medizinisches steht, muss eine Telefonnummer daneben
   stehen.
 - **Der Grund, warum diese Datei verschlüsselt gehört**: hier stehen Gesundheitsangaben von
