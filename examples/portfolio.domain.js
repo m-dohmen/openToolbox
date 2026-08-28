@@ -288,6 +288,31 @@ export const DASHBOARD = {
     { type: 'bar', entity: 'projects', groupBy: 'phase', measure: 'budget', label: 'Budget by phase' },
     { type: 'donut', entity: 'milestones', groupBy: 'status', label: 'Milestones by status' },
   ],
+  /**
+   * Diagramme aus dem neuen `chart`-Block. Zeigen dieselben Daten aus einer
+   * anderen Blickrichtung: die Verteilung ueber das Risiko (bisher sah man
+   * Phase und Budget, nicht die Risikolage) und der Verlauf der geplanten
+   * Projektenden im Jahr. Beide Aggregationen lesen direkt aus den Datensaetzen
+   * - die Zaehlung und die Summe werden nicht gepflegt.
+   */
+  charts: [
+    {
+      type: 'chart',
+      kind: 'bar',
+      entity: 'projects',
+      groupBy: 'risk',
+      measure: 'count',
+      label: 'Projects by risk',
+    },
+    {
+      type: 'chart',
+      kind: 'line',
+      entity: 'projects',
+      dateField: 'end',
+      aggregate: 'count',
+      label: 'Projects landing by month',
+    },
+  ],
 }
 
 /**
