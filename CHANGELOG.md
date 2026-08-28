@@ -9,7 +9,131 @@ Release notes for each version live on GitHub:
 
 ## [Unreleased]
 
-Nothing yet.
+### Added
+
+- `view.board` schema declaration adds a Kanban board per entity next to the
+  existing list and dashboard views. `view.board.columnField` points at an
+  enum field that becomes the columns (in the order the schema declares the
+  values); `view.board.cardFields` lists up to three additional fields per
+  card beyond the title; `view.board.limit` caps each column with a banner
+  showing the actual count, default 50 if unset
+  ([#79](https://github.com/m-dohmen/openToolbox/pull/79)).
+- Dragging a card between columns writes through the same `mutate` path the
+  form uses, so the move lands in the Undo/Redo stack and the change log with
+  one entry — the board does not invent a write surface
+  ([#79](https://github.com/m-dohmen/openToolbox/pull/79)).
+- Keyboard end-to-end: a focused card answers Left/Right to step between
+  columns, Enter to commit, Escape to abort. The pending move lives in the
+  session, never in the data block — an Escape is a no-op for Undo because
+  nothing changed yet
+  ([#79](https://github.com/m-dohmen/openToolbox/pull/79)).
+- Touch uses the HTML5 drag-and-drop API, native on iPadOS 15.4+, so the same
+  keyboard arrows cover an attached iPad keyboard and no second entry point
+  is needed ([#79](https://github.com/m-dohmen/openToolbox/pull/79)).
+- Read-only copies render the board but disable dragging — the same
+  `settings.readOnly` flag the rest of the UI watches
+  ([#79](https://github.com/m-dohmen/openToolbox/pull/79)).
+- 200+ cards in a single column do not silently clip — a banner names the
+  per-column limit and the actual count, with the first `limit` cards shown,
+  and the rest stay reachable via the table view
+  ([#79](https://github.com/m-dohmen/openToolbox/pull/79)).
+- Records whose value is empty or no longer in `values` land in an
+  "Unassigned" reservoir at the right of the board; a card that belongs to no
+  column stays findable instead of being silently re-categorised by the first
+  column ([#79](https://github.com/m-dohmen/openToolbox/pull/79)).
+- Global search and field filters act on the board the same way they act on
+  the table, so a filter the recipient set up keeps working when they switch
+  tabs ([#79](https://github.com/m-dohmen/openToolbox/pull/79)).
+- `AGENTS.md` and `CLAUDE.md` gained a `view.board` section; the diff between
+  the two remains byte-identical so the CI guard keeps matching
+  ([#79](https://github.com/m-dohmen/openToolbox/pull/79)).
+- `README.md` and `README.de.md` carry a Kanban-board section with a
+  schema example and a screenshot of the toggle, so a reader of either long
+  README meets the new view mode without leaving the document
+  ([#79](https://github.com/m-dohmen/openToolbox/pull/79)).
+- School-trip demo activates the board with
+  `view.board.columnField: 'consent'` and `cardFields: ['guardian', 'phone',
+  'payment']`, so dragging a pupil's consent state between columns is the
+  visible change in the live demo
+  ([#80](https://github.com/m-dohmen/openToolbox/pull/80)).
+- Three new screenshots `docs/screenshots/school-trip-table.png`,
+  `school-trip-board.png`, `school-trip-board-table.png` show the toggle in
+  both states and both side-by-side
+  ([#80](https://github.com/m-dohmen/openToolbox/pull/80)).
+- New `test/board.mjs` covers `validateBoardConfig`, `groupByColumn`,
+  `moveRecordInBoard` (including the `coerceField` round-trip),
+  `applyColumnLimit`, the audit-trail-andockung and the no-op path
+  ([#79](https://github.com/m-dohmen/openToolbox/pull/79)).
+- The seven demo build prompts gain a "Board" section in every shipped
+  language, so a reader in `de`/`en`/`es`/`fr`/`ja`/`pt`/`zh` meets the
+  feature at the same depth
+  ([#80](https://github.com/m-dohmen/openToolbox/pull/80)).
+- Targeted `scripts/screenshots-school-trip-board.mjs` regenerates the three
+  board screenshots without touching the rest of the gallery, mirroring the
+  precedent `scripts/screenshots-report.mjs` set in 0.16.0
+  ([#80](https://github.com/m-dohmen/openToolbox/pull/80)).
+- `README.zh.md` feature list carries a `view.board` entry, so a reader of
+  the Chinese short README meets the Kanban board at the same depth as the
+  English README
+  ([#82](https://github.com/m-dohmen/openToolbox/pull/82)).
+- `README.es.md` feature list carries a `view.board` entry, in the same
+  depth as the English README
+  ([#82](https://github.com/m-dohmen/openToolbox/pull/82)).
+- `README.fr.md` feature list carries a `view.board` entry, in the same
+  depth as the English README
+  ([#82](https://github.com/m-dohmen/openToolbox/pull/82)).
+- `README.ja.md` feature list carries a `view.board` entry, in the same
+  depth as the English README
+  ([#82](https://github.com/m-dohmen/openToolbox/pull/82)).
+- `README.pt.md` feature list carries a `view.board` entry, in the same
+  depth as the English README
+  ([#82](https://github.com/m-dohmen/openToolbox/pull/82)).
+- New wiki page `Kanban-Board.md` in the `openToolbox.wiki` repo documents
+  the `view.board` activation snippet, the school-trip example, the
+  keyboard and touch paths and the read-only banner
+  ([`m-dohmen/openToolbox.wiki@f6bc17e`](https://github.com/m-dohmen/openToolbox.wiki/commit/f6bc17e)).
+- `chart`-Block in the dashboard export next to the existing `tiles`,
+  declared as `{ type: 'chart', kind: 'bar' | 'donut' | 'line', ... }`.
+  `validateChart` surfaces malformed declarations as an objection tile in
+  the grid instead of silently rendering nothing
+  ([#81](https://github.com/m-dohmen/openToolbox/pull/81)).
+- New inline-SVG chart renderer in `src/lib/charts.js` (229 lines) replaces
+  the previous CSS bars and single SVG ring with one consistent renderer;
+  `line` aggregates per month (`count` or `sum(field)`) and skips empty
+  months instead of overdrawing, and the `sanitizeSvg` contract is
+  enforced so no `script` / `on*` / external URL leaks into the renderer
+  output ([#81](https://github.com/m-dohmen/openToolbox/pull/81)).
+- `src/dashboard.jsx` (+234/-22) wires the renderer into the dashboard
+  grid; the accent colour and both themes run without manual intervention
+  and the print stylesheet switches to black-and-white hatching
+  ([#81](https://github.com/m-dohmen/openToolbox/pull/81)).
+- `test/charts.mjs` (229 lines, pure math — scaling, paths, aggregates,
+  validation) and `test/fixtures/charts.domain.js` cover the renderer
+  without a browser. `test/smoke.mjs` (+164/-3) integrates against the
+  fixture with a hand-counter check, and the previous `bars__fill`
+  assertion was switched to `style.fill` because the colour now lives in
+  the SVG `fill` attribute. `package.json` adds `node test/charts.mjs` to
+  the test chain ([#81](https://github.com/m-dohmen/openToolbox/pull/81)).
+- All seven demo HTML files (`docs/demo/index.html` and
+  `docs/demos/<demo>/index.html`) were rebuilt against the new bundle and
+  now render the chart toggle in the dashboard view
+  ([#81](https://github.com/m-dohmen/openToolbox/pull/81)).
+- `AGENTS.md` and `CLAUDE.md` gained an `Inline-SVG charts in the
+  dashboard`-section; the diff between the two remains byte-identical so
+  the CI guard keeps matching
+  ([#81](https://github.com/m-dohmen/openToolbox/pull/81)).
+- `README.md` and `README.de.md` carry a dashboard section that lists
+  `charts` next to `tiles`, names `kind: 'line'` as the fourth variant
+  and points at `validateChart` as the objection tile. `README.zh`,
+  `README.es`, `README.fr`, `README.ja` and `README.pt` each gained a
+  feature-list bullet for the chart block
+  ([#81](https://github.com/m-dohmen/openToolbox/pull/81)).
+
+### Not included (consciously)
+
+- WIP-limits, swimlanes, multi-select inside the board and per-card colours
+  are out of scope at this version; the schema declares only the four fields
+  the board needs and no more.
 
 ## [0.16.1] — 2026-08-27
 
@@ -189,5 +313,9 @@ and stored in the payload.
 [0.15.0]: https://github.com/m-dohmen/openToolbox/releases/tag/v0.15.0
 [0.14.0]: https://github.com/m-dohmen/openToolbox/releases/tag/v0.14.0
 [Unreleased]: https://github.com/m-dohmen/openToolbox/compare/v0.16.1...HEAD
+[#79]: https://github.com/m-dohmen/openToolbox/pull/79
+[#80]: https://github.com/m-dohmen/openToolbox/pull/80
+[#82]: https://github.com/m-dohmen/openToolbox/pull/82
+[#81]: https://github.com/m-dohmen/openToolbox/pull/81
 [#65]: https://github.com/m-dohmen/openToolbox/pull/65
 [#66]: https://github.com/m-dohmen/openToolbox/pull/66
