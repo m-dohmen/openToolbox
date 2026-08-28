@@ -9,6 +9,15 @@ Release notes for each version live on GitHub:
 
 ## [Unreleased]
 
+## [0.17.0] — 2026-08-28
+
+Minor release: two additive features land at once — a Kanban board per
+entity (the `view.board` schema field, the `src/board.jsx` renderer, the
+`src/lib/board.js` Bausteine) and inline-SVG dashboard charts (the `chart`
+block in the dashboard export, the `src/lib/charts.js` renderer). Both
+features are opt-in and rückwärtskompatibel: a `domain.js` without either
+declaration renders exactly as before.
+
 ### Added
 
 - `view.board` schema declaration adds a Kanban board per entity next to the
@@ -153,6 +162,8 @@ Release notes for each version live on GitHub:
 - WIP-limits, swimlanes, multi-select inside the board and per-card colours
   are out of scope at this version; the schema declares only the four fields
   the board needs and no more.
+
+[0.17.0]: https://github.com/m-dohmen/openToolbox/releases/tag/v0.17.0
 
 ## [0.16.1] — 2026-08-27
 
@@ -331,10 +342,11 @@ and stored in the payload.
 
 [0.15.0]: https://github.com/m-dohmen/openToolbox/releases/tag/v0.15.0
 [0.14.0]: https://github.com/m-dohmen/openToolbox/releases/tag/v0.14.0
-[Unreleased]: https://github.com/m-dohmen/openToolbox/compare/v0.16.1...HEAD
+[Unreleased]: https://github.com/m-dohmen/openToolbox/compare/v0.17.0...HEAD
 [#79]: https://github.com/m-dohmen/openToolbox/pull/79
 [#80]: https://github.com/m-dohmen/openToolbox/pull/80
 [#82]: https://github.com/m-dohmen/openToolbox/pull/82
 [#81]: https://github.com/m-dohmen/openToolbox/pull/81
+[#85]: https://github.com/m-dohmen/openToolbox/pull/85
 [#65]: https://github.com/m-dohmen/openToolbox/pull/65
 [#66]: https://github.com/m-dohmen/openToolbox/pull/66
