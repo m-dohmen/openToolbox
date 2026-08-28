@@ -107,6 +107,11 @@ larguras em CSS e o anel é um único círculo SVG. As duas visões imprimem com
   `count` (com filtro opcional), `sum(campo)` ou `avg(campo)` sobre campos numéricos; cálculo local
   na renderização, nada entra nos dados; um clique salta para a lista da entidade; declarações
   inválidas são rejeitadas com o motivo nomeado, não em silêncio.
+- **Gráficos SVG inline no painel** (barras, anel, linha) — o array `DASHBOARD.charts` com a forma
+  unificada `{ type: 'chart', kind: 'bar'|'donut'|'line' }`; `line` agrega por mês (`count` ou
+  `sum(campo)`) e pula meses vazios; tudo é SVG inline, sem biblioteca de gráficos, também funciona
+  offline; a folha de estilos de impressão muda para padrões em preto e branco; convive com os
+  cartões e com os temas claro e escuro.
 - **Campos calculados (`computed`).** Declare `compute: (record) => value` no esquema: o resultado
   é calculado e memorizado por registro a cada renderização, **nunca é gravado no arquivo** — uma
   derivação guardada fica desatualizada assim que uma das entradas muda, sem que ninguém perceba.
