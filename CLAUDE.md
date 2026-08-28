@@ -503,6 +503,55 @@ file is just a new entry in the merged set — there is no delete signal across 
 recipient that never used the view never saved it, and dropping a shared view on a single merge
 would surprise the other side.
 
+## Optional: a Kanban board per entity
+
+The list view is the default, but a tool whose records move between statuses - audit findings,
+work items, tickets - is often faster to read as a board. A `view.board` declaration on the schema
+adds the "Board" tab next to "List" and "Dashboard"; without it the view does not exist, the same
+posture as `DASHBOARD` and `WIZARD`:
+
+```js
+export const SCHEMA = {
+  // …
+  view: {
+    board: {
+      columnField: 'status',                 // enum field that becomes the columns
+      cardFields: ['owner', 'due', 'effort'], // optional: up to three fields on each card,
+                                               //   in addition to the title
+      limit: 50,                              // optional: per-column card limit, default 50
+    },
+  },
+}
+```
+
+`columnField` must point at an existing enum field - the columns take their values and their order
+straight from the schema's `values`, so `open` always sits at the left end regardless of where the
+records sit in the data block. Records whose value is empty or no longer in `values` land in a
+small "Unassigned" reservoir at the right; a card that belongs to no column would otherwise be
+unfindable, and pretending the first column catches them would silently mis-categorise.
+
+`cardFields` defaults to the first three non-computed, non-attachment, non-title, non-column
+fields in the schema. Computed fields render via the same `fieldValue` path as the table; date
+fields render through `entity.formatDate`; enum values get the same pill styling as the table. A
+record opened from a card still uses the regular record drawer - the board does not invent a new
+edit surface, it just offers another way to set one field.
+
+A drag from one column to another sets the enum field through the normal change path: the same
+`mutate` function the form uses, which means the change lands in the Undo/Redo stack and in the
+change log, exactly as a form edit would. Read-only copies render the board but disable dragging -
+the same `settings.readOnly` flag the rest of the UI watches.
+
+Keyboard works end-to-end: a focused card responds to Left/Right to step between columns, Enter
+to commit the move, Escape to abort it. The pending move lives in the session, not the data block
+- an Escape is a no-op for Undo because nothing changed yet. 200+ cards in a single column are
+not silently clipped: a banner appears above the column naming the limit and the actual count, and
+the column shows only the first `limit` cards. Anyone who wants the full set switches to the
+table.
+
+Touch uses the HTML5 drag-and-drop API, which works natively on iPadOS 15.4+; the same keyboard
+arrows cover an attached keyboard on iPad. There is no second entry point and no new dependency -
+the board ships inside the same single-file build.
+
 ## Optional second file
 
 `src/app.jsx` — only if the user needs something the schema cannot express: an extra sidebar
