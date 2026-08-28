@@ -57,9 +57,9 @@ neben dem Titel. Alles Sichtbare entsteht aus einer Datei, `src/domain.js`.
 
 ![Das Dashboard](docs/screenshots/dashboard.png)
 
-Das Dashboard berichtet über beide Datensatztypen hinweg. Gezeichnet ohne Diagrammbibliothek — die
-Balken sind CSS-Breiten, der Ring ist ein einzelner SVG-Kreis. Beide Ansichten drucken als sauberes
-PDF.
+Das Dashboard berichtet über beide Datensatztypen hinweg. Gezeichnet ohne Diagrammbibliothek — Balken,
+Ring und eine monatliche Zeitreihe sind Inline-SVG, alle aus `src/lib/charts.js`. Beide Ansichten
+drucken als sauberes PDF.
 
 <table>
 <tr>
@@ -648,18 +648,34 @@ export const DASHBOARD = {
     { type: 'donut', groupBy: 'phase' },
     { type: 'bar',   groupBy: 'phase', measure: 'budget', label: 'Budget je Phase' },
   ],
+  charts: [
+    { type: 'chart', kind: 'bar',   groupBy: 'phase',     measure: 'budget' },
+    { type: 'chart', kind: 'donut', groupBy: 'risk' },
+    { type: 'chart', kind: 'line',  dateField: 'due', aggregate: 'count', label: 'Punkte je Monat' },
+  ],
 }
 ```
 
 Drei Kacheltypen — `stat` (eine Zahl), `bar` (ein Balken je Aufzählungswert) und `donut` (dieselben
-Daten als Ring mit Legende). `measure` ist entweder `'count'` oder ein Feldschlüssel, dessen Werte
+Daten als Ring mit Legende) — plus ein vierter, `chart`, in einem eigenen `charts`-Array: `chart`
+akzeptiert dieselben `bar`- und `donut`-Formen wie die Kacheln und ergänzt `kind: 'line'` als
+monatliche Zeitreihe über ein Datumsfeld (`aggregate: 'count'` oder `'sum'` mit `field`). Die beiden
+Renderpfade laufen nebeneinander, damit ältere Beispiele mit `type: 'bar'` weiter funktionieren; neue
+Diagramme kommen in `charts`. `measure` ist entweder `'count'` oder ein Feldschlüssel, dessen Werte
 summiert werden; `filter(record)` schränkt vorher ein; bei mehreren Entitäten benennt eine Kachel
-über `entity`, worauf sie sich bezieht.
+oder ein Diagramm über `entity`, worauf sie sich bezieht. Fehlerhafte Deklarationen (unbekanntes
+Feld, fehlender `aggregate`, `sum` ohne numerisches `field`) erscheinen als eigene
+Beanstandungs-Kachel mit dem Grund im Klartext — eine still verschwundene Kachel fällt erst auf,
+wenn jemand die Zahl vermisst.
 
-Gezeichnet **ohne Diagrammbibliothek**: Die Balken sind CSS-Breiten, der Ring ist ein einzelner
-SVG-Kreis mit `stroke-dasharray`. Eine Diagrammbibliothek würde eine Datei, die per Mail durchkommen
-muss, um ein Vielfaches aufblähen — für drei Kacheltypen. Die Kategoriefarben leiten sich aus der
-Akzentfarbe des Werkzeugs ab, ein umgebrandetes Werkzeug färbt sein Dashboard also selbst um.
+Gezeichnet **ohne Diagrammbibliothek**: Jedes Diagramm ist reines Inline-SVG (Balken, Ringe, Linien,
+Pfade, Text) — eine Bibliothek würde eine Datei, die per Mail durchkommen muss, um ein Vielfaches
+aufblähen. Der Renderer selbst liegt als reine Funktion in `src/lib/charts.js` (`prepareBarRows`,
+`prepareDonutRows`, `prepareLinePoints`, `niceScale`, `linePath`, `validateChart`), die Mathematik
+ist ohne Browser prüfbar. Die Kategoriefarben leiten sich aus der Akzentfarbe des Werkzeugs ab, ein
+umgebrandetes Werkzeug färbt sein Dashboard also selbst um. Das Druck-Stylesheet schaltet Diagramme
+auf schwarzweiße Strichmuster, damit der Ausdruck auch auf einem Drucker ohne Farbprofil lesbar
+bleibt.
 
 ### Fälligkeiten
 
@@ -1105,7 +1121,7 @@ zurück — dreißig Korrekturen sind ein Verlaufsschritt, nicht dreißig.
 src/domain.js          die einzige Datei, die die meisten Werkzeuge ändern müssen
 src/app.jsx            Hülle, Liste, Formular, Speicherlogik
 src/settings.jsx       Einstellungsseite
-src/dashboard.jsx      Dashboard-Kacheln (stat, bar, donut) — keine Diagrammbibliothek
+src/dashboard.jsx      Dashboard-Kacheln und SVG-Diagramme (stat, bar, donut, chart/line) — keine Diagrammbibliothek
 src/hint.jsx           die Beispiel-Prompt-Kästen
 plugin/                installierbarer Skill für Claude Code und Codex (siehe plugin/README.md)
 examples/              acht vollständige Domänen, bereit zum Kopieren über src/domain.js

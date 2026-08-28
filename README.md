@@ -54,8 +54,9 @@ badge next to the title. Everything you see comes out of one file, `src/domain.j
 
 ![The dashboard](docs/screenshots/dashboard.png)
 
-The dashboard reports across both record types. Drawn without a charting library — the bars are CSS
-widths and the ring is one SVG circle. Both views print to a clean PDF.
+The dashboard reports across both record types. Drawn without a charting library — the bars, the
+ring and a monthly time series are all inline SVG produced by `src/lib/charts.js`. Both views print
+to a clean PDF.
 
 <table>
 <tr>
@@ -442,22 +443,37 @@ export const DASHBOARD = {
     { type: 'donut', groupBy: 'status' },
     { type: 'bar',   groupBy: 'area', measure: 'effort', label: 'Effort by area' },
   ],
+  charts: [
+    { type: 'chart', kind: 'bar',   groupBy: 'area',     measure: 'effort' },
+    { type: 'chart', kind: 'donut', groupBy: 'status' },
+    { type: 'chart', kind: 'line',  dateField: 'due', aggregate: 'count', label: 'Items per month' },
+  ],
 }
 ```
 
 Three tile types — `stat` (one number), `bar` (one bar per enum value) and `donut` (the same data
-as a ring with a legend). `measure` is either `'count'` or a field key whose values get summed;
-`filter(record)` narrows the set first; with `ENTITIES`, a tile can name the `entity` it reports on.
+as a ring with a legend) — plus a fourth, `chart`, in a sibling `charts` array: `chart` accepts the
+same `bar` and `donut` shapes the tiles do, and adds `kind: 'line'` for a monthly time series over a
+date field (`aggregate: 'count'` or `'sum'` with `field`). The two render paths coexist so an older
+example written with `type: 'bar'` keeps working; new diagrams go into `charts`. `measure` is either
+`'count'` or a field key whose values get summed; `filter(record)` narrows the set first; with
+`ENTITIES`, a tile or chart can name the `entity` it reports on. Invalid declarations
+(unknown field, missing `aggregate`, `sum` without a numeric `field`) appear as a rejection tile
+with the reason in plain text — a tile that quietly switches itself off is noticed only when somebody
+misses the number.
 
-Drawn **without a charting library**: the bars are CSS widths and the ring is a single SVG circle
-with `stroke-dasharray`. A charting library would multiply the size of a file that has to travel by
-email, for three tile types. Category colours are derived from the tool's own accent colour — so a
-rebranded tool recolours its dashboard by itself — and the shade direction flips in dark mode, or
-one end of the range would disappear into the background.
+Drawn **without a charting library**: every diagram is pure Inline-SVG (bars, rings, lines, paths,
+text) — one library would multiply the size of a file that has to travel by email. The renderer
+itself lives in `src/lib/charts.js` as pure functions (`prepareBarRows`, `prepareDonutRows`,
+`prepareLinePoints`, `niceScale`, `linePath`, `validateChart`), so the math is testable without a
+browser. Category colours are derived from the tool's own accent colour — so a rebranded tool
+recolours its dashboard by itself — and the shade direction flips in dark mode, or one end of the
+range would disappear into the background. The print stylesheet switches diagrams to black-and-white
+stroke patterns, so the PDF stays readable on a printer without a colour profile.
 
-Tiles report on their entity's **full** record set, not the filtered table view: a tile can belong
-to a different entity than the one currently open, and "sometimes filtered, sometimes not" would be
-unpredictable.
+Tiles and charts report on their entity's **full** record set, not the filtered table view: a tile
+or chart can belong to a different entity than the one currently open, and "sometimes filtered,
+sometimes not" would be unpredictable.
 
 ### Due dates
 
@@ -1040,7 +1056,7 @@ Ctrl+Z** — thirty corrections are one step of history, not thirty.
 src/domain.js          the only file most tools need to change
 src/app.jsx            shell, list, form, save logic
 src/settings.jsx       settings page
-src/dashboard.jsx      dashboard tiles (stat, bar, donut) — no charting library
+src/dashboard.jsx      dashboard tiles and SVG charts (stat, bar, donut, chart/line) — no charting library
 src/hint.jsx           the example-prompt boxes
 plugin/                installable skill for Claude Code and Codex (see plugin/README.md)
 examples/              eight complete domains, ready to copy over src/domain.js

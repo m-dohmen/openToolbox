@@ -11,7 +11,18 @@
  *       { type: 'bar',   groupBy: 'area', measure: 'effort' },
  *       { type: 'donut', groupBy: 'status' },
  *     ],
+ *     charts: [
+ *       { type: 'chart', kind: 'bar',   groupBy: 'area', measure: 'effort' },
+ *       { type: 'chart', kind: 'donut', groupBy: 'status' },
+ *       { type: 'chart', kind: 'line',  dateField: 'due', aggregate: 'count' },
+ *     ],
  *   }
+ *
+ * Der `chart`-Block ist die neue einheitliche Schreibweise (OPEN-103) und
+ * unterstuetzt drei kinds: 'bar', 'donut' (wie die alten Kacheln, jetzt als
+ * Inline-SVG) und 'line' (eine Zeitreihe ueber dateField je Monat, aggregate
+ * 'count' oder 'sum' mit 'field'). Inline-SVG, keine Bibliothek, keine
+ * externe Quelle - ein Diagramm rendert auch ohne Netz.
  *
  * Ohne Bibliothek gezeichnet: Balken sind CSS-Breiten, der Ring ist ein
  * SVG-Kreis mit stroke-dasharray. Eine Diagrammbibliothek würde die Einzeldatei
@@ -25,6 +36,14 @@
 import { fieldValue, findField } from './lib/entities.js'
 import { groupByDueDate, hasDueDates } from './lib/dueDate.js'
 import { formatMetricValue, metricValue, validateMetrics } from './lib/metrics.js'
+import {
+  prepareBarRows,
+  prepareDonutRows,
+  prepareLinePoints,
+  niceScale,
+  linePath,
+  validateChart,
+} from './lib/charts.js'
 import { shade } from './lib/color.js'
 import { Hint } from './hint.jsx'
 
@@ -57,7 +76,10 @@ function measureLabel(entity, measure, tr) {
   return findField(entity.schema, measure)?.label ?? measure
 }
 
-/** Gruppiert nach einem Feld und misst je Gruppe. Reihenfolge: Enum-Reihenfolge. */
+/** Legacy: Gruppierung hiess hier frueher groupRows. Die Arbeit liegt jetzt in
+   lib/charts.js (prepareBarRows / prepareDonutRows). Belassen, falls eine
+   aeltere Importstelle noch drauf verweist - der Aufruf wuerde sonst
+   scheitern, was hier niemand mehr tut. */
 function groupRows(entity, records, groupBy, measure) {
   const field = findField(entity.schema, groupBy)
   const keys = field?.values ?? [...new Set(records.map((r) => r[groupBy]))]
@@ -66,6 +88,7 @@ function groupRows(entity, records, groupBy, measure) {
     value: measureValue(entity, records.filter((r) => r[groupBy] === key), measure),
   }))
 }
+void groupRows
 
 /**
  * Kennzahl-Kachel aus `schema.metrics` - count, sum oder avg, gerechnet über
@@ -134,37 +157,77 @@ function StatTile({ entity, records, tile, tr }) {
 }
 
 function BarTile({ entity, records, tile, accent, dark, tr }) {
-  const rows = groupRows(entity, tile.filter ? records.filter(tile.filter) : records, tile.groupBy, tile.measure)
-  const max = Math.max(1, ...rows.map((r) => r.value))
-  const colors = categoryColors(accent, rows.length, dark)
+  const rows = prepareBarRows(
+    entity,
+    tile.filter ? records.filter(tile.filter) : records,
+    tile.groupBy,
+    tile.measure,
+  ).rows
+  const scale = niceScale(rows.reduce((m, r) => (r.value > m ? r.value : m), 0))
+  const colors = categoryColors(accent, Math.max(rows.length, 1), dark)
+  const W = 320
+  const trackX = 110
+  const trackW = 160
+  const rowH = 22
+  const padY = 8
+  const height = rows.length * rowH + padY * 2 + (scale.ticks.length > 1 ? 14 : 0)
 
   return (
     <div class="tile">
       <p class="tile__label">
         {tile.label ?? `${measureLabel(entity, tile.measure, tr)} · ${findField(entity.schema, tile.groupBy)?.label ?? tile.groupBy}`}
       </p>
-      <div class="bars">
-        {rows.map((row, i) => (
-          <div class="bars__row" key={row.key}>
-            <span class="bars__name" title={row.key}>{row.key}</span>
-            <span class="bars__track">
-              <span
-                class="bars__fill"
-                style={`width:${(row.value / max) * 100}%;background:${colors[i]}`}
-              />
-            </span>
-            <span class="bars__value">{row.value}</span>
-          </div>
-        ))}
-      </div>
+      {rows.length === 0 ? (
+        <p class="chart-empty">{tr('dashboard.chart.empty')}</p>
+      ) : (
+        <svg
+          class="bars"
+          viewBox={`0 0 ${W} ${height}`}
+          role="img"
+          aria-label={tile.label ?? tile.groupBy}
+          preserveAspectRatio="xMinYMin meet"
+        >
+          {rows.map((row, i) => {
+            const ratio = scale.max ? row.value / scale.max : 0
+            const w = ratio * trackW
+            const y = padY + i * rowH
+            return (
+              <g key={row.key ?? i} class="bars__row">
+                <title>{`${row.label}: ${row.value}`}</title>
+                <text class="bars__name" x={trackX - 8} y={y + rowH / 2 + 4} text-anchor="end">{row.label}</text>
+                <rect class="bars__track" x={trackX} y={y + 4} width={trackW} height={rowH - 8} rx="2" />
+                <rect class="bars__fill" x={trackX} y={y + 4} width={Math.max(w, row.value > 0 ? 1.5 : 0)} height={rowH - 8} rx="2" fill={colors[i]} />
+                <text class="bars__value" x={trackX + trackW + 8} y={y + rowH / 2 + 4}>{row.value}</text>
+              </g>
+            )
+          })}
+          {scale.ticks.length > 1 && (
+            <g class="bars__axis" transform={`translate(0, ${height - 14})`}>
+              {scale.ticks.map((t) => {
+                const x = trackX + (t / scale.max) * trackW
+                return (
+                  <g key={t}>
+                    <line x1={x} y1={0} x2={x} y2={4} stroke="currentColor" />
+                    <text x={x} y={12} text-anchor="middle">{t}</text>
+                  </g>
+                )
+              })}
+            </g>
+          )}
+        </svg>
+      )}
     </div>
   )
 }
 
 function DonutTile({ entity, records, tile, accent, dark, tr }) {
-  const rows = groupRows(entity, tile.filter ? records.filter(tile.filter) : records, tile.groupBy, tile.measure)
-  const total = rows.reduce((n, r) => n + r.value, 0)
-  const colors = categoryColors(accent, rows.length, dark)
+  const { rows, total } = prepareDonutRows(
+    entity,
+    tile.filter ? records.filter(tile.filter) : records,
+    tile.groupBy,
+    tile.measure,
+  )
+  const colors = categoryColors(accent, Math.max(rows.length, 1), dark)
 
   // Umfang 100 macht die Segmentlängen zu Prozentwerten - dasharray braucht
   // dann keine Umrechnung. r = 100 / (2π).
@@ -178,6 +241,7 @@ function DonutTile({ entity, records, tile, accent, dark, tr }) {
       </p>
       <div class="donut">
         <svg viewBox="0 0 42 42" role="img" aria-label={tile.label ?? tile.groupBy}>
+          <title>{`${total} ${entity.schema.plural}`}</title>
           <circle class="donut__track" cx="21" cy="21" r={R} fill="none" stroke-width="6" />
           {total > 0 &&
             rows.map((row, i) => {
@@ -202,12 +266,149 @@ function DonutTile({ entity, records, tile, accent, dark, tr }) {
           {rows.map((row, i) => (
             <li key={row.key}>
               <span class="legend__dot" style={`background:${colors[i]}`} />
-              <span class="legend__name">{row.key}</span>
+              <span class="legend__name">{row.label}</span>
               <span class="legend__value">{row.value}</span>
             </li>
           ))}
         </ul>
       </div>
+    </div>
+  )
+}
+
+/**
+ * Zeitreihe ueber ein Datumsfeld. aggregation 'count' zaehlt die Datensaetze
+ * je Monat, 'sum(field)' summiert ein numerisches Feld. Fehlende Monate
+ * bleiben als Luecke sichtbar - die Linie springt nicht ueber sie hinweg,
+ * ein Strichplatzhalter wuerde einen Monat mit Wert nur suggerieren.
+ *
+ * X-Achse: bis zu sechs Monatsmarkierungen, gleichmaessig verteilt - bei
+ * vielen Monaten wuerde eine Beschriftung jedes Monats die Skala unlesbar
+ * machen. Y-Achse: drei Ticks (0, Mitte, Maximum), derselbe nice-Scaler wie
+ * der Balken.
+ */
+function LineTile({ entity, records, tile, accent, dark, tr }) {
+  const { points, months, max } = prepareLinePoints(
+    entity,
+    tile.filter ? records.filter(tile.filter) : records,
+    tile.dateField,
+    tile.aggregate,
+    tile.field,
+  )
+  const scale = niceScale(max)
+  const W = 320
+  const H = 160
+  const padL = 28
+  const padR = 8
+  const padT = 8
+  const padB = 22
+  const x = (key) => {
+    if (months.length <= 1) return padL + (W - padL - padR) / 2
+    const i = months.indexOf(key)
+    return padL + (i / (months.length - 1)) * (W - padL - padR)
+  }
+  const y = (value) => padT + (1 - value / scale.max) * (H - padT - padB)
+  const path = linePath(points, x, y)
+  const xTickEvery = Math.max(1, Math.ceil(months.length / 6))
+
+  return (
+    <div class="tile">
+      <p class="tile__label">{tile.label ?? defaultLineLabel(entity, tile, tr)}</p>
+      {points.length === 0 ? (
+        <p class="chart-empty">{tr('dashboard.chart.empty')}</p>
+      ) : (
+        <svg
+          class="line-chart"
+          viewBox={`0 0 ${W} ${H}`}
+          role="img"
+          aria-label={tile.label ?? `${tile.dateField} ${tile.aggregate}`}
+          preserveAspectRatio="xMinYMin meet"
+        >
+          <title>{lineTitle(entity, tile, points, max, tr)}</title>
+          {scale.ticks.map((t) => {
+            const yy = y(t)
+            return <line key={t} class="line-chart__grid" x1={padL} y1={yy} x2={W - padR} y2={yy} />
+          })}
+          {scale.ticks.map((t) => {
+            const yy = y(t)
+            return (
+              <text key={'ty-' + t} class="line-chart__tick" x={padL - 6} y={yy + 4} text-anchor="end">{t}</text>
+            )
+          })}
+          {path && <path class="line-chart__line" d={path} fill="none" stroke={accent} stroke-width="1.5" />}
+          {points.map((p) =>
+            p.value === null || p.value === undefined || Number.isNaN(p.value)
+              ? null
+              : <circle key={p.key} class="line-chart__dot" cx={x(p.key)} cy={y(p.value)} r="2.5" fill={accent}>
+                  <title>{`${p.key}: ${p.value}`}</title>
+                </circle>,
+          )}
+          <line class="line-chart__axis" x1={padL} y1={H - padB} x2={W - padR} y2={H - padB} />
+          {months.map((m, i) =>
+            i % xTickEvery === 0 || i === months.length - 1
+              ? <text key={'xt-' + m} class="line-chart__tick" x={x(m)} y={H - padB + 12} text-anchor="middle">{monthShort(m)}</text>
+              : null,
+          )}
+        </svg>
+      )}
+    </div>
+  )
+}
+
+/**
+ * Default-Label einer Liniendeklaration: "<Aggregate> of <Field>" auf englisch,
+ * bzw. das passende i18n-Pendant in der jeweils eingestellten Sprache. Ohne
+ * diese Vorgabe stuende auf der Kachel nur der Spaltenname.
+ */
+function defaultLineLabel(entity, tile, tr) {
+  const dateField = findField(entity.schema, tile.dateField)
+  const dateLabel = dateField?.label ?? tile.dateField
+  if (tile.aggregate === 'count') return tr('dashboard.chart.line.count', dateLabel)
+  const sumField = findField(entity.schema, tile.field)
+  return tr('dashboard.chart.line.sum', dateLabel, sumField?.label ?? tile.field)
+}
+
+function lineTitle(entity, tile, points, max, tr) {
+  const sumField = findField(entity.schema, tile.field)
+  const label = sumField?.label ?? tile.field ?? ''
+  const phrase = tile.aggregate === 'sum' ? tr('dashboard.chart.title.sum', label) : tr('dashboard.chart.title.count')
+  return `${entity.schema.plural} · ${phrase} · ${points.length} ${tr('dashboard.chart.title.months')} · max ${max}`
+}
+
+const monthShort = (key) => {
+  const [y, m] = key.split('-')
+  return `${m}/${y.slice(2)}`
+}
+
+/**
+ * Einheitlicher Chart-Block: { type: 'chart', kind: 'bar'|'donut'|'line', ... }.
+ * Wird zusaetzlich zu den bestehenden 'bar' und 'donut' Kacheltypen erkannt
+ * und dispatcht an die passende Renderer-Komponente. So koennen neue
+ * Beispiele einheitlich 'chart' schreiben, ohne die alten Beispiele zu
+ * brechen, die noch 'bar' oder 'donut' verwenden.
+ */
+function ChartTile({ entity, records, decl, accent, dark, tr }) {
+  const props = { entity, records, tile: decl, accent, dark, tr }
+  if (decl.kind === 'line') return <LineTile {...props} />
+  if (decl.kind === 'donut') return <DonutTile {...props} />
+  return <BarTile {...props} />
+}
+
+/**
+ * Verworfene Chart-Deklarationen erscheinen als eigene Kachel, damit sie im
+ * Raster auffallen statt still zu verschwinden - dieselbe Haltung wie bei
+ * den Metriken (validateMetrics) und beim Faelligkeits-Widget.
+ */
+function ChartIssueTile({ decl, issues, tr }) {
+  if (!issues.length) return null
+  return (
+    <div class="tile tile--metric-issue">
+      <p class="tile__label">{tr('dashboard.chart.rejected')}</p>
+      <ul class="metric-issues">
+        {issues.map((issue, i) => (
+          <li key={i}>{tr('dashboard.chart.' + issue.code, ...(issue.params ? Object.values(issue.params) : []))}</li>
+        ))}
+      </ul>
     </div>
   )
 }
@@ -322,7 +523,18 @@ export function DashboardView({
         const props = { entity, records, tile, accent, dark, tr }
         if (tile.type === 'bar') return <BarTile key={i} {...props} />
         if (tile.type === 'donut') return <DonutTile key={i} {...props} />
+        if (tile.type === 'chart') return <ChartTile key={i} entity={entity} records={records} decl={tile} accent={accent} dark={dark} tr={tr} />
+        if (tile.type === 'line') return <LineTile key={i} {...props} />
         return <StatTile key={i} {...props} />
+      })}
+      {dashboard?.charts?.map((decl, i) => {
+        const key = decl.entity ?? defaultEntityKey
+        const entity = entities[key]
+        if (!entity) return null
+        const records = recordsByEntity[key] ?? []
+        const issues = validateChart(decl, entity)
+        if (issues.length) return <ChartIssueTile key={'chart-issue:' + i} decl={decl} issues={issues} tr={tr} />
+        return <ChartTile key={'chart:' + i} entity={entity} records={records} decl={decl} accent={accent} dark={dark} tr={tr} />
       })}
     </div>
   )

@@ -120,6 +120,11 @@ s'impriment en un PDF propre.
   devient une tuile — `count` (avec filtre optionnel), `sum(champ)` ou `avg(champ)` sur des champs
   numériques ; calcul local au rendu, rien n'entre dans les données ; un clic saute à la liste de
   l'entité ; les déclarations invalides sont rejetées nommément, pas en silence.
+- **Graphiques SVG en ligne dans le tableau de bord** (barres, anneau, ligne) — le tableau
+  `DASHBOARD.charts` sous la forme unifiée `{ type: 'chart', kind: 'bar'|'donut'|'line' }` ; `line`
+  agrège par mois (`count` ou `sum(champ)`) et saute les mois vides ; tout est en SVG en ligne sans
+  bibliothèque de graphiques, fonctionne aussi hors ligne ; la feuille d'impression passe à des
+  motifs en noir et blanc ; coexiste avec les tuiles et les thèmes clair et sombre.
 - **Champs calculés (`computed`).** Déclarez `compute: (record) => value` dans le schéma : le
   résultat est calculé et mémoïsé par enregistrement à chaque rendu, **jamais inscrit dans le
   fichier** — une dérivation stockée devient fausse dès qu'une entrée change, sans que personne
