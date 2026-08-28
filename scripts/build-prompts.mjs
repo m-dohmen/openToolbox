@@ -164,6 +164,24 @@ function entitySection(key, entity, t, single, multi) {
     out.push('')
   }
 
+  if (s.view?.board) {
+    const b = s.view.board
+    const columnLabel = s.fields.find((f) => f.key === b.columnField)?.label ?? b.columnField
+    const cardLabels = (b.cardFields ?? [])
+      .map((k) => s.fields.find((f) => f.key === k)?.label ?? k)
+    out.push(`**${t.board}**`, '', t.boardIntro, '')
+    out.push(t.boardFields, '')
+    out.push(
+      `- \`columnField\` — \`${b.columnField}\` (${columnLabel}); ${t.boardColumn}.`,
+    )
+    if (cardLabels.length) {
+      out.push(`- \`cardFields\` — ${cardLabels.map((l) => `*${l}*`).join(', ')}.`)
+    }
+    if (b.limit) out.push(`- \`limit\` — ${b.limit}.`)
+    out.push(`- ${t.boardUnassigned}.`)
+    out.push('')
+  }
+
   out.push(...metricsLines(s, t))
 
   if (multi) out.push('---', '')

@@ -11,7 +11,7 @@ Usa la plantilla **openToolbox**: https://github.com/m-dohmen/openToolbox. Lee p
 
 ## El problema que resuelve
 
-Se acerca un viaje de fin de curso. Salen 28 autorizaciones, vuelven 19, tres sin firma, una con una alergia anotada al dorso. Dos días antes de salir falta el dinero de cuatro familias. La tutora lo lleva en una hoja que no puede compartir, porque contiene alergias y si el niño sabe nadar. Casi nada de esto es un número: son estados, y la única suma que importa es lo que queda pendiente. Las preguntas de cada lunes ("¿de quién falta el justificante?", “¿quién no ha pagado?”) son las mismas semana tras semana — pertenecen a la cabecera como vistas guardadas, no se reconstruyen a mano cada vez.
+Se acerca un viaje de fin de curso. Salen 28 autorizaciones, vuelven 19, tres sin firma, una con una alergia anotada al dorso. Dos días antes de salir falta el dinero de cuatro familias. La tutora lo lleva en una hoja que no puede compartir, porque contiene alergias y si el niño sabe nadar. Casi nada de esto es un número: son estados, y la única suma que importa es lo que queda pendiente. Las preguntas de cada lunes ("¿de quién falta el justificante?", “¿quién no ha pagado?”) son las mismas semana tras semana — pertenecen a la cabecera como vistas guardadas, no se reconstruyen a mano cada vez. El propio flujo del consentimiento es un Kanban pequeño: pendiente → recibido → rechazado, barrido de izquierda a derecha según llegan las hojas.
 
 ## Qué debe quedar al final
 
@@ -83,6 +83,16 @@ Combinaciones con nombre de búsqueda, filtros y orden, que ofrece el desplegabl
 - propuesta: **Zettel ausstehend** — Einverständnis = ausstehend; sort: `name ↑`
 - propuesta: **Geld offen** — Zahlung = offen; sort: `open ↓`
 
+**Tablero**
+
+Un Kanban opcional por entidad, abierto desde la barra de pestañas junto a *Lista* y *Panel*. Sin esta declaración la vista no existe — la misma postura que el Panel y la captura guiada: es la declaración en el esquema lo que la habilita.
+
+`columnField` (clave de un campo enum existente — sus `values` definen las columnas en ese orden, de modo que el primer valor queda a la izquierda), `cardFields` (hasta tres claves adicionales que aparecen en cada tarjeta bajo el título; omitir toma los tres primeros campos que no sean título, columna, calculado ni adjunto) y `limit` (tope de tarjetas por columna, por defecto `50`). Arrastrar una tarjeta a otra columna pasa por el mismo `mutate` que el formulario, así que el movimiento entra en la pila de deshacer y en el registro de cambios. Las copias de solo lectura muestran el tablero sin arrastre.
+
+- `columnField` — `consent` (Einverständnis); las columnas vienen de los `values` del enum, en el orden declarado.
+- `cardFields` — *Erziehungsberechtigte*, *Telefon für Notfälle*, *Zahlung*.
+- los registros con valor vacío o que ya no está en `values` caen en un pequeño depósito *Sin asignar* a la derecha.
+
 ## Panel
 
 Fichas sobre todo el conjunto de registros, no sobre la vista filtrada.
@@ -141,6 +151,10 @@ Rückseite. Zwei Tage vor Abfahrt fehlt das Geld von vier Familien.
   ausstehend", „Geld offen"), die morgens und vor jeder Überweisung dieselbe Tastaturabfolge
   ersparen. Eigene Sichten legt man in den Einstellungen an; eine davon als Start-Ansicht markiert
   öffnet die Datei immer in genau diesem Zustand.
+- **Kanban-Board** — der Reiter „Board" ordnet die Kinder nach Einverständnis (ausstehend, liegt
+  vor, verweigert). Eine Karte per Drag nach „liegt vor" verschieben trägt sich ins
+  Änderungsprotokoll ein und lässt sich mit Strg+Z zurücknehmen; die Tastatur übernehmen Pfeil-
+  und Eingabetaste.
 - **Regeln, die dem Alltag folgen** — wo Medizinisches steht, muss eine Telefonnummer daneben
   stehen.
 - **Der Grund, warum diese Datei verschlüsselt gehört**: hier stehen Gesundheitsangaben von

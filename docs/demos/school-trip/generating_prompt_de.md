@@ -11,7 +11,7 @@ Nutze die Vorlage **openToolbox**: https://github.com/m-dohmen/openToolbox. Lies
 
 ## Das Problem dahinter
 
-Eine Klassenfahrt steht an. 28 Zettel gehen raus, 19 kommen zurück, drei ohne Unterschrift, einer mit einer Allergie auf der Rückseite. Zwei Tage vor Abfahrt fehlt das Geld von vier Familien. Die Klassenlehrerin führt das in einer Tabelle, die sie nicht teilen darf, weil Allergien und Schwimmfähigkeit darin stehen. Fast nichts daran ist eine Zahl — es sind Zustände, und die einzige Summe, auf die es ankommt, ist der offene Rest. Die Fragen jedes Montagmorgen („wessen Zettel fehlt noch?", „wer hat nicht gezahlt?") wiederholen sich wochenweise — sie gehören als gespeicherte Ansichten an den Listenkopf, nicht jede Woche von Hand zusammengeklickt.
+Eine Klassenfahrt steht an. 28 Zettel gehen raus, 19 kommen zurück, drei ohne Unterschrift, einer mit einer Allergie auf der Rückseite. Zwei Tage vor Abfahrt fehlt das Geld von vier Familien. Die Klassenlehrerin führt das in einer Tabelle, die sie nicht teilen darf, weil Allergien und Schwimmfähigkeit darin stehen. Fast nichts daran ist eine Zahl — es sind Zustände, und die einzige Summe, auf die es ankommt, ist der offene Rest. Die Fragen jedes Montagmorgen („wessen Zettel fehlt noch?", „wer hat nicht gezahlt?") wiederholen sich wochenweise — sie gehören als gespeicherte Ansichten an den Listenkopf, nicht jede Woche von Hand zusammengeklickt. Der Einverständnis-Fluss selbst ist ein kleines Kanban: offen → ausstehend → verweigert, beim Eintreffen der Zettel von links nach rechts geräumt.
 
 ## Was am Ende dastehen muss
 
@@ -83,6 +83,16 @@ Benannte Kombinationen aus Suchbegriff, Feldfiltern und Sortierung, die das Drop
 - Vorschlag: **Zettel ausstehend** — Einverständnis = ausstehend; sort: `name ↑`
 - Vorschlag: **Geld offen** — Zahlung = offen; sort: `open ↓`
 
+**Board**
+
+Eine optionale Kanban-Sicht pro Entität, erreichbar aus der Reiterleiste neben *Liste* und *Dashboard*. Ohne diese Deklaration gibt es die Ansicht gar nicht — gleiche Haltung wie beim Dashboard und beim Wizard: erst die Erklärung im Schema schaltet sie frei.
+
+`columnField` (Schlüssel eines vorhandenen enum-Feldes — seine `values` bestimmen die Spalten in dieser Reihenfolge, der erste Wert steht links), `cardFields` (bis zu drei weitere Feldschlüssel, die auf jeder Karte unter dem Titel erscheinen; weglassen = die ersten drei Nicht-Titel-, Nicht-Spalten-, Nicht-Computed-, Nicht-Attachment-Felder), und `limit` (Kartenobergrenze pro Spalte, Standard `50`). Eine Karte per Drag in eine andere Spalte läuft über denselben `mutate`-Pfad wie das Formular — die Verschiebung landet in der Undo-Historie und im Änderungsprotokoll. Schreibgeschützte Kopien zeigen das Board ohne Ziehfunktion.
+
+- `columnField` — `consent` (Einverständnis); Spalten folgen den enum-`values` in deklarierter Reihenfolge.
+- `cardFields` — *Erziehungsberechtigte*, *Telefon für Notfälle*, *Zahlung*.
+- Datensätze mit leerem oder nicht mehr gültigem Wert landen rechts in einem kleinen Reservoir „Nicht zugeordnet".
+
 ## Dashboard
 
 Kacheln über den gesamten Bestand, nicht über die gefilterte Ansicht.
@@ -141,6 +151,10 @@ Rückseite. Zwei Tage vor Abfahrt fehlt das Geld von vier Familien.
   ausstehend", „Geld offen"), die morgens und vor jeder Überweisung dieselbe Tastaturabfolge
   ersparen. Eigene Sichten legt man in den Einstellungen an; eine davon als Start-Ansicht markiert
   öffnet die Datei immer in genau diesem Zustand.
+- **Kanban-Board** — der Reiter „Board" ordnet die Kinder nach Einverständnis (ausstehend, liegt
+  vor, verweigert). Eine Karte per Drag nach „liegt vor" verschieben trägt sich ins
+  Änderungsprotokoll ein und lässt sich mit Strg+Z zurücknehmen; die Tastatur übernehmen Pfeil-
+  und Eingabetaste.
 - **Regeln, die dem Alltag folgen** — wo Medizinisches steht, muss eine Telefonnummer daneben
   stehen.
 - **Der Grund, warum diese Datei verschlüsselt gehört**: hier stehen Gesundheitsangaben von

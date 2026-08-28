@@ -76,6 +76,21 @@ const L = {
       'spec with just `v` sets the matching facet and a spec with `op` sets a field filter), and ' +
       '`sort` (`{ key, dir }`, `dir` is `1` or `-1`). `entity` is optional and reserved for multi-entity.',
     savedViewPreset: 'preset: **%s**',
+    board: 'Board',
+    boardIntro:
+      'An optional Kanban per entity, opened from the tab strip next to *List* and *Dashboard*. ' +
+      'Without this declaration the view does not exist, the same posture as Dashboard and the ' +
+      'guided entry wizard — declaring it is what enables it.',
+    boardFields:
+      '`columnField` (the key of an existing enum field — its `values` define the columns in that ' +
+      'order, so the first value sits at the left), `cardFields` (up to three further field keys ' +
+      'shown on each card below the title; omit to take the first three non-title, non-column, ' +
+      'non-computed, non-attachment fields), and `limit` (per-column card cap, default `50`). ' +
+      'Dragging a card to another column writes through the same `mutate` path as the edit form, ' +
+      'so the move lands in the undo stack and the change log. Read-only copies render the board ' +
+      'with dragging disabled.',
+    boardColumn: 'columns come from the enum `values`, in declared order',
+    boardUnassigned: 'records whose value is empty or no longer in `values` land in a small *Unassigned* reservoir at the right',
     ruleWhen: 'When',
     ruleThen: 'Then',
     ruleMessage: 'Message',
@@ -216,6 +231,22 @@ const L = {
       '(`{ key, dir }`, `dir` ist `1` oder `-1`). `entity` ist optional und der Multi-Entität ' +
       'vorbehalten.',
     savedViewPreset: 'Vorschlag: **%s**',
+    board: 'Board',
+    boardIntro:
+      'Eine optionale Kanban-Sicht pro Entität, erreichbar aus der Reiterleiste neben *Liste* und ' +
+      '*Dashboard*. Ohne diese Deklaration gibt es die Ansicht gar nicht — gleiche Haltung wie beim ' +
+      'Dashboard und beim Wizard: erst die Erklärung im Schema schaltet sie frei.',
+    boardFields:
+      '`columnField` (Schlüssel eines vorhandenen enum-Feldes — seine `values` bestimmen die ' +
+      'Spalten in dieser Reihenfolge, der erste Wert steht links), `cardFields` (bis zu drei ' +
+      'weitere Feldschlüssel, die auf jeder Karte unter dem Titel erscheinen; weglassen = die ' +
+      'ersten drei Nicht-Titel-, Nicht-Spalten-, Nicht-Computed-, Nicht-Attachment-Felder), und ' +
+      '`limit` (Kartenobergrenze pro Spalte, Standard `50`). Eine Karte per Drag in eine andere ' +
+      'Spalte läuft über denselben `mutate`-Pfad wie das Formular — die Verschiebung landet in ' +
+      'der Undo-Historie und im Änderungsprotokoll. Schreibgeschützte Kopien zeigen das Board ' +
+      'ohne Ziehfunktion.',
+    boardColumn: 'Spalten folgen den enum-`values` in deklarierter Reihenfolge',
+    boardUnassigned: 'Datensätze mit leerem oder nicht mehr gültigem Wert landen rechts in einem kleinen Reservoir „Nicht zugeordnet"',
     ruleWhen: 'Wenn',
     ruleThen: 'Dann',
     ruleMessage: 'Meldung',
@@ -369,6 +400,21 @@ L.es = {
     'filtro de campo) y `sort` (`{ key, dir }`, `dir` vale `1` o `-1`). `entity` es opcional y ' +
     'queda para múltiples entidades.',
   savedViewPreset: 'propuesta: **%s**',
+  board: 'Tablero',
+  boardIntro:
+    'Un Kanban opcional por entidad, abierto desde la barra de pestañas junto a *Lista* y *Panel*. ' +
+    'Sin esta declaración la vista no existe — la misma postura que el Panel y la captura guiada: ' +
+    'es la declaración en el esquema lo que la habilita.',
+  boardFields:
+    '`columnField` (clave de un campo enum existente — sus `values` definen las columnas en ese ' +
+    'orden, de modo que el primer valor queda a la izquierda), `cardFields` (hasta tres claves ' +
+    'adicionales que aparecen en cada tarjeta bajo el título; omitir toma los tres primeros campos ' +
+    'que no sean título, columna, calculado ni adjunto) y `limit` (tope de tarjetas por columna, ' +
+    'por defecto `50`). Arrastrar una tarjeta a otra columna pasa por el mismo `mutate` que el ' +
+    'formulario, así que el movimiento entra en la pila de deshacer y en el registro de cambios. ' +
+    'Las copias de solo lectura muestran el tablero sin arrastre.',
+  boardColumn: 'las columnas vienen de los `values` del enum, en el orden declarado',
+  boardUnassigned: 'los registros con valor vacío o que ya no está en `values` caen en un pequeño depósito *Sin asignar* a la derecha',
   dashboard: 'Panel',
   dashboardIntro: 'Fichas sobre todo el conjunto de registros, no sobre la vista filtrada.',
   tileStat: 'Un número: %s',
@@ -511,6 +557,21 @@ L.fr = {
     'un filtre de champ) et `sort` (`{ key, dir }`, `dir` vaut `1` ou `-1`). `entity` est ' +
     'optionnel et réservé au multi-entité.',
   savedViewPreset: 'proposition : **%s**',
+  board: 'Tableau',
+  boardIntro:
+    'Un Kanban facultatif par entité, ouvert depuis la barre d’onglets à côté de *Liste* et ' +
+    '*Tableau de bord*. Sans cette déclaration, la vue n’existe pas — même posture que pour le ' +
+    'tableau de bord et la saisie guidée : c’est la déclaration dans le schéma qui l’active.',
+  boardFields:
+    '`columnField` (clé d’un champ enum existant — ses `values` définissent les colonnes dans cet ' +
+    'ordre, la première valeur à gauche), `cardFields` (jusqu’à trois autres clés de champ ' +
+    'affichées sous le titre de chaque carte ; omis, prend les trois premiers champs qui ne sont ' +
+    'ni titre, ni colonne, ni calculé, ni pièce jointe) et `limit` (plafond de cartes par colonne, ' +
+    'par défaut `50`). Faire glisser une carte vers une autre colonne passe par le même `mutate` ' +
+    'que le formulaire — le mouvement entre dans la pile d’annulation et dans le journal des ' +
+    'modifications. Les copies en lecture seule affichent le tableau sans glisser-déposer.',
+  boardColumn: 'les colonnes viennent des `values` de l’enum, dans l’ordre déclaré',
+  boardUnassigned: 'les enregistrements dont la valeur est vide ou n’est plus dans `values` aboutissent dans un petit réservoir « Non assignés » à droite',
   dashboard: 'Tableau de bord',
   dashboardIntro: 'Tuiles sur l’ensemble des enregistrements, pas sur la vue filtrée.',
   tileStat: 'Un nombre : %s',
@@ -654,6 +715,21 @@ L.pt = {
     'campo) e `sort` (`{ key, dir }`, `dir` vale `1` ou `-1`). `entity` é opcional e fica ' +
     'reservado para múltiplas entidades.',
   savedViewPreset: 'proposta: **%s**',
+  board: 'Quadro',
+  boardIntro:
+    'Um Kanban opcional por entidade, aberto a partir da faixa de abas ao lado de *Lista* e ' +
+    '*Painel*. Sem essa declaração a vista não existe — mesma postura que o Painel e a captura ' +
+    'guiada: é a declaração no esquema que a habilita.',
+  boardFields:
+    '`columnField` (chave de um campo enum existente — seus `values` definem as colunas nessa ' +
+    'ordem, de modo que o primeiro valor fica à esquerda), `cardFields` (até três chaves de campo ' +
+    'adicionais mostradas em cada cartão sob o título; omitir pega os três primeiros campos que ' +
+    'não sejam título, coluna, calculado nem anexo) e `limit` (teto de cartões por coluna, padrão ' +
+    '`50`). Arrastar um cartão para outra coluna passa pelo mesmo `mutate` do formulário — o ' +
+    'movimento entra na pilha de desfazer e no registro de alterações. Cópias somente leitura ' +
+    'mostram o quadro sem arrastar.',
+  boardColumn: 'as colunas vêm dos `values` do enum, na ordem declarada',
+  boardUnassigned: 'registros com valor vazio ou que já não está em `values` caem num pequeno reservatório *Sem atribuição* à direita',
   dashboard: 'Painel',
   dashboardIntro: 'Blocos sobre todo o conjunto de registros, não sobre a visão filtrada.',
   tileStat: 'Um número: %s',
@@ -785,6 +861,17 @@ L.zh = {
     '筛选，带 `op` 的 `spec` 是字段筛选），以及 `sort`（`{ key, dir }`，`dir` 取 `1` 或 `-1`）。' +
     '`entity` 是可选字段，为多实体预留。',
   savedViewPreset: '预设：**%s**',
+  board: '看板',
+  boardIntro:
+    '每个实体可选的看板视图，通过 *列表* 与 *仪表板* 旁边的标签栏打开。没有此声明时视图根本不存在——' +
+    '与仪表板和引导式录入同样的态度：由 schema 中的声明启用它。',
+  boardFields:
+    '`columnField`（已存在的 enum 字段键——其 `values` 按声明顺序决定列，第一个值位于最左）、' +
+    '`cardFields`（最多三个其它字段键，显示在每张卡片标题下方；省略时取前三个非标题、非列、' +
+    '非计算、非附件字段）、`limit`（每列卡片上限，默认 `50`）。把一张卡片拖到另一列走的是表单' +
+    '同样的 `mutate` 路径——变更进入撤销栈和变更日志。只读副本上的看板禁用拖动。',
+  boardColumn: '列由 enum 的 `values` 决定，按声明顺序排列',
+  boardUnassigned: '字段值为空或已不在 `values` 中的记录，落到右侧一个小的「未分配」容器里',
   dashboard: '仪表板',
   dashboardIntro: '统计整个记录集，而不是筛选后的视图。',
   tileStat: '一个数字：%s',
@@ -913,6 +1000,19 @@ L.ja = {
     '`spec` は同名ファセットを起動し、`op` 付きの `spec` はフィールドフィルタ）、`sort`（`{ key, dir }`、' +
     '`dir` は `1` か `-1`）。`entity` は任意で、複数エンティティ用に予約されています。',
   savedViewPreset: 'プリセット：**%s**',
+  board: 'ボード',
+  boardIntro:
+    'エンティティごとの任意の Kanban で、*リスト* と *ダッシュボード* の横にあるタブ列から開きます。' +
+    'この宣言がなければビュー自体が存在しません。ダッシュボードやガイド付き入力と同じ姿勢です——' +
+    'スキーマでの宣言があって初めて有効になります。',
+  boardFields:
+    '`columnField`（既存の enum フィールドのキー。`values` が宣言順に列となり、最初の値が左端）、' +
+    '`cardFields`（カードのタイトル下に表示される最大 3 つの追加フィールドキー。省略時はタイトル・' +
+    '列・計算・添付ではない最初の 3 フィールド）、`limit`（列ごとのカード上限、デフォルト `50`）。' +
+    'カードを別の列へドラッグすると、フォームと同じ `mutate` を通るため、操作は Undo スタックと ' +
+    '変更ログに載ります。読み取り専用コピーのボードではドラッグが無効になります。',
+  boardColumn: '列は enum の `values` を宣言順に並べたもの',
+  boardUnassigned: '値が空、もしくは `values` に無いレコードは右側の小さな『未分類』に入ります',
   dashboard: 'ダッシュボード',
   dashboardIntro: '絞り込み後ではなく、レコード全体を対象とするタイルです。',
   tileStat: '数値 1 つ：%s',

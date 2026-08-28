@@ -11,7 +11,7 @@ Use the **openToolbox** template: https://github.com/m-dohmen/openToolbox. Read 
 
 ## The problem this solves
 
-A class trip is coming up. 28 forms go out, 19 come back, three without a signature, one with an allergy written on the back. Two days before departure the money from four families is still missing. The class teacher keeps this in a sheet she is not allowed to share, because allergies and swimming ability are in it. Almost nothing here is a number — it is a set of states, and the only sum that matters is what is still outstanding. The recurring questions every Monday morning ("whose form is still missing?", "who has not paid?") are the same ones every week — they belong on the list head as saved views, not rebuilt by hand each time.
+A class trip is coming up. 28 forms go out, 19 come back, three without a signature, one with an allergy written on the back. Two days before departure the money from four families is still missing. The class teacher keeps this in a sheet she is not allowed to share, because allergies and swimming ability are in it. Almost nothing here is a number — it is a set of states, and the only sum that matters is what is still outstanding. The recurring questions every Monday morning ("whose form is still missing?", "who has not paid?") are the same ones every week — they belong on the list head as saved views, not rebuilt by hand each time. The consent state itself is a small Kanban in disguise: open → waiting → declined, swept left to right as the forms come in.
 
 ## What it has to be at the end
 
@@ -83,6 +83,16 @@ Named combinations of query, field filters and sort, offered by the dropdown at 
 - preset: **Zettel ausstehend** — Einverständnis = ausstehend; sort: `name ↑`
 - preset: **Geld offen** — Zahlung = offen; sort: `open ↓`
 
+**Board**
+
+An optional Kanban per entity, opened from the tab strip next to *List* and *Dashboard*. Without this declaration the view does not exist, the same posture as Dashboard and the guided entry wizard — declaring it is what enables it.
+
+`columnField` (the key of an existing enum field — its `values` define the columns in that order, so the first value sits at the left), `cardFields` (up to three further field keys shown on each card below the title; omit to take the first three non-title, non-column, non-computed, non-attachment fields), and `limit` (per-column card cap, default `50`). Dragging a card to another column writes through the same `mutate` path as the edit form, so the move lands in the undo stack and the change log. Read-only copies render the board with dragging disabled.
+
+- `columnField` — `consent` (Einverständnis); columns come from the enum `values`, in declared order.
+- `cardFields` — *Erziehungsberechtigte*, *Telefon für Notfälle*, *Zahlung*.
+- records whose value is empty or no longer in `values` land in a small *Unassigned* reservoir at the right.
+
 ## Dashboard
 
 Tiles over the whole record set, not the filtered view.
@@ -141,6 +151,10 @@ Rückseite. Zwei Tage vor Abfahrt fehlt das Geld von vier Familien.
   ausstehend", „Geld offen"), die morgens und vor jeder Überweisung dieselbe Tastaturabfolge
   ersparen. Eigene Sichten legt man in den Einstellungen an; eine davon als Start-Ansicht markiert
   öffnet die Datei immer in genau diesem Zustand.
+- **Kanban-Board** — der Reiter „Board" ordnet die Kinder nach Einverständnis (ausstehend, liegt
+  vor, verweigert). Eine Karte per Drag nach „liegt vor" verschieben trägt sich ins
+  Änderungsprotokoll ein und lässt sich mit Strg+Z zurücknehmen; die Tastatur übernehmen Pfeil-
+  und Eingabetaste.
 - **Regeln, die dem Alltag folgen** — wo Medizinisches steht, muss eine Telefonnummer daneben
   stehen.
 - **Der Grund, warum diese Datei verschlüsselt gehört**: hier stehen Gesundheitsangaben von

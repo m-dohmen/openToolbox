@@ -11,7 +11,7 @@
 
 ## 背景にある問題
 
-校外学習が近づいています。28 枚の用紙を配り、19 枚が戻り、うち 3 枚は署名なし、1 枚は裏にアレルギーが書かれています。出発 2 日前になっても 4 家庭からの集金が終わりません。担任はこれを、共有できない表で管理しています。アレルギーや泳力が書かれているからです。ここにはほとんど数値がありません。あるのは状態で、意味のある合計は「あといくら足りないか」だけです。毎週月曜の朝に出る問い（「どの家庭の用紙がまだ？」「誰がまだ払っていない？」）は毎週同じです——リストの頭の上に「保存ビュー」として 置くものであって、毎回手で組み直すものではありません。
+校外学習が近づいています。28 枚の用紙を配り、19 枚が戻り、うち 3 枚は署名なし、1 枚は裏にアレルギーが書かれています。出発 2 日前になっても 4 家庭からの集金が終わりません。担任はこれを、共有できない表で管理しています。アレルギーや泳力が書かれているからです。ここにはほとんど数値がありません。あるのは状態で、意味のある合計は「あといくら足りないか」だけです。毎週月曜の朝に出る問い（「どの家庭の用紙がまだ？」「誰がまだ払っていない？」）は毎週同じです——リストの頭の上に「保存ビュー」として 置くものであって、毎回手で組み直すものではありません。同意の流れそのものが小さなカンバンです：保留 → 受領 → 拒否、用紙が届くたびに左から右へ流します。
 
 ## 最終的に何が出来ていればよいか
 
@@ -83,6 +83,16 @@
 - プリセット：**Zettel ausstehend** — Einverständnis = ausstehend; sort: `name ↑`
 - プリセット：**Geld offen** — Zahlung = offen; sort: `open ↓`
 
+**ボード**
+
+エンティティごとの任意の Kanban で、*リスト* と *ダッシュボード* の横にあるタブ列から開きます。この宣言がなければビュー自体が存在しません。ダッシュボードやガイド付き入力と同じ姿勢です——スキーマでの宣言があって初めて有効になります。
+
+`columnField`（既存の enum フィールドのキー。`values` が宣言順に列となり、最初の値が左端）、`cardFields`（カードのタイトル下に表示される最大 3 つの追加フィールドキー。省略時はタイトル・列・計算・添付ではない最初の 3 フィールド）、`limit`（列ごとのカード上限、デフォルト `50`）。カードを別の列へドラッグすると、フォームと同じ `mutate` を通るため、操作は Undo スタックと 変更ログに載ります。読み取り専用コピーのボードではドラッグが無効になります。
+
+- `columnField` — `consent` (Einverständnis); 列は enum の `values` を宣言順に並べたもの.
+- `cardFields` — *Erziehungsberechtigte*, *Telefon für Notfälle*, *Zahlung*.
+- 値が空、もしくは `values` に無いレコードは右側の小さな『未分類』に入ります.
+
 ## ダッシュボード
 
 絞り込み後ではなく、レコード全体を対象とするタイルです。
@@ -141,6 +151,10 @@ Rückseite. Zwei Tage vor Abfahrt fehlt das Geld von vier Familien.
   ausstehend", „Geld offen"), die morgens und vor jeder Überweisung dieselbe Tastaturabfolge
   ersparen. Eigene Sichten legt man in den Einstellungen an; eine davon als Start-Ansicht markiert
   öffnet die Datei immer in genau diesem Zustand.
+- **Kanban-Board** — der Reiter „Board" ordnet die Kinder nach Einverständnis (ausstehend, liegt
+  vor, verweigert). Eine Karte per Drag nach „liegt vor" verschieben trägt sich ins
+  Änderungsprotokoll ein und lässt sich mit Strg+Z zurücknehmen; die Tastatur übernehmen Pfeil-
+  und Eingabetaste.
 - **Regeln, die dem Alltag folgen** — wo Medizinisches steht, muss eine Telefonnummer daneben
   stehen.
 - **Der Grund, warum diese Datei verschlüsselt gehört**: hier stehen Gesundheitsangaben von
