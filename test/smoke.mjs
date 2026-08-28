@@ -1787,15 +1787,17 @@ if (Number(donutTotal) !== 11) fail('Ring zaehlt nicht alle Datensaetze')
 await page14.screenshot({ path: resolve(tmp, 'dashboard-hell.png') })
 
 // Kategoriefarben muessen im Dunkelmodus die Richtung drehen, sonst verschwindet
-// ein Ende der Reihe im Hintergrund.
-const lightFirstBar = await page14.locator('.bars__fill').first().evaluate((el) => el.style.background)
+// ein Ende der Reihe im Hintergrund. Seit OPEN-103 sind die Balken Inline-SVG,
+// die Farbe steckt im fill-Attribut statt in style.background - darum wird
+// style.fill gelesen, das Preact aus dem JSX-Attribut ableitet.
+const lightFirstBar = await page14.locator('.bars__fill').first().evaluate((el) => el.style.fill || el.getAttribute('fill'))
 await page14.getByLabel('Settings').click()
 await page14.waitForSelector('.settings')
 await page14.getByRole('button', { name: 'Dark', exact: true }).click()
 await page14.getByRole('button', { name: 'Back to the list' }).click()
 await page14.getByRole('tab', { name: 'Dashboard' }).click()
 await page14.waitForSelector('.dashboard')
-const darkFirstBar = await page14.locator('.bars__fill').first().evaluate((el) => el.style.background)
+const darkFirstBar = await page14.locator('.bars__fill').first().evaluate((el) => el.style.fill || el.getAttribute('fill'))
 console.log('35) Erste Kategoriefarbe hell:', lightFirstBar, '| dunkel:', darkFirstBar)
 if (lightFirstBar === darkFirstBar) fail('Kategoriefarben drehen im Dunkelmodus nicht')
 await page14.screenshot({ path: resolve(tmp, 'dashboard-dunkel.png') })
@@ -1962,6 +1964,165 @@ if (metricValuesDe[4] !== '9,70') fail(`Deutsches Dezimalzeichen fehlt: ${metric
 
 await metricsCtx.close()
 rmSync(metricsOutDir, { recursive: true, force: true })
+
+/*
+ * Inline-SVG-Diagramme (OPEN-103): eigener Build mit
+ * test/fixtures/charts.domain.js, dessen Seed so gewaehlt ist, dass jede
+ * Kachel mit Handzaehlung stimmt. Prueft vier Dinge gemeinsam:
+ *  - das SVG enthaelt weder script- noch Event-Attribute noch externe URLs
+ *    (sanitizeSvg-Vertrag), damit ein Renderer-Bug nicht still eine Quelle
+ *    einbringen kann;
+ *  - die Balken- und Donut-Skalierung passt zum Handzettel;
+ *  - die Linie aggregiert nach Monat (count, sum) und zeichnet Beschriftung
+ *    an jeder Achse;
+ *  - eine fehlerhafte Deklaration landet als Beanstandungs-Kachel im Raster,
+ *    nicht stillschweigend im Nichts.
+ */
+const chartsOutDir = resolve(root, 'dist-charts' + pidSuffix)
+const chartsDist = resolve(chartsOutDir, 'index.html')
+const chartsFixture = resolve(root, 'test/fixtures/charts.domain.js')
+buildWithDomain(chartsFixture, 'dist-charts' + pidSuffix)
+console.log('36j) Diagramme-Build erzeugt:', chartsDist)
+
+const chartsCtx = await browser.newContext({ viewport: { width: 1280, height: 850 } })
+const pageCharts = await chartsCtx.newPage()
+const chartsErrors = []
+pageCharts.on('pageerror', (e) => chartsErrors.push(String(e)))
+pageCharts.on('console', (m) => m.type() === 'error' && chartsErrors.push(m.text()))
+await openList(pageCharts, chartsDist)
+await pageCharts.getByRole('tab', { name: 'Dashboard' }).click()
+await pageCharts.waitForSelector('.dashboard')
+
+// Drei Charts sind Bar, Bar, Donut, Line, Line - die Schreibweise 'type:
+// chart' ist die neue einheitliche Form; 'type: bar' und 'type: donut'
+// (Legacy in Beispielen) werden weiterhin erkannt. Hier ist alles auf
+// 'chart' gestellt, also sollte die Render-Welle ausschliesslich aus SVG
+// mit den drei Achsen-Bausteinen bestehen.
+const svgCount = await pageCharts.locator('svg.bars, svg.line-chart, .donut > svg').count()
+console.log('36k) SVG-Diagramme auf der Seite:', svgCount)
+if (svgCount < 5) fail(`Erwartet mindestens 5 Diagramme (4x Bar + 3x Donut + 2x Line), gefunden ${svgCount}`)
+
+// Sicherheitspruefung: kein Script-Element im Diagramm-SVG, keine on*-Handler,
+// keine externen URLs. Wer den Renderer eines Tages erweitert und dabei ein
+// Attribut einbringt, das der sanitizeSvg-Reiniger spaeter kassieren wuerde,
+// faengt diesen Bug hier. Das gesamte SVG-Markup wird einmal eingesammelt
+// und gegen die bekannten schlechten Muster verglichen.
+const svgMarkup = await pageCharts.locator('svg.bars, svg.line-chart, .donut > svg').evaluateAll((nodes) =>
+  nodes.map((n) => n.outerHTML).join(''),
+)
+console.log('36l) SVG-Gesamtmenge:', svgMarkup.length, 'Bytes')
+if (/<script/i.test(svgMarkup)) fail('Diagramm-SVG enthaelt ein script-Element')
+if (/\son[a-z]+\s*=/i.test(svgMarkup)) fail('Diagramm-SVG enthaelt on*-Attribute')
+if (/href\s*=\s*["']https?:/i.test(svgMarkup)) fail('Diagramm-SVG verweist extern')
+if (/src\s*=\s*["']https?:/i.test(svgMarkup)) fail('Diagramm-SVG laedt externe Quelle')
+
+// Bar-Charts: zwei Stueck, beide gegen das Handzaehler-Bild - IT 11 / PR 13
+// (effort) und IT 3 / PR 3 (count). Wir pruefen die gerenderten Wert-Texte
+// und das Verhaeltnis der <rect class="bars__fill">-Breiten. textContent statt
+// innerText, weil innerText in manchen Playwright-Versionen fuer SVG-Inhalte
+// undefined liefert.
+const barValuesEffort = await pageCharts.locator('text.bars__value').evaluateAll((nodes) => nodes.map((n) => n.textContent))
+console.log('36m) Bar-Werte (alle Balken, in Reihenfolge):', barValuesEffort.join(' | '))
+if (!barValuesEffort.includes('11') || !barValuesEffort.includes('13')) {
+  fail('Balken-Summe (effort) zeigt nicht 11 (IT) und 13 (PR)')
+}
+if (!barValuesEffort.includes('3')) fail('Balken-Anzahl zeigt nicht 3 je Bereich')
+
+// Verhaeltnispruefung: Das rect-Element fuer IT (Wert 11) muss breiter sein
+// als das fuer PR (Wert 13) im Effort-Chart, aber kuerzer im Count-Chart
+// (3 vs. 3 -> gleich breit). Hier reicht der Blick auf die fill-Box.
+const barFills = await pageCharts.locator('rect.bars__fill').evaluateAll((nodes) =>
+  nodes.map((n) => ({ w: Number(n.getAttribute('width')), fill: n.getAttribute('fill') })),
+)
+const widest = Math.max(...barFills.map((r) => r.w))
+const narrowest = Math.min(...barFills.map((r) => r.w))
+console.log('36n) Bar-Fuellbreiten: max', widest.toFixed(1), 'min', narrowest.toFixed(1))
+if (widest <= narrowest) fail('Groesster Balken ist nicht breiter als der kleinste')
+// Der Count-Chart hat fuer beide Bereiche den Wert 3, beide Balken also
+// gleich breit - schmaler als der breiteste aus dem Effort-Chart.
+if (widest === narrowest) fail('Mindestens ein Balken sollte groesser sein als ein anderer')
+
+// Achsen-Tick: das Effort-Chart skaliert auf 13 -> 20 (niceScale 1,2,2.5,5,10
+// -> Schritt 20), also sollten die Ticks 0, 10, 20 als Beschriftung auftauchen.
+const axisTexts = await pageCharts.locator('svg.bars .bars__axis text').evaluateAll((nodes) => nodes.map((n) => n.textContent))
+console.log('36o) Achsen-Beschriftung Balken:', axisTexts.join(' '))
+if (!axisTexts.includes('20')) fail('Achse nennt die Obergrenze 20 nicht')
+
+// Donut: pro Donut-Kachel muss die Summe der Legenden-Eintraege gleich dem
+// Ring-Total sein. Beide Donuts (Legacy + neue chart-Schreibweise) tragen
+// jeweils 6 (IT 3 + PR 3); wir pruefen jeden einzeln.
+const donutTiles = await pageCharts.locator('.donut').count()
+console.log('36p) Donut-Kacheln:', donutTiles)
+if (donutTiles < 2) fail('Erwartet mindestens 2 Donuts (Legacy + neue Form), gefunden ' + donutTiles)
+for (let i = 0; i < donutTiles; i++) {
+  const tile = pageCharts.locator('.donut').nth(i)
+  const total = Number(await tile.locator('.donut__total').textContent())
+  const legendSum = (await tile.locator('.legend__value').evaluateAll((nodes) => nodes.map((n) => Number(n.textContent))))
+    .reduce((n, t) => n + t, 0)
+  console.log(`    Donut ${i}: Total=${total} | Legende=${legendSum}`)
+  if (total !== legendSum) fail(`Donut ${i}: Ring und Legende widersprechen sich (${total} vs ${legendSum})`)
+  if (total !== 6) fail(`Donut ${i}: erwartet 6, war ${total}`)
+}
+
+// Linie (count): drei Punkte 1, 2, 3. Wir lesen die Punkte via <circle class=
+// "line-chart__dot"> und ihre Y-Position im viewBox. Das Skalenraster ist
+// glatt (1, 2, 3 = 20%, 40%, 60% der Skala), und genau das macht den Test:
+// der Chart muss die Werte monoton nach oben zeichnen. title-Attribut liefert
+// den exakten Wert, weil die Y-Position allein bei unterschiedlichen Skalen
+// gleich aussehen kann.
+const lineDotsCount = await pageCharts.locator('svg.line-chart').first().locator('circle.line-chart__dot').evaluateAll((nodes) =>
+  nodes.map((n) => ({ cy: Number(n.getAttribute('cy')), title: n.querySelector('title')?.textContent })),
+)
+console.log('36q) Linie count:', lineDotsCount.map((d) => `${d.title}@y=${d.cy}`).join(', '))
+if (lineDotsCount.length !== 3) fail(`Linie count zeichnet ${lineDotsCount.length} statt 3 Punkte`)
+if (!(lineDotsCount[0].cy > lineDotsCount[1].cy && lineDotsCount[1].cy > lineDotsCount[2].cy)) {
+  fail('Linie count: Punkte sind nicht monoton fallend (Werte 1, 2, 3)')
+}
+if (!lineDotsCount.some((d) => d.title === '2026-01: 1') ||
+    !lineDotsCount.some((d) => d.title === '2026-02: 2') ||
+    !lineDotsCount.some((d) => d.title === '2026-03: 3')) {
+  fail('Linie count: Punkte tragen nicht die erwarteten Werte 1, 2, 3')
+}
+
+// Linie (sum effort): Maximalwert ist 12 (Maerz 4+8), Linie faengt im Januar
+// bei 4. Werte sind hier 4, 8, 12 - der Unterschied zum count-Chart steckt
+// in den title-Texten.
+const lineDotsSum = await pageCharts.locator('svg.line-chart').nth(1).locator('circle.line-chart__dot').evaluateAll((nodes) =>
+  nodes.map((n) => ({ cy: Number(n.getAttribute('cy')), title: n.querySelector('title')?.textContent })),
+)
+console.log('36r) Linie sum:', lineDotsSum.map((d) => `${d.title}@y=${d.cy}`).join(', '))
+if (!lineDotsSum.some((d) => d.title === '2026-01: 4') ||
+    !lineDotsSum.some((d) => d.title === '2026-02: 8') ||
+    !lineDotsSum.some((d) => d.title === '2026-03: 12')) {
+  fail('Linie sum: Punkte tragen nicht die erwarteten Werte 4, 8, 12')
+}
+
+// Pfad-String: die Linie hat tatsaechlich Linien-Befehle, nicht nur Punkte.
+const linePathD = await pageCharts.locator('svg.line-chart path.line-chart__line').first().getAttribute('d')
+if (!/^M[\d.]+ [\d.]+( L[\d.]+ [\d.]+)+$/.test(linePathD)) {
+  fail('Linie hat keinen M/L-Pfadstring: ' + linePathD)
+}
+if ((linePathD.match(/L/g) || []).length < 2) fail('Linie verbindet weniger als 3 Punkte')
+
+// X-Achse: Beschriftung jedes Monats (MM/YY) erscheint als <text>.
+const xTicks = await pageCharts.locator('svg.line-chart').first().locator('text.line-chart__tick').evaluateAll((nodes) => nodes.map((n) => n.textContent))
+console.log('36s) X-Achsen-Beschriftung Linie:', xTicks.join(' '))
+if (!xTicks.some((t) => /01\/26/.test(t))) fail('Januar-Beschriftung fehlt auf der X-Achse')
+if (!xTicks.some((t) => /03\/26/.test(t))) fail('Maerz-Beschriftung fehlt auf der X-Achse')
+
+// Verworfene Diagramm-Deklaration: der Eintrag { type: 'chart', kind: 'line',
+// dateField: 'ghost' } muss als Beanstandungs-Kachel sichtbar sein, nicht
+// still ignoriert. Die Kachel nennt den Grund ("Names no existing field") im
+// Klartext - dieselbe Haltung wie bei den Metriken (validateMetrics).
+const issueTileTexts = await pageCharts.locator('.tile--metric-issue').allInnerTexts()
+console.log('36t) Beanstandungs-Kacheln:', issueTileTexts.length)
+if (issueTileTexts.length === 0) fail('Verworfene Diagramm-Deklaration wurde still ignoriert')
+if (!issueTileTexts.some((t) => /ghost/i.test(t))) {
+  fail('Beanstandungs-Kachel nennt das unbekannte Feld nicht: ' + JSON.stringify(issueTileTexts))
+}
+
+await chartsCtx.close()
+rmSync(chartsOutDir, { recursive: true, force: true })
 
 /*
  * Verworfene Deklarationen werden benannt statt still ignoriert: eigener Build

@@ -84,7 +84,13 @@ const DEFAULT_ENTITY_KEY = ENTITY_KEYS[0]
 const SINGLE = isSingleEntity(ENTITIES)
 
 /** Optional: Kacheln über den Bestand. Fehlt der Export, gibt es die Ansicht nicht. */
-const DASHBOARD = domainModule.DASHBOARD?.tiles?.length ? domainModule.DASHBOARD : null
+/* OPEN-103: ein Dashboard-Export kann jetzt sowohl 'tiles' als auch 'charts'
+   enthalten. Beide sind eigenstaendige Renderwege (stat-Kacheln bzw. SVG-
+   Diagramme) - die Frage "gibt es eine Dashboard-Ansicht" bejaht sich, wenn
+   einer von beiden nicht leer ist. */
+const DASHBOARD = (domainModule.DASHBOARD?.tiles?.length || domainModule.DASHBOARD?.charts?.length)
+  ? domainModule.DASHBOARD
+  : null
 /* Das Fälligkeiten-Widget lebt in der Dashboard-Ansicht, hängt aber nicht am
    DASHBOARD-Export - eine Domäne kann `dueDate` deklarieren, ohne je Kacheln
    zu definieren, und bekommt die Ansicht dann trotzdem. Für Kennzahlen gilt

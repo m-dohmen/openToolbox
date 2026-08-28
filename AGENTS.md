@@ -351,22 +351,47 @@ export const DASHBOARD = {
     { type: 'donut', groupBy: 'likelihood' },
     { type: 'bar',   groupBy: 'category', measure: 'impact', label: 'Impact by category' },
   ],
+  // OPEN-103: zusaetzlicher Block fuer Inline-SVG-Diagramme (Balken/Donut/Linie)
+  // unter dem neuen einheitlichen 'type: chart'. 'tiles' daneben ist weiterhin
+  // erlaubt - beide Renderschienen koexistieren.
+  charts: [
+    { type: 'chart', kind: 'bar',   groupBy: 'category', measure: 'impact', label: 'Impact by category' },
+    { type: 'chart', kind: 'donut', groupBy: 'likelihood' },
+    { type: 'chart', kind: 'line',  dateField: 'review', aggregate: 'count', label: 'Reviews per month' },
+  ],
 }
 ```
 
 - `stat` — one number. `measure`: `'count'` or a field key whose values are summed. `filter(record)`
   narrows the set first. `label` and `caption` are free text.
-- `bar` — one bar per value of `groupBy` (an enum field). `measure` as above.
-- `donut` — the same data as a ring with a legend.
-- `entity` — only needed with `ENTITIES`; defaults to the entity being viewed.
+- `bar` / `donut` — die alten Kacheltypen, gezeichnet als Inline-SVG (Balken als
+  `<rect>` mit Achse, Donut als Kreis mit `stroke-dasharray`). Funktionieren
+  weiter wie bisher; wer neue Diagramme baut, schreibt heute `type: 'chart'`.
+- `chart` — der neue einheitliche Baustein (OPEN-103). `kind` waehlt zwischen
+  `bar`, `donut` und `line`. `line` aggregiert ueber `dateField` je Monat
+  (`aggregate: 'count'` oder `'sum'` mit `field`). Andere Aggregate sind
+  bewusst nicht im Katalog - wer mehr braucht, soll die Datei verstehen und
+  bewusst erweitern, nicht ueber eine string-evaluiert Formel aus Versehen
+  Code einschleusen.
+- `entity` — nur noetig mit `ENTITIES`; faellt auf die gerade offene Entitaet
+  zurueck.
 
-Drawn without a charting library: bars are CSS widths, the ring is one SVG circle with
-`stroke-dasharray`. Category colours are derived from the tool's accent colour, so a rebranded tool
-recolours its dashboard automatically. Tiles show their entity's **full** record set, not the
-filtered table view.
+Drawn without a charting library: every diagram is pure Inline-SVG (Balken,
+Linien, Kreise, Pfade) - eine Chart-Bibliothek wuerde die Einzeldatei um ein
+Vielfaches dessen aufblaehen, was hier tatsaechlich gebraucht wird. Category
+colours werden aus der Akzentfarbe des Werkzeugs abgeleitet, ein Rebrand
+faerbt das gesamte Dashboard automatisch. Tiles und Charts zeigen den
+**vollstaendigen** Bestand ihrer Entitaet, nicht die gefilterte Tabellenansicht.
 
-Both the list and the dashboard have a print stylesheet — the browser makes the PDF, everything
-interactive drops away. Worth mentioning at handover; it is how these end up as meeting appendices.
+Eine verworfene Deklaration (unbekanntes Feld, fehlender aggregate, sum ohne
+`field`) erscheint als eigene Kachel mit dem Grund im Klartext - genau wie
+bei den Metriken. Eine stille Verwerfung waere genau die Stelle, an der ein
+Reihenfolge-Bug erst beim Kunden auffaelt.
+
+Both the list and the dashboard have a print stylesheet - der Browser macht
+das PDF, alles Bedienbare faellt weg. Diagramme werden schwarzweiss
+gestrichelt statt in Akzentfarbe gedruckt, damit die Lesbarkeit auch auf
+einem Drucker ohne Farbprofil stimmt.
 
 ### Due dates on the dashboard
 
@@ -447,6 +472,51 @@ Details worth knowing:
   missing field or a non-numeric target appears as its own rejection tile between the valid ones,
   with the reason in the interface language. A metric that quietly switches itself off is noticed
   only when somebody misses the number.
+
+### Inline-SVG charts in the dashboard (OPEN-103)
+
+A `DASHBOARD` export can carry a `charts` array alongside `tiles` - the old
+kinds stay alive so existing examples keep working, the new form is for
+fresh diagrams. Three kinds, all rendered as Inline-SVG without a charting
+library, without external requests, without `<script>`:
+
+```js
+export const DASHBOARD = {
+  /* tiles: [...],  — bleibt unveraendert, falls vorhanden */
+  charts: [
+    { type: 'chart', kind: 'bar',   groupBy: 'area',     measure: 'effort' },
+    { type: 'chart', kind: 'donut', groupBy: 'status' },
+    { type: 'chart', kind: 'line',  dateField: 'due', aggregate: 'count' },
+    { type: 'chart', kind: 'line',  dateField: 'due', aggregate: 'sum',  field: 'effort' },
+  ],
+}
+```
+
+- `bar` — one bar per value of `groupBy` (an enum or reference field). Bars
+  share a single SVG with proper axis ticks; the largest bar reaches the
+  top tick rather than clinging to the edge.
+- `donut` — same data as a ring with a legend. Sum of segments equals the
+  total printed in the centre, both checked at render time.
+- `line` — monthly time series over `dateField`. `aggregate: 'count'` counts
+  records per month; `'sum'` sums a numeric `field` per month. Months without
+  data are skipped, the line jumps over them rather than faking values.
+  Computed fields are accepted as `field` (same posture as `metrics`).
+- `entity` — only needed with `ENTITIES`; defaults to the entity being viewed.
+- i18n axes: the chart label takes its label from the matching schema field
+  ("Review date · count", "Effort · sum of Effort"), the chart title is set
+  automatically from the same source.
+
+The whole renderer lives in `src/lib/charts.js` as pure functions
+(`prepareBarRows`, `prepareDonutRows`, `prepareLinePoints`, `niceScale`,
+`linePath`, `validateChart`) so the math can be tested without a browser.
+The dashboard components consume them; they do not rebuild the math
+themselves. Invalid declarations - unknown `groupBy`, missing `dateField`,
+sum without a numeric `field` - are listed under a rejection tile, not
+silently dropped.
+
+Both the list and the dashboard have a print stylesheet. Charts switch to
+black-and-white stroke patterns so the printout stays readable on a printer
+without a colour profile.
 
 ## Optional: saved views
 
