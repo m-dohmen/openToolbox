@@ -72,14 +72,29 @@ Release notes for each version live on GitHub:
   board screenshots without touching the rest of the gallery, mirroring the
   precedent `scripts/screenshots-report.mjs` set in 0.16.0
   ([#80](https://github.com/m-dohmen/openToolbox/pull/80)).
+- `README.zh.md` feature list carries a `view.board` entry, so a reader of
+  the Chinese short README meets the Kanban board at the same depth as the
+  English README
+  ([#82](https://github.com/m-dohmen/openToolbox/pull/82)).
+- `README.es.md` feature list carries a `view.board` entry, in the same
+  depth as the English README
+  ([#82](https://github.com/m-dohmen/openToolbox/pull/82)).
+- `README.fr.md` feature list carries a `view.board` entry, in the same
+  depth as the English README
+  ([#82](https://github.com/m-dohmen/openToolbox/pull/82)).
+- `README.ja.md` feature list carries a `view.board` entry, in the same
+  depth as the English README
+  ([#82](https://github.com/m-dohmen/openToolbox/pull/82)).
+- `README.pt.md` feature list carries a `view.board` entry, in the same
+  depth as the English README
+  ([#82](https://github.com/m-dohmen/openToolbox/pull/82)).
+- New wiki page `Kanban-Board.md` in the `openToolbox.wiki` repo documents
+  the `view.board` activation snippet, the school-trip example, the
+  keyboard and touch paths and the read-only banner
+  ([`m-dohmen/openToolbox.wiki@f6bc17e`](https://github.com/m-dohmen/openToolbox.wiki/commit/f6bc17e)).
 
 ### Not included (consciously)
 
-- Bullet on `view.board` in the five short READMEs (`zh`, `es`, `fr`, `ja`,
-  `pt`) and the wiki page `Board-Ansicht` are deliberately left to a
-  follow-up docs PR — the framework docs, the two long READMEs and the live
-  demo already document the feature, and rushing the short READMEs into the
-  release would not change what the framework does.
 - WIP-limits, swimlanes, multi-select inside the board and per-card colours
   are out of scope at this version; the schema declares only the four fields
   the board needs and no more.
@@ -264,5 +279,6 @@ and stored in the payload.
 [Unreleased]: https://github.com/m-dohmen/openToolbox/compare/v0.16.1...HEAD
 [#79]: https://github.com/m-dohmen/openToolbox/pull/79
 [#80]: https://github.com/m-dohmen/openToolbox/pull/80
+[#82]: https://github.com/m-dohmen/openToolbox/pull/82
 [#65]: https://github.com/m-dohmen/openToolbox/pull/65
 [#66]: https://github.com/m-dohmen/openToolbox/pull/66
