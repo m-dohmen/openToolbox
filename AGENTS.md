@@ -837,6 +837,33 @@ repository activity shares one GitHub identity, so "CI green before merge" and "
 own PR" rest on review discipline rather than GitHub enforcement until required status checks and
 separate merge permissions exist (tracked in the project wiki, [Testing](https://github.com/m-dohmen/openToolbox/wiki/Testing)).
 
+### Delete the branch as part of the merge
+
+The repository does not delete head branches automatically
+(`delete_branch_on_merge` is off, and turning it on needs owner rights).
+So the merge is not finished when the PR closes -- it is finished when the
+branch is gone.
+
+**Whoever merges a PR deletes its head branch in the same step:**
+
+```bash
+gh pr merge <nr> --squash   # or --merge / --rebase, as agreed
+git push origin --delete <branch>   # same step, not "later"
+```
+
+This matters more than it looks. Merges here are squash merges, so the
+original branch keeps commits that never literally entered `main` -- 
+`git branch --no-merged` lists it as unmerged forever, even though its
+content shipped. Left alone, the branch list stops telling you anything:
+on 2026-08-29 it held 20 branches, 17 of them long since delivered, and
+the two genuinely open questions were invisible in the noise.
+
+Never delete `main`. Never delete a branch whose PR is still open, or one
+that was closed without merging until someone has confirmed its content
+reached `main` some other way -- name the commit or the file that proves
+it, in the issue.
+
+
 ## When the user wants more than a list
 
 openToolbox is a records-with-fields tool. If the request is a calculator, a canvas, a diagram
