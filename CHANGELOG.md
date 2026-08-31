@@ -154,6 +154,89 @@ Release notes for each version live on GitHub:
   are out of scope at this version; the schema declares only the four fields
   the board needs and no more.
 
+## [0.18.0] — 2026-08-31
+
+Completion of the `computed` field type first shipped in v0.14.0: the formula
+runs once per record per render pass instead of on every render, a throwing
+formula is contained rather than silent, and computed fields stand in for
+stored number fields in `sum`/`avg` metric tiles. The release stage for the
+underlying OPEN-94 was missed when the issue closed (OPEN-46 pattern), so this
+release also catches up the change log against code that has been on `main`
+since v0.17.0 — the change set is purely additive and backwards-compatible.
+
+### Added
+
+- `compute(record)` is memoised per record per render pass: the result is cached
+  on the record object for the lifetime of the page and discarded by the
+  garbage collector when the record is replaced, so a 1000-record table with
+  three computed fields no longer costs 3000 function calls per render
+  ([#58](https://github.com/m-dohmen/openToolbox/pull/58)).
+- If `compute(record)` throws, the field renders as a dash and the console
+  sees **one** warning per unique combination of entity, field, record id and
+  error message — the table does not stop, the error does not drown the
+  developer in identical stack traces, and the next render pass tries again
+  ([#58](https://github.com/m-dohmen/openToolbox/pull/58)).
+- `validateMetrics` accepts `sum(computed)` and `avg(computed)` in addition
+  to the stored-field forms it already accepted; the catalogue stays closed at
+  `count`, `sum` and `avg`, and `sum`/`avg` are still gated to numeric
+  sources (now including `computed` returning a number)
+  ([#58](https://github.com/m-dohmen/openToolbox/pull/58)).
+- `portfolio` demo gained a "Budget left" metric tile that aggregates a
+  computed `variance` field with `sum(variance)` — the visible proof that the
+  closed metric catalogue accepts computed sources the same way it accepts
+  stored number fields
+  ([#63](https://github.com/m-dohmen/openToolbox/pull/63)).
+- `docs/demo/index.html` and `docs/demos/portfolio/index.html` rebuilt against
+  the new bundle so the live demo shows the "Budget left" tile; the eleven
+  existing gallery screenshots were also regenerated to reflect the table
+  with the new column and the dashboard with the new tile
+  ([#63](https://github.com/m-dohmen/openToolbox/pull/63)).
+- `AGENTS.md` and `CLAUDE.md` "Calculated fields" section now documents
+  memoisation, the one-warning-per-failure rule, and `sum(computed)` /
+  `avg(computed)`; the diff between the two files stays byte-identical so the
+  CI guard keeps matching
+  ([#58](https://github.com/m-dohmen/openToolbox/pull/58)).
+- `README.md` and `README.de.md` carry the memoisation, warning and metric
+  additions; the five short READMEs (`zh`, `es`, `fr`, `ja`, `pt`) gained a
+  computed-field entry in their feature lists so a reader in any shipped
+  language meets the addition at the same depth as the English README
+  ([#58](https://github.com/m-dohmen/openToolbox/pull/58),
+  [#61](https://github.com/m-dohmen/openToolbox/pull/61)).
+- `plugin/skills/opentoolbox-tool/SKILL.md` notes that a calculated field is
+  memoised per record and points at `AGENTS.md` for the schema shape, keeping
+  the skill free of a schema duplicate
+  ([#58](https://github.com/m-dohmen/openToolbox/pull/58)).
+
+### Changed
+
+- `npm test` runs the same ten suites; the `smoke` suite gained coverage for
+  the memoisation key, the one-warning signature, the empty/null display in
+  the read-only form, and the metric catalogue accepting a `computed`
+  field as the aggregate source
+  ([#58](https://github.com/m-dohmen/openToolbox/pull/58)).
+- `fieldValue` for a `computed` field that returns `null` or `undefined`
+  renders an empty cell (which the table and form both turn into the `—`
+  placeholder) instead of falling through to `null`; the form's previous
+  behaviour was to print `0` from `fieldValue || '—'`, which silently turned a
+  missing computed value into a real zero
+  ([#58](https://github.com/m-dohmen/openToolbox/pull/58)).
+
+### Not included (consciously)
+
+- No computed-of-computed chains by reactive subscription. A `computed`
+  field may read stored fields and other `computed` fields by name, but the
+  memo invalidates on record identity, not on dependency tracking — that
+  kept the original v0.14.0 posture and OPEN-104 deliberately did not
+  introduce a subscriber graph.
+- No persistent cache. Computed values are still never written to the data
+  block; saving the file is byte-identical to the saved state of a schema
+  without `computed` fields.
+- No new metric kind. The catalogue stays closed at `count`, `sum`, `avg`;
+  `sum`/`avg` only opened up to `computed`-returning-number sources, which is
+  the same gating the stored-field forms already had.
+- No wiki edit. The wiki lives in its own repository (`m-dohmen/openToolbox.wiki`);
+  OPEN-100 covered the short README feature lists, not a wiki page.
+
 ## [Unreleased]
 
 ## [0.16.1] — 2026-08-27
@@ -334,11 +417,15 @@ and stored in the payload.
 [0.15.0]: https://github.com/m-dohmen/openToolbox/releases/tag/v0.15.0
 [0.14.0]: https://github.com/m-dohmen/openToolbox/releases/tag/v0.14.0
 [0.17.0]: https://github.com/m-dohmen/openToolbox/compare/v0.16.1...v0.17.0
-[Unreleased]: https://github.com/m-dohmen/openToolbox/compare/v0.17.0...HEAD
+[0.18.0]: https://github.com/m-dohmen/openToolbox/compare/v0.17.0...v0.18.0
+[Unreleased]: https://github.com/m-dohmen/openToolbox/compare/v0.18.0...HEAD
 [#79]: https://github.com/m-dohmen/openToolbox/pull/79
 [#80]: https://github.com/m-dohmen/openToolbox/pull/80
 [#82]: https://github.com/m-dohmen/openToolbox/pull/82
 [#81]: https://github.com/m-dohmen/openToolbox/pull/81
 [#85]: https://github.com/m-dohmen/openToolbox/pull/85
+[#58]: https://github.com/m-dohmen/openToolbox/pull/58
+[#61]: https://github.com/m-dohmen/openToolbox/pull/61
+[#63]: https://github.com/m-dohmen/openToolbox/pull/63
 [#65]: https://github.com/m-dohmen/openToolbox/pull/65
 [#66]: https://github.com/m-dohmen/openToolbox/pull/66
