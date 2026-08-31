@@ -154,6 +154,52 @@ Release notes for each version live on GitHub:
   are out of scope at this version; the schema declares only the four fields
   the board needs and no more.
 
+## [0.18.0] — 2026-08-31
+
+### Added
+
+- `compute(record)` for fields of type `computed` runs once per record per render pass and is
+  memoised on the record for the lifetime of the page. A thousand-record dataset with three
+  computed fields no longer pays 3000 calls per sort/search/export, only the number of records
+  that are actually new — the cache sits on a `WeakMap`, so a record edited out of the data block
+  drops its cache with it
+  ([#58](https://github.com/m-dohmen/openToolbox/pull/58)).
+- If `compute(record)` throws, the field renders as a dash and the console sees exactly one
+  warning per unique combination of entity, field, record id and error message. The table does
+  not stop, the same combination does not warn twice, and a different record, field or message
+  starts a fresh warning
+  ([#58](https://github.com/m-dohmen/openToolbox/pull/58)).
+- A computed field whose `compute` returns a number stands in for a stored number field in the
+  closed `sum(field)` / `avg(field)` metric catalog, exactly the way `totalField` already accepts
+  one. `validateMetrics` accepts the new combination without flagging it as non-numeric, the
+  actual error probe stays in `fieldValue` so the same dash-and-warn behaviour carries over
+  ([#58](https://github.com/m-dohmen/openToolbox/pull/58)).
+- `AGENTS.md` and `CLAUDE.md` gained a `computed` section spelling out the memo, the warning key
+  and the metric acceptance; the diff between the two remains byte-identical so the CI guard
+  keeps matching
+  ([#58](https://github.com/m-dohmen/openToolbox/pull/58)).
+- `README.md` and `README.de.md` rewrite the computed-field paragraph to name the memo, the
+  warning shape and the metric acceptance, so a reader of either long README meets the new
+  behaviour without leaving the document
+  ([#58](https://github.com/m-dohmen/openToolbox/pull/58)).
+- The five short READMEs (`zh`/`es`/`fr`/`ja`/`pt`) carry computed fields in their feature lists
+  at the same depth as the English README
+  ([#61](https://github.com/m-dohmen/openToolbox/pull/61)).
+- Portfolio demo's dashboard gains a "Budget left" tile that sums the `Budgetabweichung` computed
+  field, demonstrating that the closed metric catalog accepts computed numbers just like stored
+  ones. Eleven screenshots under `docs/screenshots/` are regenerated to mirror the table with
+  the new column and the dashboard with the new tile
+  ([#63](https://github.com/m-dohmen/openToolbox/pull/63)).
+- The seven demo build prompts under `docs/demos/portfolio/generating_prompt_*.md` are refreshed
+  so a reader in `de`/`en`/`es`/`fr`/`ja`/`pt`/`zh` meets the new metric at the same depth
+  ([#63](https://github.com/m-dohmen/openToolbox/pull/63)).
+- `plugin/skills/opentoolbox-tool/SKILL.md` carries the same computed-field paragraph as
+  `AGENTS.md`, so the skill stays a thin pointer to the canonical documentation
+  ([#58](https://github.com/m-dohmen/openToolbox/pull/58)).
+- `test/smoke.mjs` adds the memo, warning, metric-acceptance, sum/avg and 1000-record cases
+  proving the contract from the user's side
+  ([#58](https://github.com/m-dohmen/openToolbox/pull/58)).
+
 ## [Unreleased]
 
 ## [0.16.1] — 2026-08-27
@@ -334,7 +380,8 @@ and stored in the payload.
 [0.15.0]: https://github.com/m-dohmen/openToolbox/releases/tag/v0.15.0
 [0.14.0]: https://github.com/m-dohmen/openToolbox/releases/tag/v0.14.0
 [0.17.0]: https://github.com/m-dohmen/openToolbox/compare/v0.16.1...v0.17.0
-[Unreleased]: https://github.com/m-dohmen/openToolbox/compare/v0.17.0...HEAD
+[Unreleased]: https://github.com/m-dohmen/openToolbox/compare/v0.18.0...HEAD
+[0.18.0]: https://github.com/m-dohmen/openToolbox/compare/v0.17.0...v0.18.0
 [#79]: https://github.com/m-dohmen/openToolbox/pull/79
 [#80]: https://github.com/m-dohmen/openToolbox/pull/80
 [#82]: https://github.com/m-dohmen/openToolbox/pull/82
