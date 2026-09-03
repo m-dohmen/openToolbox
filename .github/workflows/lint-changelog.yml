@@ -1,0 +1,17 @@
+# Lint CHANGELOG.md against the Keep-a-Changelog rules described in AGENTS.md.
+# PR-only: the GitHub-Release job is what enforces the rules on main, and
+# violations can only enter via a PR (OPEN-121).
+name: lint-changelog
+
+on:
+  pull_request:
+    paths:
+      - 'CHANGELOG.md'
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check the changelog section order, tag references and external hosts
+        run: node scripts/check-changelog.mjs
