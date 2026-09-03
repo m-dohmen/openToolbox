@@ -837,6 +837,15 @@ repository activity shares one GitHub identity, so "CI green before merge" and "
 own PR" rest on review discipline rather than GitHub enforcement until required status checks and
 separate merge permissions exist (tracked in the project wiki, [Testing](https://github.com/m-dohmen/openToolbox/wiki/Testing)).
 
+A second gate keeps `CHANGELOG.md` honest: every PR that touches it runs
+`node scripts/check-changelog.mjs` (workflow `.github/workflows/lint-changelog.yml`),
+which enforces `[`Unreleased`]` as the first section, strictly descending semver order below it, a
+link definition for every version whose target tag exists on `origin`, and no external host
+outside `{github.com, keepachangelog.com, semver.org}`. The four checks are the ones an out-of-order
+file silently slips past review (OPEN-120/OPEN-121); the gate is PR-only because on `main` the
+GitHub-Release job is what catches the equivalent problem, and violations cannot enter except via a
+PR.
+
 ### Delete the branch as part of the merge
 
 The repository does not delete head branches automatically
