@@ -64,6 +64,8 @@ jobs:
             exit 1
           fi
       - run: npx playwright install --with-deps chromium
+      - name: Guard the test-suite documentation against drift
+        run: node scripts/check-suite-drift.js
       - run: npm test
       - uses: actions/upload-artifact@v4
         with:
