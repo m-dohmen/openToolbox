@@ -36,7 +36,7 @@ Diese fünf Punkte brechen weder Termindruck noch Reviewkompromiss:
 | Zweck | Befehl |
 |---|---|
 | Bauen | `npm run build` → `dist/index.html` |
-| Prüfen | `npm test` (zwölf Suiten: prompts-metrics, actions-delete-guard, timezone, domain-swap-crash, views, board, charts, changelog, smoke, multi-entity, demos, timezone-examples) |
+| Prüfen | `npm test` (zwölf Suiten: prompts-metrics, actions-delete-guard, timezone, domain-swap-crash, views, board, charts, changelog, smoke, multi-entity, demos, timezone-examples) — die Liste wird durch `scripts/check-suite-drift.mjs` automatisch gegen `scripts.test` geprüft (OPEN-126) |
 | Demos + Prompts neu bauen | `npm run build:demo` |
 | Nur Prompts | `npm run prompts` |
 | Bilder für README/Wiki | `npm run screenshots` |

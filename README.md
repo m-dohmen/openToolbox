@@ -1107,7 +1107,8 @@ test/demos.mjs                opens every built demo once — the examples rot s
 npm test
 ```
 
-Runs twelve suites — three of them against a real headless Chromium:
+Runs twelve suites — three of them against a real headless Chromium.
+The list is checked against `scripts.test` in CI by `scripts/check-suite-drift.mjs` (OPEN-126):
 
 - `test/prompts-metrics.mjs` — pure Node, no browser: the metric section that
   `scripts/build-prompts.mjs` generates must describe every declared metric so an agent reading only
