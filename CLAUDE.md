@@ -846,6 +846,12 @@ file silently slips past review (OPEN-120/OPEN-121); the gate is PR-only because
 GitHub-Release job is what catches the equivalent problem, and violations cannot enter except via a
 PR.
 
+A third gate keeps the test-suite documentation honest: every PR runs
+`node scripts/check-suite-drift.js` (workflow `.github/workflows/build.yml`) as a mandatory step
+before `npm test`, holding `scripts.test` in `package.json` in sync with the five places the
+suites are enumerated — `README.md`, `README.de.md`, `CONTRIBUTING.md`,
+`.multica/agents/_produkt.md`, and `.multica/agents/entwickler.md` (OPEN-124).
+
 ### Delete the branch as part of the merge
 
 The repository does not delete head branches automatically
