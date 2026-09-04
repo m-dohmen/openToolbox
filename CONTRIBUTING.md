@@ -21,11 +21,12 @@ npm run build
 npm test          # downloads a chromium on first run
 ```
 
-`npm test` runs eight suites: pure Node checks on the generated build prompts, the action
+`npm test` runs twelve suites: pure Node checks on the generated build prompts, the action
 validation's reference guard, the crash-safe fixture swap behind the extra builds and the
-local-calendar due dates — for the framework and for every
-example domain under `examples/`; two end-to-end suites that drive a real
-headless browser against the built file over `file://`; and one that opens every built demo. If your
+local-calendar due dates — for the framework and for every example domain under `examples/` — plus
+the saved-views machinery, the kanban-board library, the chart math, and the
+CHANGELOG-order validator; two end-to-end suites that drive a real headless
+browser against the built file over `file://`; and one that opens every built demo. If your
 change touches persistence, encryption, the AI client or branding, add an
 assertion to `test/smoke.mjs`. A feature without a test tends to break silently three commits later,
 because nobody clicks through a single-file app by hand.

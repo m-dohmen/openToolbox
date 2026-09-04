@@ -1107,7 +1107,7 @@ test/demos.mjs                opens every built demo once — the examples rot s
 npm test
 ```
 
-Runs eight suites — three of them against a real headless Chromium:
+Runs twelve suites — three of them against a real headless Chromium:
 
 - `test/prompts-metrics.mjs` — pure Node, no browser: the metric section that
   `scripts/build-prompts.mjs` generates must describe every declared metric so an agent reading only
@@ -1121,9 +1121,27 @@ Runs eight suites — three of them against a real headless Chromium:
   mid-run, once hard (`SIGKILL`) and once softly (`SIGTERM`), and runs a follow-up build after the
   kill. A hard-killed run strands no fixture in `src/domain.js`, and a follow-up run restores the
   true original instead of adopting the mutation as its own.
-- `test/timezone-examples.mjs` — pure Node: the same clock freeze run over all eight example
-  domains under `examples/` — seed dates, remaining-day fields and overdue boundaries follow the
-  local calendar day there too.
+- `test/views.mjs` — pure Node: pins down `src/lib/views.js` (normalizeView, sanitizeViews,
+  mergeViewsWithDefaults, applyView) and the views branch in `src/lib/merge.js`. Both acceptance
+  criteria from OPEN-102 are anchored here — the positive case where two files merge disjoint view
+  lists, and the negative case with a same-name conflict where the stored view wins. Plus the usual
+  robustness against empty or broken input. The dropdown and the settings editor themselves run
+  through `smoke.mjs` against the live app.
+- `test/board.mjs` — pure Node: tests `src/lib/board.js` — `validateBoardConfig`, `groupByColumn`,
+  `moveRecordInBoard`, `applyColumnLimit` — split out from the UI so the behaviour is checkable
+  without a browser. A `columnField` that is not an enum in the schema is rejected by name; a record
+  whose column value is empty or no longer in `values` lands in an "Unassigned" reservoir rather than
+  the first column, so no card becomes unfindable.
+- `test/charts.mjs` — pure Node: locks down the math behind the dashboard diagrams — `niceScale`,
+  `linePath`, `prepareBarRows`, `prepareDonutRows`, `prepareLinePoints`, `validateChart` from
+  `src/lib/charts.js` — so the renderer can be exercised without a browser. Also feeds a synthetic
+  SVG string with every field through `sanitizeSvg`: the chart output must come out script-free,
+  otherwise a dashboard is one data point away from a callable URL.
+- `test/changelog.mjs` — pure Node: tests `scripts/check-changelog.mjs`. The four acceptance
+  criteria from OPEN-121 are anchored here — `[Unreleased]` first, sections in strictly descending
+  semver order, a link definition for every version whose target tag exists on `origin`, and no host
+  outside `{github.com, keepachangelog.com, semver.org}`. The pure logic is checked against synthetic
+  fixtures; the real `CHANGELOG.md` is validated in CI.
 - `test/smoke.mjs` — the single-entity path, against the already-built `dist/index.html`: startup,
   edit, save, reopen, encrypt, wrong passphrase, decrypt, dark mode, settings round-trip, AI dialect
   negotiation against a mock endpoint, attachments, proposed changes with a deliberately invalid one,
@@ -1143,6 +1161,9 @@ Runs eight suites — three of them against a real headless Chromium:
 - `test/demos.mjs` — opens every built demo once and checks the few things that must always hold:
   it renders without console errors, has records, its computed fields produce values, and the
   configured accent colour arrives. The examples are the part of the repository that rots silently.
+- `test/timezone-examples.mjs` — pure Node: the same clock freeze run over all eight example
+  domains under `examples/` — seed dates, remaining-day fields and overdue boundaries follow the
+  local calendar day there too.
 
 ## Contributing
 
