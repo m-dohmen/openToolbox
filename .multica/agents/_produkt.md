@@ -36,7 +36,7 @@ Diese fünf Punkte brechen weder Termindruck noch Reviewkompromiss:
 | Zweck | Befehl |
 |---|---|
 | Bauen | `npm run build` → `dist/index.html` |
-| Prüfen | `npm test` (zwölf Suiten: prompts-metrics, actions-delete-guard, timezone, domain-swap-crash, views, board, charts, changelog, smoke, multi-entity, demos, timezone-examples) |
+| Prüfen | `npm test` (zwölf Suiten: prompts-metrics, actions-delete-guard, timezone, domain-swap-crash, views, board, charts, changelog, smoke, multi-entity, demos, timezone-examples); vorab hält `scripts/check-suite-drift.js` als CI-Tor die fünf Aufzählungsstellen gegen `scripts.test` synchron (Reihenfolge und Vollständigkeit) |
 | Demos + Prompts neu bauen | `npm run build:demo` |
 | Nur Prompts | `npm run prompts` |
 | Bilder für README/Wiki | `npm run screenshots` |
@@ -47,6 +47,7 @@ Diese fünf Punkte brechen weder Termindruck noch Reviewkompromiss:
 - die eingecheckten Demos unter `docs/demo` und `docs/demos` sind aktuell
 - `CLAUDE.md` ist identisch mit `AGENTS.md`
 - Plugin-Manifeste und `SKILL.md`-Frontmatter sind gültig
+- `scripts/check-suite-drift.js` hält die fünf Aufzählungsstellen gegen `scripts.test` synchron (Pflichtgate vor `npm test`)
 - alle zwölf Testsuiten laufen durch
 
 ### Artefakte, die zusammen gepflegt werden müssen

@@ -1216,6 +1216,10 @@ Fährt zwölf Testsuiten — drei davon gegen einen echten Headless-Chromium:
   Beispieldomänen unter `examples/` — Seeddaten, Resttage und Fälligkeitsgrenzen folgen auch dort
   dem lokalen Kalendertag.
 
+Vor `npm test` prüft die CI zusätzlich `node scripts/check-suite-drift.js` als Pflichtgate — es
+hält diese Liste synchron mit `scripts.test` in `package.json` (Reihenfolge und Vollständigkeit);
+Drift bricht den Build, bevor eine Suite startet.
+
 ## Mitwirken
 
 Fehlermeldungen und Pull Requests sind willkommen, siehe [CONTRIBUTING.md](CONTRIBUTING.md). Das ist

@@ -31,6 +31,10 @@ change touches persistence, encryption, the AI client or branding, add an
 assertion to `test/smoke.mjs`. A feature without a test tends to break silently three commits later,
 because nobody clicks through a single-file app by hand.
 
+`scripts/check-suite-drift.js` runs as a CI step right before `npm test` and holds this
+enumeration against `scripts.test` in `package.json` — order is not enforced here, only
+completeness.
+
 ## Style
 
 - Comments explain **why**, not what. German is fine, English is fine, mixing within one file is not.

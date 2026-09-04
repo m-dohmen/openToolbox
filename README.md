@@ -1165,6 +1165,10 @@ Runs twelve suites — three of them against a real headless Chromium:
   domains under `examples/` — seed dates, remaining-day fields and overdue boundaries follow the
   local calendar day there too.
 
+Before `npm test` runs, the CI also executes `node scripts/check-suite-drift.js` as a mandatory
+gate — it keeps this list in sync with `scripts.test` in `package.json` (order and completeness),
+so a missing or reordered suite fails the build before any test fires.
+
 ## Contributing
 
 Issues and pull requests welcome. See [CONTRIBUTING.md](CONTRIBUTING.md). This is a hobby project —
