@@ -1170,7 +1170,8 @@ test/demos.mjs                öffnet jede gebaute Demo einmal — sonst verrott
 npm test
 ```
 
-Fährt zwölf Testsuiten — drei davon gegen einen echten Headless-Chromium:
+Fährt zwölf Testsuiten — drei davon gegen einen echten Headless-Chromium.
+Die Liste wird in der CI gegen `scripts.test` durch `scripts/check-suite-drift.mjs` geprüft (OPEN-125):
 
 - `test/prompts-metrics.mjs` — reiner Knoten-Test ohne Browser: der Kennzahlen-Abschnitt, den
   `scripts/build-prompts.mjs` erzeugt, muss jede deklarierte Kennzahl so beschreiben, dass ein Agent,

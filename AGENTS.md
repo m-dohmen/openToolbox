@@ -846,6 +846,16 @@ file silently slips past review (OPEN-120/OPEN-121); the gate is PR-only because
 GitHub-Release job is what catches the equivalent problem, and violations cannot enter except via a
 PR.
 
+A third gate keeps the testsuites listing in sync with `scripts.test`: every build runs
+`node scripts/check-suite-drift.js` as a step before `npm test`. The script parses the
+`test/<name>.mjs` positions in `package.json`, filters itself out, and compares the remaining
+twelve against five places in the repo that enumerate them — the bullet list under `## Testing` in
+`README.md`, the same under `## Testen` in `README.de.md`, the comma-separated list in the
+`Prüfen` row of `.multica/agents/_produkt.md`, and the count words ("twelve", "zwölf") in
+`CONTRIBUTING.md` and `.multica/agents/entwickler.md`. Drift — reordering, a missing or added suite,
+a wrong count — fails the step before any test runs. The pure logic is covered by
+`test/suite-drift.mjs`, which runs as the first suite itself (OPEN-124).
+
 ### Delete the branch as part of the merge
 
 The repository does not delete head branches automatically

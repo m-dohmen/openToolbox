@@ -26,7 +26,9 @@ validation's reference guard, the crash-safe fixture swap behind the extra build
 local-calendar due dates — for the framework and for every example domain under `examples/` — plus
 the saved-views machinery, the kanban-board library, the chart math, and the
 CHANGELOG-order validator; two end-to-end suites that drive a real headless
-browser against the built file over `file://`; and one that opens every built demo. If your
+browser against the built file over `file://`; and one that opens every built demo.
+This count is checked against `scripts.test` in CI by `scripts/check-suite-drift.mjs` (OPEN-125),
+so if you add or remove a suite, the matching prose above has to follow in the same commit. If your
 change touches persistence, encryption, the AI client or branding, add an
 assertion to `test/smoke.mjs`. A feature without a test tends to break silently three commits later,
 because nobody clicks through a single-file app by hand.
