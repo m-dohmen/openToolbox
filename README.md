@@ -1108,7 +1108,7 @@ npm test
 ```
 
 Runs twelve suites — three of them against a real headless Chromium.
-The list is checked against `scripts.test` in CI by `scripts/check-suite-drift.mjs` (OPEN-126):
+The order and completeness of this list are checked against `scripts.test` in CI by `scripts/check-suite-drift.js` — new suites only appear in the docs after they are also in the script:
 
 - `test/prompts-metrics.mjs` — pure Node, no browser: the metric section that
   `scripts/build-prompts.mjs` generates must describe every declared metric so an agent reading only

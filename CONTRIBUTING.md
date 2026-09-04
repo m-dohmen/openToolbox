@@ -27,8 +27,9 @@ local-calendar due dates — for the framework and for every example domain unde
 the saved-views machinery, the kanban-board library, the chart math, and the
 CHANGELOG-order validator; two end-to-end suites that drive a real headless
 browser against the built file over `file://`; and one that opens every built demo.
-This count is checked against `scripts.test` in CI by `scripts/check-suite-drift.mjs` (OPEN-126),
-so if you add or remove a suite, the matching prose above has to follow in the same commit. If your
+The completeness of this count is checked against `scripts.test` in CI by `scripts/check-suite-drift.js` —
+new suites only appear in the docs after they are also in the script, so if you add or remove a suite,
+the matching prose above has to follow in the same commit. If your
 change touches persistence, encryption, the AI client or branding, add an
 assertion to `test/smoke.mjs`. A feature without a test tends to break silently three commits later,
 because nobody clicks through a single-file app by hand.

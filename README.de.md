@@ -1171,7 +1171,7 @@ npm test
 ```
 
 Fährt zwölf Testsuiten — drei davon gegen einen echten Headless-Chromium.
-Die Liste wird in der CI gegen `scripts.test` durch `scripts/check-suite-drift.mjs` geprüft (OPEN-126):
+Reihenfolge und Vollständigkeit dieser Liste werden durch `scripts/check-suite-drift.js` gegen `scripts.test` geprüft — neue Suiten erscheinen erst in der Doku, wenn sie auch im Skript stehen:
 
 - `test/prompts-metrics.mjs` — reiner Knoten-Test ohne Browser: der Kennzahlen-Abschnitt, den
   `scripts/build-prompts.mjs` erzeugt, muss jede deklarierte Kennzahl so beschreiben, dass ein Agent,

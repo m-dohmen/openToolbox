@@ -36,10 +36,14 @@ Diese fünf Punkte brechen weder Termindruck noch Reviewkompromiss:
 | Zweck | Befehl |
 |---|---|
 | Bauen | `npm run build` → `dist/index.html` |
-| Prüfen | `npm test` (zwölf Suiten: prompts-metrics, actions-delete-guard, timezone, domain-swap-crash, views, board, charts, changelog, smoke, multi-entity, demos, timezone-examples) — die Liste wird durch `scripts/check-suite-drift.mjs` automatisch gegen `scripts.test` geprüft (OPEN-126) |
+| Prüfen | `npm test` (zwölf Suiten: prompts-metrics, actions-delete-guard, timezone, domain-swap-crash, views, board, charts, changelog, smoke, multi-entity, demos, timezone-examples) |
 | Demos + Prompts neu bauen | `npm run build:demo` |
 | Nur Prompts | `npm run prompts` |
 | Bilder für README/Wiki | `npm run screenshots` |
+
+Reihenfolge und Vollständigkeit der Suite-Liste werden durch `scripts/check-suite-drift.js` gegen
+`scripts.test` geprüft — neue Suiten erscheinen erst in der Doku, wenn sie auch im Skript stehen
+(OPEN-126).
 
 ### Was die CI erzwingt
 
