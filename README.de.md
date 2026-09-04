@@ -1170,7 +1170,7 @@ test/demos.mjs                öffnet jede gebaute Demo einmal — sonst verrott
 npm test
 ```
 
-Fährt acht Testsuiten — drei davon gegen einen echten Headless-Chromium:
+Fährt zwölf Testsuiten — drei davon gegen einen echten Headless-Chromium:
 
 - `test/prompts-metrics.mjs` — reiner Knoten-Test ohne Browser: der Kennzahlen-Abschnitt, den
   `scripts/build-prompts.mjs` erzeugt, muss jede deklarierte Kennzahl so beschreiben, dass ein Agent,
@@ -1185,14 +1185,36 @@ Fährt acht Testsuiten — drei davon gegen einen echten Headless-Chromium:
   danach einen Folgelauf bauen. Ein hart gekillter Lauf hinterlässt keine Fixture in
   `src/domain.js`, und der Folgelauf stellt das echte Original wieder her, statt die Mutation als
   sein „Original" zu übernehmen.
-- `test/timezone-examples.mjs` — reiner Knoten-Test: dasselbe Uhr-Einfrieren über alle acht
-  Beispieldomänen unter `examples/` — Seeddaten, Resttage und Fälligkeitsgrenzen folgen auch dort
-  dem lokalen Kalendertag.
+- `test/views.mjs` — reiner Knoten-Test: prüft `src/lib/views.js` (normalizeView, sanitizeViews,
+  mergeViewsWithDefaults, applyView) und den Views-Zweig in `src/lib/merge.js`. Beide
+  Akzeptanzkriterien aus OPEN-102 sind hier verankert — der positive Fall, in dem zwei Dateien
+  disjunkte View-Listen verschmelzen, und der negative Fall mit Namenskonflikt, in dem der
+  gespeicherte View gewinnt. Dazu die übliche Robustheit gegen leere oder kaputte Eingaben. Das
+  Dropdown und der Settings-Editor selbst laufen in `smoke.mjs` gegen die laufende App.
+- `test/board.mjs` — reiner Knoten-Test: prüft `src/lib/board.js` — `validateBoardConfig`,
+  `groupByColumn`, `moveRecordInBoard`, `applyColumnLimit` — herausgelöst aus der Oberfläche, damit
+  das Verhalten ohne Browser prüfbar bleibt. Ein `columnField`, das im Schema nicht als Aufzählung
+  deklariert ist, wird namentlich abgelehnt; ein Datensatz ohne Spaltenwert landet in einem eigenen
+  Reservoir statt in der ersten Spalte, damit keine Karte unauffindbar wird.
+- `test/charts.mjs` — reiner Knoten-Test: legt die Mathematik hinter den Dashboard-Diagrammen fest
+  — `niceScale`, `linePath`, `prepareBarRows`, `prepareDonutRows`, `prepareLinePoints`,
+  `validateChart` aus `src/lib/charts.js` — damit der Renderer ohne Browser geprüft werden kann.
+  Dazu geht ein synthetischer SVG-String mit allen Feldern durch `sanitizeSvg`: die
+  Diagramm-Ausgabe muss skriptfrei bleiben, sonst ist ein Dashboard einen Datenpunkt von einer
+  ausführbaren URL entfernt.
+- `test/changelog.mjs` — reiner Knoten-Test: prüft `scripts/check-changelog.mjs`. Die vier
+  Akzeptanzkriterien aus OPEN-121 sind hier verankert — `[Unreleased]` zuerst, Abschnitte in strikt
+  absteigender Semver-Reihenfolge, eine Link-Definition für jede Version, deren Ziel-Tag auf
+  `origin` existiert, und kein Host außerhalb von `{github.com, keepachangelog.com, semver.org}`.
+  Die reine Logik wird an synthetischen Fixtures geprüft; die echte `CHANGELOG.md` validiert die CI.
 - `test/smoke.mjs` — der Einzel-Entitäts-Pfad gegen die gebaute `dist/index.html`. Rund 300
   Zusicherungen.
 - `test/multi-entity.mjs` — der `ENTITIES`-Pfad gegen einen eigens gebauten Zwei-Entitäten-Build.
   Rund 60 Zusicherungen.
 - `test/demos.mjs` — öffnet jede gebaute Demo einmal; die Beispiele verrotten sonst still.
+- `test/timezone-examples.mjs` — reiner Knoten-Test: dasselbe Uhr-Einfrieren über alle acht
+  Beispieldomänen unter `examples/` — Seeddaten, Resttage und Fälligkeitsgrenzen folgen auch dort
+  dem lokalen Kalendertag.
 
 ## Mitwirken
 
