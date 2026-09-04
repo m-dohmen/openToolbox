@@ -9,6 +9,49 @@ Release notes for each version live on GitHub:
 
 ## [Unreleased]
 
+## [0.18.1] — 2026-09-04
+
+Patch release on top of v0.18.0. Additive CI guard that keeps the test-suite
+documentation in sync with `scripts.test` — no user-visible change, no API
+or schema drift.
+
+### Added
+
+- New CI gate `scripts/check-suite-drift.js` (and matching `test/suite-drift.mjs`
+  suite, the thirteenth and first to run in `npm test`). It reads `scripts.test`
+  from `package.json` and compares it against the five places the suites are
+  enumerated — `README.md`, `README.de.md`, `CONTRIBUTING.md`,
+  `.multica/agents/_produkt.md`, `.multica/agents/entwickler.md` — failing
+  the workflow with a file-and-position diagnosis before `npm test` runs
+  ([#96](https://github.com/m-dohmen/openToolbox/pull/96)).
+- The drift check recognises three source shapes because not every
+  enumeration is a list: explicit lists (Reihenfolge + Vollständigkeit),
+  prose in `CONTRIBUTING.md` (Vollständigkeit only — the order there follows
+  a conceptual grouping), and the count claim in `.multica/agents/entwickler.md`
+  (matches `scripts.test` length). Its own suite (`suite-drift`) is excluded
+  from the comparison, since the docs enumerate what is checked, not the
+  checker itself ([#96](https://github.com/m-dohmen/openToolbox/pull/96)).
+- A half-sentence in each of the five doc places names the new gate as part
+  of the CI pipeline, so a reader of either long README, the contribution
+  guide or the agent briefs meets the new behaviour without leaving the
+  document. `AGENTS.md` and `CLAUDE.md` carry a third paragraph in the
+  "What the CI enforces" section, byte-identical as always
+  ([#97](https://github.com/m-dohmen/openToolbox/pull/97)).
+
+### Not included (consciously)
+
+- No change to the user output. `dist/index.html` is byte-identical to
+  v0.18.0, `check-self-contained.mjs` reports 0 Verstöße, and no demo was
+  rebuilt (`git diff --quiet -- docs/demo docs/demos` stays empty).
+- No correction of the five enumerations themselves — the drift gate
+  confirms them as in sync after OPEN-123, and an unrelated rewrite would
+  belong in its own change.
+- No extension of the check to other files (e.g. the wiki or the
+  short READMEs). Five is the closed set the issue names; adding more is
+  a deliberate, separate decision.
+- No `Added`-style change to the suite catalog. The gate is part of the
+  CI plumbing, not a feature the recipient of the built file ever sees.
+
 ## [0.18.0] — 2026-08-31
 
 ### Added
@@ -370,7 +413,8 @@ and stored in the payload.
   write to a `computed` field — the field is read-only in the form and
   absent from the AI's allowed-keys list.
 
-[Unreleased]: https://github.com/m-dohmen/openToolbox/compare/v0.18.0...HEAD
+[Unreleased]: https://github.com/m-dohmen/openToolbox/compare/v0.18.1...HEAD
+[0.18.1]: https://github.com/m-dohmen/openToolbox/compare/v0.18.0...v0.18.1
 [0.18.0]: https://github.com/m-dohmen/openToolbox/compare/v0.17.0...v0.18.0
 [0.17.0]: https://github.com/m-dohmen/openToolbox/compare/v0.16.1...v0.17.0
 [#79]: https://github.com/m-dohmen/openToolbox/pull/79
