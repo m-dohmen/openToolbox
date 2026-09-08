@@ -9,6 +9,26 @@ Release notes for each version live on GitHub:
 
 ## [Unreleased]
 
+## [0.18.2] — 2026-09-08
+
+Patch release on top of v0.18.1. The `[0.18.1]` section of `CHANGELOG.md`
+listed only #96 (suite-drift gate) and #97 (docs half-sentence), but missed
+the two issues that produced the `check-changelog` gate itself — #92
+(OPEN-120, Keep-a-Changelog section reordering) and #93 (OPEN-121, the
+`scripts/check-changelog.mjs` script and its `test/changelog.mjs` suite).
+The gate was already sound on the file; only the human-maintained bullet
+text was incomplete. This release closes the loop on the `0.18.1` historical
+record. No user-visible change, no API or schema drift; the CI guards
+introduced in `0.18.1` continue to apply.
+
+### Fixed
+
+- `CHANGELOG.md` `[0.18.1]` block now lists #92 and #93 alongside #96 and
+  #97, and the section intro is pluralised so the prose matches the two
+  guards. Completeness of the human-maintained prose is the change; the
+  `check-changelog` script itself was untouched
+  ([#100](https://github.com/m-dohmen/openToolbox/pull/100)).
+
 ## [0.18.1] — 2026-09-04
 
 Patch release on top of v0.18.0. Two additive CI guards — test-suite
@@ -429,7 +449,8 @@ and stored in the payload.
   write to a `computed` field — the field is read-only in the form and
   absent from the AI's allowed-keys list.
 
-[Unreleased]: https://github.com/m-dohmen/openToolbox/compare/v0.18.1...HEAD
+[Unreleased]: https://github.com/m-dohmen/openToolbox/compare/v0.18.2...HEAD
+[0.18.2]: https://github.com/m-dohmen/openToolbox/compare/v0.18.1...v0.18.2
 [0.18.1]: https://github.com/m-dohmen/openToolbox/compare/v0.18.0...v0.18.1
 [0.18.0]: https://github.com/m-dohmen/openToolbox/compare/v0.17.0...v0.18.0
 [0.17.0]: https://github.com/m-dohmen/openToolbox/compare/v0.16.1...v0.17.0
