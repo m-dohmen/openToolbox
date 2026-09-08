@@ -11,9 +11,11 @@ Release notes for each version live on GitHub:
 
 ## [0.18.1] — 2026-09-04
 
-Patch release on top of v0.18.0. Additive CI guard that keeps the test-suite
-documentation in sync with `scripts.test` — no user-visible change, no API
-or schema drift.
+Patch release on top of v0.18.0. Two additive CI guards — test-suite
+documentation drift (keeps `scripts.test` and the five doc enumerations in
+sync) and `CHANGELOG.md` conformance (Keep-a-Changelog format and external
+host allowlist) — plus the manual `CHANGELOG.md` reformatting the second
+guard enforces. No user-visible change, no API or schema drift.
 
 ### Added
 
@@ -37,6 +39,20 @@ or schema drift.
   document. `AGENTS.md` and `CLAUDE.md` carry a third paragraph in the
   "What the CI enforces" section, byte-identical as always
   ([#97](https://github.com/m-dohmen/openToolbox/pull/97)).
+- `CHANGELOG.md` reordered to follow Keep-a-Changelog (Added/Changed/Fixed
+  subsections under each version, `[Unreleased]` first, descending semver
+  for version sections) so the new CI guard has something concrete to
+  enforce. The prose and link shapes are unchanged for every existing
+  release entry; only the section headings move
+  ([#92](https://github.com/m-dohmen/openToolbox/pull/92)).
+- New CI gate `scripts/check-changelog.mjs` (and matching `test/changelog.mjs`
+  suite). It enforces Keep-a-Changelog format: `[Unreleased]` as the first
+  section, strictly descending semver for version sections, a link
+  definition for every release, and the external-host allowlist
+  (`github.com`, `keepachangelog.com`, `semver.org`). The pure validator
+  (`validateChangelog`) is exported so the suite tests it synthetically;
+  the CLI wrapper reads `CHANGELOG.md` and exits non-zero on the first
+  violation ([#93](https://github.com/m-dohmen/openToolbox/pull/93)).
 
 ### Not included (consciously)
 
