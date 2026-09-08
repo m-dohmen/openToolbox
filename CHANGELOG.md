@@ -9,6 +9,33 @@ Release notes for each version live on GitHub:
 
 ## [Unreleased]
 
+## [0.18.2] — 2026-09-08
+
+Patch release that completes the v0.18.1 changelog entry itself. Two
+bullets were missing from the `[0.18.1]` block — the `CHANGELOG.md`
+reordering under Keep-a-Changelog ([#92](https://github.com/m-dohmen/openToolbox/pull/92),
+OPEN-120) and the `check-changelog` gate that enforces it
+([#93](https://github.com/m-dohmen/openToolbox/pull/93), OPEN-121). Both
+commits shipped with v0.18.1, both were reflected in the rebuilt file
+and the running CI, and both went unmentioned under the section that
+narrates what v0.18.1 contains. The `check-changelog` validator itself
+is sound — strictly descending semver, `[Unreleased]` first, link
+definition per release, external-host allowlist — but the gate could
+not retroactively fill in its own narrative; that took a separate
+commit ([#100](https://github.com/m-dohmen/openToolbox/pull/100)).
+
+### Fixed
+
+- `CHANGELOG.md` `[0.18.1]` block: the bullets for the Keep-a-Changelog
+  reorder ([#92](https://github.com/m-dohmen/openToolbox/pull/92),
+  OPEN-120) and the `check-changelog` CI gate
+  ([#93](https://github.com/m-dohmen/openToolbox/pull/93), OPEN-121)
+  added, so the section now lists every change that actually shipped in
+  v0.18.1. Without this entry the human-readable changelog was
+  incomplete while the machine-enforceable version was complete, which
+  is the exact shape of bug the gate cannot catch on its own
+  ([#100](https://github.com/m-dohmen/openToolbox/pull/100)).
+
 ## [0.18.1] — 2026-09-04
 
 Patch release on top of v0.18.0. Two additive CI guards — test-suite
@@ -429,7 +456,8 @@ and stored in the payload.
   write to a `computed` field — the field is read-only in the form and
   absent from the AI's allowed-keys list.
 
-[Unreleased]: https://github.com/m-dohmen/openToolbox/compare/v0.18.1...HEAD
+[Unreleased]: https://github.com/m-dohmen/openToolbox/compare/v0.18.2...HEAD
+[0.18.2]: https://github.com/m-dohmen/openToolbox/compare/v0.18.1...v0.18.2
 [0.18.1]: https://github.com/m-dohmen/openToolbox/compare/v0.18.0...v0.18.1
 [0.18.0]: https://github.com/m-dohmen/openToolbox/compare/v0.17.0...v0.18.0
 [0.17.0]: https://github.com/m-dohmen/openToolbox/compare/v0.16.1...v0.17.0
