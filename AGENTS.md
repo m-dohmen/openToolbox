@@ -838,7 +838,7 @@ own PR" rest on review discipline rather than GitHub enforcement until required 
 separate merge permissions exist (tracked in the project wiki, [Testing](https://github.com/m-dohmen/openToolbox/wiki/Testing)).
 
 A second gate keeps `CHANGELOG.md` honest: every PR that touches it runs
-`node scripts/check-changelog.mjs` (workflow `.github/workflows/lint-changelog.yml`),
+`node scripts/lint-changelog.mjs` (workflow `.github/workflows/lint-changelog.yml`),
 which enforces `[`Unreleased`]` as the first section, strictly descending semver order below it, a
 link definition for every version whose target tag exists on `origin`, and no external host
 outside `{github.com, keepachangelog.com, semver.org}`. The four checks are the ones an out-of-order

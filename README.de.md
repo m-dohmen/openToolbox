@@ -1202,7 +1202,7 @@ Fährt zwölf Testsuiten — drei davon gegen einen echten Headless-Chromium:
   Dazu geht ein synthetischer SVG-String mit allen Feldern durch `sanitizeSvg`: die
   Diagramm-Ausgabe muss skriptfrei bleiben, sonst ist ein Dashboard einen Datenpunkt von einer
   ausführbaren URL entfernt.
-- `test/changelog.mjs` — reiner Knoten-Test: prüft `scripts/check-changelog.mjs`. Die vier
+- `test/changelog.mjs` — reiner Knoten-Test: prüft `scripts/lint-changelog.mjs`. Die vier
   Akzeptanzkriterien aus OPEN-121 sind hier verankert — `[Unreleased]` zuerst, Abschnitte in strikt
   absteigender Semver-Reihenfolge, eine Link-Definition für jede Version, deren Ziel-Tag auf
   `origin` existiert, und kein Host außerhalb von `{github.com, keepachangelog.com, semver.org}`.
