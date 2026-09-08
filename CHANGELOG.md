@@ -14,11 +14,11 @@ Release notes for each version live on GitHub:
 Patch release that completes the v0.18.1 changelog entry itself. Two
 bullets were missing from the `[0.18.1]` block — the `CHANGELOG.md`
 reordering under Keep-a-Changelog ([#92](https://github.com/m-dohmen/openToolbox/pull/92),
-OPEN-120) and the `check-changelog` gate that enforces it
+OPEN-120) and the `lint-changelog` gate that enforces it
 ([#93](https://github.com/m-dohmen/openToolbox/pull/93), OPEN-121). Both
 commits shipped with v0.18.1, both were reflected in the rebuilt file
 and the running CI, and both went unmentioned under the section that
-narrates what v0.18.1 contains. The `check-changelog` validator itself
+narrates what v0.18.1 contains. The `lint-changelog` validator itself
 is sound — strictly descending semver, `[Unreleased]` first, link
 definition per release, external-host allowlist — but the gate could
 not retroactively fill in its own narrative; that took a separate
@@ -28,7 +28,7 @@ commit ([#100](https://github.com/m-dohmen/openToolbox/pull/100)).
 
 - `CHANGELOG.md` `[0.18.1]` block: the bullets for the Keep-a-Changelog
   reorder ([#92](https://github.com/m-dohmen/openToolbox/pull/92),
-  OPEN-120) and the `check-changelog` CI gate
+  OPEN-120) and the `lint-changelog` CI gate
   ([#93](https://github.com/m-dohmen/openToolbox/pull/93), OPEN-121)
   added, so the section now lists every change that actually shipped in
   v0.18.1. Without this entry the human-readable changelog was
@@ -72,7 +72,7 @@ guard enforces. No user-visible change, no API or schema drift.
   enforce. The prose and link shapes are unchanged for every existing
   release entry; only the section headings move
   ([#92](https://github.com/m-dohmen/openToolbox/pull/92)).
-- New CI gate `scripts/check-changelog.mjs` (and matching `test/changelog.mjs`
+- New CI gate `scripts/lint-changelog.mjs` (and matching `test/changelog.mjs`
   suite). It enforces Keep-a-Changelog format: `[Unreleased]` as the first
   section, strictly descending semver for version sections, a link
   definition for every release, and the external-host allowlist

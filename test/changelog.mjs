@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 /**
- * Tests for scripts/check-changelog.mjs.
+ * Tests for scripts/lint-changelog.mjs.
  *
  * Vier Akzeptanzkriterien aus OPEN-121:
  *
@@ -15,7 +15,7 @@
  * erst nach dem OPEN-120-Merge zurueck. CI validiert die echte Datei.
  */
 import { strict as assert } from 'node:assert'
-import { validateChangelog } from '../scripts/check-changelog.mjs'
+import { validateChangelog } from '../scripts/lint-changelog.mjs'
 
 const KNOWN = new Set([
   'v0.18.0', 'v0.17.0', 'v0.16.1', 'v0.16.0', 'v0.15.0', 'v0.14.0',

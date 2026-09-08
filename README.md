@@ -1137,7 +1137,7 @@ Runs twelve suites — three of them against a real headless Chromium:
   `src/lib/charts.js` — so the renderer can be exercised without a browser. Also feeds a synthetic
   SVG string with every field through `sanitizeSvg`: the chart output must come out script-free,
   otherwise a dashboard is one data point away from a callable URL.
-- `test/changelog.mjs` — pure Node: tests `scripts/check-changelog.mjs`. The four acceptance
+- `test/changelog.mjs` — pure Node: tests `scripts/lint-changelog.mjs`. The four acceptance
   criteria from OPEN-121 are anchored here — `[Unreleased]` first, sections in strictly descending
   semver order, a link definition for every version whose target tag exists on `origin`, and no host
   outside `{github.com, keepachangelog.com, semver.org}`. The pure logic is checked against synthetic
